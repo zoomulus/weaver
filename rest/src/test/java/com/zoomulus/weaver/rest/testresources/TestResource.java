@@ -1,4 +1,4 @@
-package com.zoomulus.weaver.rest.resources;
+package com.zoomulus.weaver.rest.testresources;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

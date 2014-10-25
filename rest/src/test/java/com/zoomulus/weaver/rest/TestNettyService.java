@@ -3,6 +3,7 @@ package com.zoomulus.weaver.rest;
 import lombok.RequiredArgsConstructor;
 
 import com.zoomulus.weaver.core.connector.ServerConnector;
+import com.zoomulus.weaver.rest.connector.RestServerConnector;
 
 @RequiredArgsConstructor
 public class TestNettyService
@@ -11,9 +12,9 @@ public class TestNettyService
     
     public void start()
     {
-        ServerConnector connector = ServerConnector.builder()
+        ServerConnector connector = RestServerConnector.builder()
                 .withPort(port)
-                .withResources("com.zoomulus.weaver.rest.resources")
+                .withResources("com.zoomulus.weaver.rest.testresources")
                 .build();
         RestServer server = new RestServer(connector);
         server.start();
