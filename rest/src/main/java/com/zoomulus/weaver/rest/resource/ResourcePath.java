@@ -62,14 +62,9 @@ public class ResourcePath
     }
     
     @RequiredArgsConstructor
-    static class ResourcePathParser
+    public static class ResourcePathParser
     {
         @NonNull final String pattern;
-        
-        private boolean isRegexPlaceholder(final String s)
-        {
-            return s.contains(":");
-        }
         
         private String keyFromRawPlaceholder(final String w)
         {

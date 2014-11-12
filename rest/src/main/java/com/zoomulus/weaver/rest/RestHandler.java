@@ -14,9 +14,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.util.CharsetUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +27,7 @@ import javax.ws.rs.core.Response;
 import com.zoomulus.weaver.rest.resource.DefaultResourceScannerStrategy;
 import com.zoomulus.weaver.rest.resource.Resource;
 import com.zoomulus.weaver.rest.resource.ResourceIdentifier;
+import com.zoomulus.weaver.rest.resource.ResourcePath;
 
 public class RestHandler extends ChannelInboundHandlerAdapter
 {
@@ -36,6 +39,8 @@ public class RestHandler extends ChannelInboundHandlerAdapter
     final Map<ResourceIdentifier, Resource> resources;
     
     Optional<Resource> handlingResource = Optional.empty();
+    Optional<ResourcePath> handlingResourcePath = Optional.empty();
+    final StringBuilder buffer = new StringBuilder();
     
     public RestHandler(final Set<Class<?>> resourceClasses)
     {
@@ -63,9 +68,22 @@ public class RestHandler extends ChannelInboundHandlerAdapter
         return true;
     }
     
-    protected boolean haveMatchingResource(final ResourceIdentifier resourceIdentifier)
+    protected Optional<Resource> parseResource(final HttpMethod method, final String requestPath)
     {
-        return resources.containsKey(resourceIdentifier);
+        Optional<Resource> resource = Optional.empty();
+        for (final Entry<ResourceIdentifier, Resource> entry : resources.entrySet())
+        {
+            Optional<ResourcePath> rp =
+                    ResourcePath
+                        .withPattern(entry.getKey().getPath())
+                        .parse(requestPath);
+            if (rp.isPresent())
+            {
+                handlingResourcePath = rp;
+                resource = Optional.of(entry.getValue());
+            }
+        }
+        return resource;
     }
     
     @Override
@@ -105,33 +123,43 @@ public class RestHandler extends ChannelInboundHandlerAdapter
             }
             else
             {
-                final HttpMethod method = request.getMethod();
-                final String path = request.getUri();
-                final ResourceIdentifier resourceIdentifier = new ResourceIdentifier(path, method);
-                if (! haveMatchingResource(resourceIdentifier))
+//                final HttpMethod method = request.getMethod();
+//                final String path = request.getUri();
+//                final ResourceIdentifier resourceIdentifier = new ResourceIdentifier(path, method);
+                
+                handlingResource = parseResource(request.getMethod(), request.getUri());
+                
+                //if (! haveMatchingResource(resourceIdentifier))
+                if (! handlingResource.isPresent() || ! handlingResourcePath.isPresent())
                 {
                     ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                             HttpResponseStatus.NOT_FOUND,
                             copiedBuffer(String.format("No matching resource found for path \"%s\" and method \"%s\"",
-                                    path,
-                                    method.name()).getBytes())));
+                                    request.getUri(),
+                                    request.getMethod().name()).getBytes())));
                 }
                 else
                 {
-                    handlingResource = Optional.of(resources.get(resourceIdentifier));
+                    //handlingResource = Optional.of(resources.get(resourceIdentifier));
                     parameters = Optional.of(new QueryStringDecoder(request.getUri()).parameters()); 
                 }
             }
         }
         else if (msg instanceof HttpContent)
         {
-            // extract payload 
+            // extract payload
+            HttpContent httpContent = (HttpContent) msg;
+            if (httpContent.content().isReadable())
+            {
+               buffer.append(httpContent.content().toString(CharsetUtil.UTF_8));
+            }
+
             if (msg instanceof LastHttpContent)
             {
                 // invoke the handler
-                if (handlingResource.isPresent())
+                if (handlingResource.isPresent() && handlingResourcePath.isPresent())
                 {
-                    Response rsp = handlingResource.get().invoke();
+                    Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get());
                     
                     FullHttpResponse fullRsp =
                             new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,

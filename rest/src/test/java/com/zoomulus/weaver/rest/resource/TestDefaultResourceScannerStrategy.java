@@ -175,5 +175,5 @@ public class TestDefaultResourceScannerStrategy
         verifySingle(results, "/single/put/", HttpMethod.PUT, 11);
         
         verifyFull(results);
-    }
+    }    
 }

@@ -46,6 +46,7 @@ public class RestServerConnector implements ServerConnector
             protected void initChannel(final SocketChannel ch) throws Exception
             {
                 ch.pipeline().addLast(new HttpRequestDecoder());
+                //ch.pipeline().addLast(new HttpObjectAggregator(1048576));
                 ch.pipeline().addLast(new HttpResponseEncoder());
                 ch.pipeline().addLast(new RestHandler(resources));
             }            
