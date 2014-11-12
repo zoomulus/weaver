@@ -1,8 +1,10 @@
 package com.zoomulus.weaver.core.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 public class PathJoinerTest
 {
@@ -41,7 +43,8 @@ public class PathJoinerTest
     @Test
     public void testJoinOneNullString()
     {
-        assertEquals("/", new PathJoiner().with(null).join());
+        final String nullString = null;
+        assertEquals("/", new PathJoiner().with(nullString).join());
     }
     
     @Test
@@ -74,4 +77,9 @@ public class PathJoinerTest
         assertEquals(TEST_PATH, new PathJoiner().with("/path/").with("to/").with("/resource/").join());
     }
     
+    @Test
+    public void testJoinWithList()
+    {
+        assertEquals(TEST_PATH, new PathJoiner().with(Lists.newArrayList("path", "to", "resource")).join());
+    }
 }

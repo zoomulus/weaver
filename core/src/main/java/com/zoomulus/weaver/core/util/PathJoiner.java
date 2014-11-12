@@ -22,6 +22,15 @@ public class PathJoiner
         return this;
     }
     
+    public PathJoiner with(final List<String> pathElements)
+    {
+        for (final String element : pathElements)
+        {
+            with(element);
+        }
+        return this;
+    }
+    
     public String join()
     {
         final StringBuilder builder = new StringBuilder();
