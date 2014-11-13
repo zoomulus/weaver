@@ -86,13 +86,13 @@ public class Resource
         Object response = null;
         try
         {
-            Object resourceObj = referencedClass.newInstance();
+            Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
             response = referencedMethod.invoke(resourceObj, populateArgs(messageBody, resourcePath));
         }
-        catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
+        catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e)
         {
-            // TODO Auto-generated catch block
             e.printStackTrace();
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e).build();
         }
         
         if (null == response) 

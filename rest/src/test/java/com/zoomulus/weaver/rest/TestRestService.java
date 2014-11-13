@@ -6,7 +6,7 @@ import com.zoomulus.weaver.core.connector.ServerConnector;
 import com.zoomulus.weaver.rest.connector.RestServerConnector;
 
 @RequiredArgsConstructor
-public class TestNettyService
+public class TestRestService
 {
     private final int port;
     
@@ -22,6 +22,6 @@ public class TestNettyService
     
     public static void main(final String[] args)
     {
-        new TestNettyService(5150).start();
+        new TestRestService(5150).start();
     }
 }
