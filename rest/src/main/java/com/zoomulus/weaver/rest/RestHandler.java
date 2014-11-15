@@ -1,7 +1,6 @@
 package com.zoomulus.weaver.rest;
 
 import static io.netty.buffer.Unpooled.copiedBuffer;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -123,20 +122,24 @@ public class RestHandler extends ChannelInboundHandlerAdapter
             }
             else
             {
-//                final HttpMethod method = request.getMethod();
-//                final String path = request.getUri();
-//                final ResourceIdentifier resourceIdentifier = new ResourceIdentifier(path, method);
-                
                 handlingResource = parseResource(request.getMethod(), request.getUri());
                 
                 //if (! haveMatchingResource(resourceIdentifier))
                 if (! handlingResource.isPresent() || ! handlingResourcePath.isPresent())
                 {
-                    ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                    FullHttpResponse fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                             HttpResponseStatus.NOT_FOUND,
                             copiedBuffer(String.format("No matching resource found for path \"%s\" and method \"%s\"",
                                     request.getUri(),
-                                    request.getMethod().name()).getBytes())));
+                                    request.getMethod().name()).getBytes()));
+                    
+                    fullRsp.headers().set(HttpHeaders.Names.CONTENT_LENGTH, fullRsp.content().readableBytes());
+                    if (isHttpKeepaliveRequest())
+                    {
+                        fullRsp.headers().set(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+                    }
+                    
+                    ctx.writeAndFlush(fullRsp);
                 }
                 else
                 {
@@ -176,10 +179,6 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                 }
             }
         }
-        
-        ByteBuf buf = (ByteBuf) msg;
-        
-        buf.release();
     }
 
     @Override

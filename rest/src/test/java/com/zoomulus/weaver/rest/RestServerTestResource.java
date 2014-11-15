@@ -24,7 +24,7 @@ public class RestServerTestResource
     }
     
     @GET
-    @Path("get/id/{id: \\d{5}}")
+    @Path("get/idmatch/{id: \\d{5}}")
     public Response getFiveDigitId(@PathParam("id") String id)
     {
         return Response.status(Status.OK).entity("id:" + id).build();

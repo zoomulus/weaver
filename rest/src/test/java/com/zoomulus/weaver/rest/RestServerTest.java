@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import javax.ws.rs.core.Response.Status;
+
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -51,31 +53,42 @@ public class RestServerTest
     @Test
     public void testGet() throws ClientProtocolException, IOException
     {
-        final RequestResult rr = new RequestResult("get");
-        assertEquals(200, rr.status());
-        assertEquals("OK", rr.reason());
-        assertEquals("get", rr.content());
+        verifyOkResult(new RequestResult("get"), "get");
     }
     
     @Test
     public void testGetId() throws ClientProtocolException, IOException
     {
-        final RequestResult rr = new RequestResult("get/id/id.12345.0");
-        assertEquals(200, rr.status());
-        assertEquals("OK", rr.reason());
-        assertEquals("id:id.12345.0", rr.content());
+        verifyOkResult(new RequestResult("get/id/id.12345.0"), "id:id.12345.0");
+    }
+    
+    @Test
+    public void testGetIdNoIdFails() throws ClientProtocolException, IOException
+    {
+        verifyNotFoundResult(new RequestResult("get/id"), "/get/id", "GET");
     }
     
     @Test
     public void testGetMatchingId() throws ClientProtocolException, IOException
     {
-        final RequestResult rr = new RequestResult("get/id/12345");
-        assertEquals(200, rr.status());
-        assertEquals("OK", rr.reason());
-        assertEquals("id:12345", rr.content());
+        verifyOkResult(new RequestResult("get/idmatch/12345"), "id:12345");
     }
 
     private static RestServer server;
+    
+    private void verifyOkResult(final RequestResult rr, final String expectedResponse)
+    {
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(expectedResponse, rr.content());
+    }
+    
+    private void verifyNotFoundResult(final RequestResult rr, final String path, final String method)
+    {
+        assertEquals(Status.NOT_FOUND.getStatusCode(), rr.status());
+        assertEquals(Status.NOT_FOUND.getReasonPhrase(), rr.reason());
+        assertEquals(String.format("No matching resource found for path \"%s\" and method \"%s\"", path, method), rr.content());
+    }
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
