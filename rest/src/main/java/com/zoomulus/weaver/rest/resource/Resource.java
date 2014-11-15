@@ -62,22 +62,25 @@ public class Resource
     private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath)
     {
         final List<Object> args = Lists.newArrayList();
-        for (final Parameter param : referencedMethod.getParameters())
+        
+        for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
         {
-            if (param.getAnnotations().length < 0)
+            if (0 == paramAnnotations.length)
             {
-                Annotation pathParam = param.getAnnotation(PathParam.class);
-                if (null != pathParam)
-                {
-                    args.add(resourcePath.get(pathParam.annotationType().getName()));
-                }
+                args.add(messageBody);
             }
             else
             {
-                // This is the body
-                args.add(messageBody);
+                for (final Annotation annotation : paramAnnotations)
+                {
+                    if (annotation instanceof PathParam)
+                    {
+                        args.add(resourcePath.get(((PathParam) annotation).value()));
+                    }
+                }
             }
         }
+        
         return args.toArray();
     }
     

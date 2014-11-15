@@ -56,6 +56,24 @@ public class RestServerTest
         assertEquals("OK", rr.reason());
         assertEquals("get", rr.content());
     }
+    
+    @Test
+    public void testGetId() throws ClientProtocolException, IOException
+    {
+        final RequestResult rr = new RequestResult("get/id/id.12345.0");
+        assertEquals(200, rr.status());
+        assertEquals("OK", rr.reason());
+        assertEquals("id:id.12345.0", rr.content());
+    }
+    
+    @Test
+    public void testGetMatchingId() throws ClientProtocolException, IOException
+    {
+        final RequestResult rr = new RequestResult("get/id/12345");
+        assertEquals(200, rr.status());
+        assertEquals("OK", rr.reason());
+        assertEquals("id:12345", rr.content());
+    }
 
     private static RestServer server;
 
