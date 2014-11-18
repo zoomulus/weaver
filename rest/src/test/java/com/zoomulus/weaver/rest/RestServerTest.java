@@ -73,6 +73,19 @@ public class RestServerTest
     {
         verifyOkResult(new RequestResult("get/idmatch/12345"), "id:12345");
     }
+    
+    @Test
+    public void testGetMultipleMatches() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/multiple/abc123/789xyz"), "second:789xyz,first:abc123");
+    }
+    
+    // Test multiple matching pathparams on same path
+    // Test conversion of pathparam to all native types and to custom types via ctor or valueOf
+    // Test all http methods
+    // Test POST/PUT retrieves payload
+    // Test proper ordering of resource selection (best match wins)
+    // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
 
     private static RestServer server;
     
