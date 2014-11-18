@@ -80,8 +80,99 @@ public class RestServerTest
         verifyOkResult(new RequestResult("get/multiple/abc123/789xyz"), "second:789xyz,first:abc123");
     }
     
-    // Test multiple matching pathparams on same path
+    @Test
+    public void testGetIntParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetIntWithFloatValueFails()
+    {
+        
+    }
+    
+    @Test
+    public void testGetShortParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetLongParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetFloatParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetDoubleParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetDoubleWithIntValueConverts()
+    {
+        
+    }
+    
+    @Test
+    public void testGetCharParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetByteParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetBooleanParam()
+    {
+        
+    }
+    
+    @Test
+    public void testGetBooleanWithNumericZeroConvertsToFalse()
+    {
+        
+    }
+    
+    @Test
+    public void testGetBooleanWithNumericNonzeroConvertsToTrue()
+    {
+        
+    }
+    
+    @Test
+    public void testGetCustomClassWithStringConstructor()
+    {
+        
+    }
+    
+    @Test
+    public void testGetCustomClassWithStringViaValueOf()
+    {
+        
+    }
+    
+    @Test
+    public void testGetCustomClassWithoutStringConversionFails()
+    {
+        
+    }
+    
     // Test conversion of pathparam to all native types and to custom types via ctor or valueOf
+    // Test conversion of outputs from native types, string, JSON-serializable classes to Response
+    // Test handling of null outputs as 204 NO CONTENT
     // Test all http methods
     // Test POST/PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
