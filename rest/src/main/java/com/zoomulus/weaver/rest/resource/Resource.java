@@ -88,7 +88,7 @@ public class Resource
                             else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
                             else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
                             else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
-                            else if (parameterType == float.class) { arg = Float.valueOf((float) Double.parseDouble(s_arg)); }
+                            else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
                             else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
                         }
                         else
