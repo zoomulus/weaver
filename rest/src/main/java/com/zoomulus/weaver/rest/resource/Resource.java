@@ -62,6 +62,9 @@ public class Resource
     {
         final List<Object> args = Lists.newArrayList();
         
+        Class<?>[] parameterTypes = referencedMethod.getParameterTypes();
+        
+        int idx = 0;
         for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
         {
             if (0 == paramAnnotations.length)
@@ -74,10 +77,29 @@ public class Resource
                 {
                     if (annotation instanceof PathParam)
                     {
-                        args.add(resourcePath.get(((PathParam) annotation).value()));
+                        Class<?> parameterType = parameterTypes[idx];
+                        String s_arg = resourcePath.get(((PathParam) annotation).value());
+                        Object arg = null;
+                        if (parameterType.isPrimitive())
+                        {
+                            if (parameterType == boolean.class) { }
+                            else if (parameterType == byte.class) { }
+                            else if (parameterType == char.class) { }
+                            else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
+                            else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
+                            else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
+                            else if (parameterType == float.class) { arg = Float.valueOf((float) Double.parseDouble(s_arg)); }
+                            else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
+                        }
+                        else
+                        {
+                            arg = s_arg;
+                        }
+                        args.add(arg);
                     }
                 }
             }
+            ++idx;
         }
         
         return args.toArray();

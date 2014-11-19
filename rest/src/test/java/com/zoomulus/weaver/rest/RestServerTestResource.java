@@ -37,4 +37,39 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity("second:"+second+",first:"+first).build();
     }
+    
+    @GET
+    @Path("get/typematch/short/{shortval}")
+    public Response getShortMatch(@PathParam("shortval") short i)
+    {
+        return Response.status(Status.OK).entity(Short.toString(i)).build();
+    }
+    
+    @GET
+    @Path("get/typematch/int/{intval}")
+    public Response getIntMatch(@PathParam("intval") int i)
+    {
+        return Response.status(Status.OK).entity(Integer.toString(i)).build();
+    }
+    
+    @GET
+    @Path("get/typematch/long/{longval}")
+    public Response getLongMatch(@PathParam("longval") long l)
+    {
+        return Response.status(Status.OK).entity(Long.toString(l)).build();
+    }
+    
+    @GET
+    @Path("get/typematch/float/{floatval}")
+    public Response getFloatMatch(@PathParam("floatval") float f)
+    {
+        return Response.status(Status.OK).entity(Float.toString(f)).build();
+    }
+    
+    @GET
+    @Path("get/typematch/double/{doubleval}")
+    public Response getDoubleMatch(@PathParam("doubleval") double d)
+    {
+        return Response.status(Status.OK).entity(Double.toString(d)).build();
+    }
 }

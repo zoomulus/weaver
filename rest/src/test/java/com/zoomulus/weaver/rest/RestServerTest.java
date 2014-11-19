@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.zoomulus.weaver.core.connector.ServerConnector;
@@ -81,91 +82,106 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetIntParam()
+    public void testGetIntParam() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/typematch/int/4000000"), "4000000");
+    }
+    
+    @Ignore
+    @Test
+    public void testGetIntWithFloatValueFails() throws ClientProtocolException, IOException
     {
         
     }
     
     @Test
-    public void testGetIntWithFloatValueFails()
+    public void testGetShortParam() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/typematch/short/20000"), "20000");
+    }
+    
+    @Test
+    public void testGetLongParam() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/typematch/long/8000000000"), "8000000000");        
+    }
+    
+    @Test
+    public void testGetFloatParam() throws ClientProtocolException, IOException
+    {
+        float floatVal = 1234567890.1121314151f;
+        final RequestResult rr = new RequestResult(String.format("get/typematch/float/%f", floatVal));
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(Float.valueOf(floatVal), Float.valueOf(rr.content()));
+    }
+    
+    @Test
+    public void testGetDoubleParam() throws ClientProtocolException, IOException
+    {
+        double doubleVal = 102030405060708090.019181716151413121;
+        final RequestResult rr = new RequestResult(String.format("get/typematch/double/%f", doubleVal));
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(Double.valueOf(doubleVal), Double.valueOf(rr.content()));
+    }
+    
+    @Ignore
+    @Test
+    public void testGetDoubleWithIntValueConverts() throws ClientProtocolException, IOException
     {
         
     }
     
     @Test
-    public void testGetShortParam()
+    public void testGetCharParam() throws ClientProtocolException, IOException
     {
         
     }
     
     @Test
-    public void testGetLongParam()
+    public void testGetByteParam() throws ClientProtocolException, IOException
     {
         
     }
     
     @Test
-    public void testGetFloatParam()
+    public void testGetBooleanParam() throws ClientProtocolException, IOException
     {
         
     }
     
+    @Ignore
     @Test
-    public void testGetDoubleParam()
+    public void testGetBooleanWithNumericZeroConvertsToFalse() throws ClientProtocolException, IOException
     {
         
     }
     
+    @Ignore
     @Test
-    public void testGetDoubleWithIntValueConverts()
+    public void testGetBooleanWithNumericNonzeroConvertsToTrue() throws ClientProtocolException, IOException
     {
         
     }
     
+    @Ignore
     @Test
-    public void testGetCharParam()
+    public void testGetCustomClassWithStringConstructor() throws ClientProtocolException, IOException
     {
         
     }
     
+    @Ignore
     @Test
-    public void testGetByteParam()
+    public void testGetCustomClassWithStringViaValueOf() throws ClientProtocolException, IOException
     {
         
     }
     
+    @Ignore
     @Test
-    public void testGetBooleanParam()
-    {
-        
-    }
-    
-    @Test
-    public void testGetBooleanWithNumericZeroConvertsToFalse()
-    {
-        
-    }
-    
-    @Test
-    public void testGetBooleanWithNumericNonzeroConvertsToTrue()
-    {
-        
-    }
-    
-    @Test
-    public void testGetCustomClassWithStringConstructor()
-    {
-        
-    }
-    
-    @Test
-    public void testGetCustomClassWithStringViaValueOf()
-    {
-        
-    }
-    
-    @Test
-    public void testGetCustomClassWithoutStringConversionFails()
+    public void testGetCustomClassWithoutStringConversionFails() throws ClientProtocolException, IOException
     {
         
     }
