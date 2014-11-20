@@ -39,6 +39,20 @@ public class RestServerTestResource
     }
     
     @GET
+    @Path("get/typematch/boolean/{booleanval}")
+    public Response getBooleanMatch(@PathParam("booleanval") boolean b)
+    {
+        return Response.status(Status.OK).entity(Boolean.toString(b)).build();
+    }
+    
+    @GET
+    @Path("get/typematch/byte/{byteval}")
+    public Response getByteMatch(@PathParam("byteval") byte b)
+    {
+        return Response.status(Status.OK).entity(Byte.toString(b)).build();
+    }
+    
+    @GET
     @Path("get/typematch/short/{shortval}")
     public Response getShortMatch(@PathParam("shortval") short i)
     {

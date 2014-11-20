@@ -82,9 +82,8 @@ public class Resource
                         Object arg = null;
                         if (parameterType.isPrimitive())
                         {
-                            if (parameterType == boolean.class) { }
-                            else if (parameterType == byte.class) { }
-                            else if (parameterType == char.class) { }
+                            if (parameterType == boolean.class) { arg = Boolean.valueOf(s_arg); }
+                            else if (parameterType == byte.class) { arg = Byte.valueOf(s_arg); }
                             else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
                             else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
                             else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }

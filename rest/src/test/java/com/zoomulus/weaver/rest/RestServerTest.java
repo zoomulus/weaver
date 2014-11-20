@@ -91,7 +91,7 @@ public class RestServerTest
     @Test
     public void testGetIntWithFloatValueFails() throws ClientProtocolException, IOException
     {
-        
+        verifyInternalServerErrorResult(new RequestResult("get/typematch/int/123.45"));
     }
     
     @Test
@@ -130,25 +130,22 @@ public class RestServerTest
     @Test
     public void testGetDoubleWithIntValueConverts() throws ClientProtocolException, IOException
     {
-        
-    }
-    
-    @Test
-    public void testGetCharParam() throws ClientProtocolException, IOException
-    {
-        
+        verifyOkResult(new RequestResult("get/typematch/double/13579"), "13579");
     }
     
     @Test
     public void testGetByteParam() throws ClientProtocolException, IOException
     {
-        
+        verifyOkResult(new RequestResult("get/typematch/byte/127"), "127");        
     }
     
     @Test
     public void testGetBooleanParam() throws ClientProtocolException, IOException
     {
-        
+        verifyOkResult(new RequestResult("get/typematch/boolean/true"), "true");        
+        verifyOkResult(new RequestResult("get/typematch/boolean/false"), "false");        
+        verifyOkResult(new RequestResult("get/typematch/boolean/True"), "true");        
+        verifyOkResult(new RequestResult("get/typematch/boolean/FALSE"), "false");        
     }
     
     @Ignore
@@ -208,6 +205,12 @@ public class RestServerTest
         assertEquals(Status.NOT_FOUND.getStatusCode(), rr.status());
         assertEquals(Status.NOT_FOUND.getReasonPhrase(), rr.reason());
         assertEquals(String.format("No matching resource found for path \"%s\" and method \"%s\"", path, method), rr.content());
+    }
+    
+    private void verifyInternalServerErrorResult(final RequestResult rr)
+    {
+        assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), rr.status());
+        assertEquals(Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), rr.reason());
     }
 
     @BeforeClass
