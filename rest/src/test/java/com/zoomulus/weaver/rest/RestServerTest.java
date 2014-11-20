@@ -150,20 +150,6 @@ public class RestServerTest
     
     @Ignore
     @Test
-    public void testGetBooleanWithNumericZeroConvertsToFalse() throws ClientProtocolException, IOException
-    {
-        
-    }
-    
-    @Ignore
-    @Test
-    public void testGetBooleanWithNumericNonzeroConvertsToTrue() throws ClientProtocolException, IOException
-    {
-        
-    }
-    
-    @Ignore
-    @Test
     public void testGetCustomClassWithStringConstructor() throws ClientProtocolException, IOException
     {
         
