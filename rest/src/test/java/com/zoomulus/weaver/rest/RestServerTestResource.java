@@ -100,4 +100,18 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity(c.toString()).build();
     }
+    
+    @GET
+    @Path("get/typematch/customvalueofstring/{value}")
+    public Response getCustomValueOfStringMatch(@PathParam("value") final CustomValueOfString c)
+    {
+        return Response.status(Status.OK).entity(c.toString()).build();
+    }
+    
+    @GET
+    @Path("get/typematch/custominvalid/{value}")
+    public Response getCustomInvalidMatch(@PathParam("value") final CustomInvalid c)
+    {
+        return Response.status(Status.OK).entity(c.toString()).build();
+    }
 }

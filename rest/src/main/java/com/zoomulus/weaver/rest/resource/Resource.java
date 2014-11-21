@@ -26,7 +26,6 @@ public class Resource
 {
     Class<?> referencedClass;
     Method referencedMethod;
-    //SegmentedString path;
     String path;
     HttpMethod httpMethod;
     
@@ -91,14 +90,27 @@ public class Resource
                             else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
                             else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
                         }
-                        else if (hasStringConstructor(parameterType))
-                        {
-                            arg = parameterType.getConstructor(String.class).newInstance(s_arg);
-                        }
                         else
                         {
-                            arg = s_arg;
+                            Optional<Constructor<?>> stringConstructor = getStringConstructor(parameterType);
+                            if (stringConstructor.isPresent())
+                            {
+                                arg = stringConstructor.get().newInstance(s_arg);
+                            }
+                            else
+                            {
+                                Optional<Method> valueOfStringMethod = getValueOfStringMethod(parameterType);
+                                if (valueOfStringMethod.isPresent())
+                                {
+                                    arg = valueOfStringMethod.get().invoke(null, s_arg);
+                                }
+                                else
+                                {
+                                    arg = s_arg;
+                                }
+                            }
                         }
+                        
                         args.add(arg);
                     }
                 }
@@ -149,7 +161,7 @@ public class Resource
     }
     
     
-    private boolean hasStringConstructor(final Class<?> klass)
+    private Optional<Constructor<?>> getStringConstructor(final Class<?> klass)
     {
         for (final Constructor<?> ctor : klass.getConstructors())
         {
@@ -160,9 +172,19 @@ public class Resource
             }
             if (params[0] == String.class)
             {
-                return true;
+                return Optional.of(ctor);
             }
         }
-        return false;
+        return Optional.empty();
+    }
+    
+    private Optional<Method> getValueOfStringMethod(final Class<?> klass)
+    {
+        try
+        {
+            return Optional.of(klass.getDeclaredMethod("valueOf", String.class));            
+        }
+        catch (NoSuchMethodException e) { }
+        return Optional.empty();
     }
 }

@@ -159,18 +159,16 @@ public class RestServerTest
         verifyOkResult(new RequestResult("get/typematch/customwithstringctor/test"), "test");
     }
     
-    @Ignore
     @Test
     public void testGetCustomClassWithStringViaValueOf() throws ClientProtocolException, IOException
     {
-        
+        verifyOkResult(new RequestResult("get/typematch/customvalueofstring/tset"), "tset");
     }
     
-    @Ignore
     @Test
     public void testGetCustomClassWithoutStringConversionFails() throws ClientProtocolException, IOException
     {
-        
+        verifyInternalServerErrorResult(new RequestResult("get/typematch/custominvalid/test"));
     }
     
     // Test conversion of pathparam to all native types and to custom types via ctor or valueOf
