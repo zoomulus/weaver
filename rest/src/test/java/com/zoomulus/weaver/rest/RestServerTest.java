@@ -148,11 +148,15 @@ public class RestServerTest
         verifyOkResult(new RequestResult("get/typematch/boolean/FALSE"), "false");        
     }
     
-    @Ignore
+    public void testGetStandardClassWithString() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/typematch/Integer/5"), "5");
+    }
+    
     @Test
     public void testGetCustomClassWithStringConstructor() throws ClientProtocolException, IOException
     {
-        
+        verifyOkResult(new RequestResult("get/typematch/customwithstringctor/test"), "test");
     }
     
     @Ignore

@@ -3,6 +3,7 @@ package com.zoomulus.weaver.rest.resource;
 import io.netty.handler.codec.http.HttpMethod;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -58,7 +59,7 @@ public class Resource
     //  objects with valueOf(String), containers of objects matching the above, or Optional?
     // Support ParamConverter<T>
     
-    private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath)
+    private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
     {
         final List<Object> args = Lists.newArrayList();
         
@@ -89,6 +90,10 @@ public class Resource
                             else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
                             else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
                             else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
+                        }
+                        else if (hasStringConstructor(parameterType))
+                        {
+                            arg = parameterType.getConstructor(String.class).newInstance(s_arg);
                         }
                         else
                         {
@@ -141,5 +146,23 @@ public class Resource
     public Optional<String> getPathParam(final String name)
     {
         return Optional.ofNullable(pathParams.get(name));
+    }
+    
+    
+    private boolean hasStringConstructor(final Class<?> klass)
+    {
+        for (final Constructor<?> ctor : klass.getConstructors())
+        {
+            final Class<?>[] params = ctor.getParameterTypes();
+            if (params.length != 1)
+            {
+                continue;
+            }
+            if (params[0] == String.class)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

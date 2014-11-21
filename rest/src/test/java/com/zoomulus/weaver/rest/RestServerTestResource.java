@@ -86,4 +86,18 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity(Double.toString(d)).build();
     }
+    
+    @GET
+    @Path("get/typematch/Integer/{intval}")
+    public Response getIntegerMatch(@PathParam("intval") final Integer i)
+    {
+        return Response.status(Status.OK).entity(i).build();
+    }
+    
+    @GET
+    @Path("get/typematch/customwithstringctor/{value}")
+    public Response getCustomWithStringCtorMatch(@PathParam("value") final CustomWithStringCtor c)
+    {
+        return Response.status(Status.OK).entity(c.toString()).build();
+    }
 }
