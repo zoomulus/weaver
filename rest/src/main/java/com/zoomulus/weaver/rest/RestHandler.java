@@ -162,12 +162,26 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                 // invoke the handler
                 if (handlingResource.isPresent() && handlingResourcePath.isPresent())
                 {
-                    Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get());
+                    FullHttpResponse fullRsp = null;
                     
-                    FullHttpResponse fullRsp =
-                            new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                                    HttpResponseStatus.valueOf(rsp.getStatus()),
-                                    copiedBuffer(((String)rsp.getEntity()).getBytes()));
+                    try
+                    {
+                        Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get());
+                        fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                                        HttpResponseStatus.valueOf(rsp.getStatus()),
+                                        copiedBuffer(((String)rsp.getEntity()).getBytes()));
+                    }
+                    catch (Exception e)
+                    {
+                        final StringBuilder sb =  new StringBuilder();
+                        for (final StackTraceElement ste : e.getStackTrace())
+                        {
+                            sb.append(ste.toString());
+                        }
+                        fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                                        HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                        copiedBuffer(sb.toString().getBytes()));
+                    }
                     
                     fullRsp.headers().set(HttpHeaders.Names.CONTENT_LENGTH, fullRsp.content().readableBytes());
                     if (isHttpKeepaliveRequest())
