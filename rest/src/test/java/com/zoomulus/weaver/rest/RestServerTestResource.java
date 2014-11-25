@@ -1,6 +1,7 @@
 package com.zoomulus.weaver.rest;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.MatrixParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
@@ -120,5 +121,12 @@ public class RestServerTestResource
     public Response getCustomInvalidMatch(@PathParam("value") final CustomInvalid c)
     {
         return Response.status(Status.OK).entity(c.toString()).build();
+    }
+    
+    @GET
+    @Path("get/matrix/{id: \\d{5}}")
+    public Response getMatrixParamSingle(@PathParam("id") final String id, @MatrixParam("name") final String name)
+    {
+        return Response.status(Status.OK).entity(String.format("id:%s,name:%s", id, name)).build();
     }
 }

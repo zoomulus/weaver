@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -37,6 +38,7 @@ public class Resource
     //  regex matching also, e.g. @Path("{id : \\d+}")
     //  Also handle matrix params, e.g. @Path("{/e55/{year}") with uri path /e55;color=black/2006
     //  would match year as 2006
+    // Support PathSegment (?)
     // Handle javax.ws.rs.WebApplicationException (chap 7)
     // Return type - javax.ws.rs.core.StreamingOutput
     //  Support other types (OutputStream, byte array, String, or JSON-serializable object) automatically
@@ -57,6 +59,43 @@ public class Resource
     // Support ParamConverter<T>
     // Ensure most optimal match works
     
+    private Object getParameterOfMatchingType(final Class<?> parameterType, final String s_arg)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    {
+        Object arg = null;
+        if (parameterType.isPrimitive())
+        {
+            if (parameterType == boolean.class) { arg = Boolean.valueOf(s_arg); }
+            else if (parameterType == byte.class) { arg = Byte.valueOf(s_arg); }
+            else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
+            else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
+            else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
+            else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
+            else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
+        }
+        else
+        {
+            Optional<Constructor<?>> stringConstructor = getStringConstructor(parameterType);
+            if (stringConstructor.isPresent())
+            {
+                arg = stringConstructor.get().newInstance(s_arg);
+            }
+            else
+            {
+                Optional<Method> valueOfStringMethod = getValueOfStringMethod(parameterType);
+                if (valueOfStringMethod.isPresent())
+                {
+                    arg = valueOfStringMethod.get().invoke(null, s_arg);
+                }
+                else
+                {
+                    arg = s_arg;
+                }
+            }
+        }
+        return arg;
+    }
+    
     private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
     {
         final List<Object> args = Lists.newArrayList();
@@ -74,42 +113,20 @@ public class Resource
             {
                 for (final Annotation annotation : paramAnnotations)
                 {
+                    Class<?> parameterType = parameterTypes[idx];
+                    String s_arg = null;
                     if (annotation instanceof PathParam)
                     {
-                        Class<?> parameterType = parameterTypes[idx];
-                        String s_arg = resourcePath.get(((PathParam) annotation).value());
-                        Object arg = null;
-                        if (parameterType.isPrimitive())
-                        {
-                            if (parameterType == boolean.class) { arg = Boolean.valueOf(s_arg); }
-                            else if (parameterType == byte.class) { arg = Byte.valueOf(s_arg); }
-                            else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
-                            else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
-                            else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
-                            else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
-                            else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
-                        }
-                        else
-                        {
-                            Optional<Constructor<?>> stringConstructor = getStringConstructor(parameterType);
-                            if (stringConstructor.isPresent())
-                            {
-                                arg = stringConstructor.get().newInstance(s_arg);
-                            }
-                            else
-                            {
-                                Optional<Method> valueOfStringMethod = getValueOfStringMethod(parameterType);
-                                if (valueOfStringMethod.isPresent())
-                                {
-                                    arg = valueOfStringMethod.get().invoke(null, s_arg);
-                                }
-                                else
-                                {
-                                    arg = s_arg;
-                                }
-                            }
-                        }
-                        
+                        s_arg = resourcePath.get(((PathParam) annotation).value());
+                    }
+                    else if (annotation instanceof MatrixParam)
+                    {
+                        s_arg = resourcePath.matrixParamGet((((MatrixParam) annotation).value()));                        
+                    }
+                    
+                    Object arg = getParameterOfMatchingType(parameterType, s_arg);
+                    if (null != arg)
+                    {
                         args.add(arg);
                     }
                 }

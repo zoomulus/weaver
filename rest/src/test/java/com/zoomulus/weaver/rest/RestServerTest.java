@@ -177,7 +177,14 @@ public class RestServerTest
         verifyInternalServerErrorResult(new RequestResult("get/typematch/custominvalid/test"));
     }
     
-    // Test conversion of pathparam to all native types and to custom types via ctor or valueOf
+    // Probably do PathSegment here
+    
+    @Test
+    public void testGetMatrixParamSingle() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/matrix/12345;name=bob"), "id:12345,name:bob");
+    }
+    
     // Test conversion of outputs from native types, string, JSON-serializable classes to Response
     // Test handling of null outputs as 204 NO CONTENT
     // Test all http methods
