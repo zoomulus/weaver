@@ -39,6 +39,13 @@ public class RestServerTestResource
     }
     
     @GET
+    @Path("get/multiple/first/{id}/second/{id}")
+    public Response getLastRepeatedId(@PathParam("id") final String id)
+    {
+        return Response.status(Status.OK).entity("id:" + id).build();
+    }
+    
+    @GET
     @Path("get/typematch/boolean/{booleanval}")
     public Response getBooleanMatch(@PathParam("booleanval") boolean b)
     {

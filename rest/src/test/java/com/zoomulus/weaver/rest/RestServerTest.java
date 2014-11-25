@@ -82,6 +82,12 @@ public class RestServerTest
     }
     
     @Test
+    public void testGetRepeatedMatchesReturnsLast() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/multiple/first/123/second/456"), "id:456");
+    }
+    
+    @Test
     public void testGetIntParam() throws ClientProtocolException, IOException
     {
         verifyOkResult(new RequestResult("get/typematch/int/4000000"), "4000000");
