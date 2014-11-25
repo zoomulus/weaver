@@ -9,9 +9,11 @@ import static org.junit.Assert.fail;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.rest.resource.ResourcePath.ResourcePathParser;
 
@@ -49,6 +51,11 @@ public class TestResourcePath
     private static String rxMultNonMatch1 = "/one/aliced/bob/four/eve";
     private static String rxMultNonMatch2 = "/one/alice/bobby/four/eve";
     private static String rxMultNonMatch3 = "/one/alice/bob/four/steve";
+
+    private static String mpBeginMatch = "/one;p=1/two/three/four/five";
+    private static String mpMidMatch = "/one/two/three;p=3/four/five";
+    private static String mpEndMatch = "/one/two/three/four/five;p=5";
+    private static String mpMultMatch = "/one/alice;ap=2/bob;bp=3/four/eve;ep=5";
     
     @Test
     public void testConstruct()
@@ -316,5 +323,90 @@ public class TestResourcePath
                 parse(literalPattern.substring(1, literalPattern.length()));
         assertTrue(rp.isPresent());
     }
-
+    
+    @Test
+    public void testMatchesWithMatrixParams()
+    {
+        Optional<ResourcePath> rp = ResourcePath.withPattern(phBegin)
+                .parse(mpBeginMatch);
+        assertTrue(rp.isPresent());
+    }
+    
+    private void verifyMatrixParams(final ResourcePath rp, final Map<String, String> expectedParams)
+    {
+        assertTrue(rp.hasMatrixParams());
+        
+        Set<String> mpKeys = rp.matrixParamKeySet();
+        assertEquals(expectedParams.keySet().size(), mpKeys.size());
+        for (final String expectedKey : expectedParams.keySet())
+        {
+            assertTrue(mpKeys.contains(expectedKey));
+        }
+        for (final String key : mpKeys)
+        {
+            assertEquals(expectedParams.get(key), rp.matrixParamGet(key));
+        }
+    }
+    
+    @Test
+    public void testRegexMatchesEndParams()
+    {
+        for (final String pattern : Lists.newArrayList(phEnd, rxEnd))
+        {
+            Optional<ResourcePath> rp = ResourcePath.withPattern(pattern)
+                    .parse(mpEndMatch);
+            assertTrue(rp.isPresent());
+            
+            Map<String, String> expectedParams = Maps.newHashMap();
+            expectedParams.put("p", "5");
+            verifyMatrixParams(rp.get(), expectedParams);
+        }
+    }
+    
+    @Test
+    public void testRegexMatchesBeginParams()
+    {
+        for (final String pattern : Lists.newArrayList(phBegin, rxBegin))
+        {
+            Optional<ResourcePath> rp = ResourcePath.withPattern(pattern)
+                    .parse(mpBeginMatch);
+            assertTrue(rp.isPresent());
+            
+            Map<String, String> expectedParams = Maps.newHashMap();
+            expectedParams.put("p", "1");
+            verifyMatrixParams(rp.get(), expectedParams);
+        }
+    }
+    
+    @Test
+    public void testRegexMatchesMidParams()
+    {
+        for (final String pattern : Lists.newArrayList(phMid, rxMid))
+        {
+            Optional<ResourcePath> rp = ResourcePath.withPattern(pattern)
+                    .parse(mpMidMatch);
+            assertTrue(rp.isPresent());
+            
+            Map<String, String> expectedParams = Maps.newHashMap();
+            expectedParams.put("p", "3");
+            verifyMatrixParams(rp.get(), expectedParams);
+        }
+    }
+    
+    @Test
+    public void testMatchesWithMultipleMatrixParams()
+    {
+        for (final String pattern : Lists.newArrayList(phMult, rxMult))
+        {
+            Optional<ResourcePath> rp = ResourcePath.withPattern(pattern)
+                    .parse(mpMultMatch);
+            assertTrue(rp.isPresent());
+            
+            Map<String, String> expectedParams = Maps.newHashMap();
+            expectedParams.put("ap", "2");
+            expectedParams.put("bp", "3");
+            expectedParams.put("ep", "5");
+            verifyMatrixParams(rp.get(), expectedParams);
+        }
+    }
 }

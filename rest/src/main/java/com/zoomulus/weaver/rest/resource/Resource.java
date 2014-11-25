@@ -54,9 +54,8 @@ public class Resource
     //  - Context
     //  - DefaultValue
     //  - Encoded
-    // Support string conversion to native types, objects with single String constructor param,
-    //  objects with valueOf(String), containers of objects matching the above, or Optional?
     // Support ParamConverter<T>
+    // Ensure most optimal match works
     
     private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
     {

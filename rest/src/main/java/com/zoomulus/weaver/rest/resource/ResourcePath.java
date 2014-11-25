@@ -19,16 +19,18 @@ public class ResourcePath
 //    private final String pattern;
     private final String path;
     private final Map<String, String> values;
+    private final Map<String, String> matrixParams;
     
     private ResourcePath(final String path)
     {
-        this(path, Maps.newHashMap());
+        this(path, Maps.newHashMap(), Maps.newHashMap());
     }
     
-    private ResourcePath(final String path, final Map<String, String> values)
+    private ResourcePath(final String path, final Map<String, String> values, final Map<String, String> matrixParams)
     {
         this.path = path;
         this.values = values;
+        this.matrixParams = matrixParams;
     }
     
     public String toString()
@@ -56,6 +58,21 @@ public class ResourcePath
         return values.get(key);
     }
     
+    public boolean hasMatrixParams()
+    {
+        return ! matrixParams.isEmpty();
+    }
+    
+    public Set<String> matrixParamKeySet()
+    {
+        return matrixParams.keySet();
+    }
+    
+    public String matrixParamGet(final String key)
+    {
+        return matrixParams.get(key);
+    }
+    
     public static ResourcePathParser withPattern(final String pattern)
     {
         return new ResourcePathParser(pattern);
@@ -73,6 +90,8 @@ public class ResourcePath
         
         public Optional<ResourcePath> parse(final String path)
         {
+            final Map<String, String> matrixParams = Maps.newHashMap();
+            
             if (pattern.equals(path))
             {
                 return Optional.of(new ResourcePath(path));
@@ -91,7 +110,19 @@ public class ResourcePath
             List<String> pathParts = Lists.newArrayList();
             for (final String pathPart : path.split("/"))
             {
-                if (0 != pathPart.length()) pathParts.add(pathPart);
+                if (0 != pathPart.length())
+                {
+                    String[] ppParts = pathPart.split(";");
+                    pathParts.add(ppParts[0]);
+                    if (ppParts.length > 1)
+                    {
+                        String[] matrixParamParts = ppParts[1].split("=");
+                        if (matrixParamParts.length >= 2)
+                        {
+                            matrixParams.put(matrixParamParts[0], matrixParamParts[1]);
+                        }
+                    }
+                }
             }
             
             int len = patternParts.size();
@@ -132,7 +163,7 @@ public class ResourcePath
                 }
             }
             
-            return Optional.of(new ResourcePath(path, values));
+            return Optional.of(new ResourcePath(path, values, matrixParams));
         }
     }
 }
