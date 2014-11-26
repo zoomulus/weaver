@@ -182,7 +182,13 @@ public class RestServerTest
     @Test
     public void testGetMatrixParamSingle() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/12345;name=bob"), "id:12345,name:bob");
+        verifyOkResult(new RequestResult("get/matrix/single/12345;name=bob"), "id:12345,name:bob");
+    }
+    
+    @Test
+    public void testGetMatrixParamMultiple() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/matrix/multiple/first;1=one/second;two=2"), "p1:first,n:one;p2:second,n:2");
     }
     
     // Test conversion of outputs from native types, string, JSON-serializable classes to Response
