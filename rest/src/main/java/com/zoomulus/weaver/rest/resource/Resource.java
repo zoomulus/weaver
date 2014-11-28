@@ -124,10 +124,13 @@ public class Resource
                         s_arg = resourcePath.matrixParamGet((((MatrixParam) annotation).value()));                        
                     }
                     
-                    Object arg = getParameterOfMatchingType(parameterType, s_arg);
-                    if (null != arg)
+                    if (null != s_arg)
                     {
-                        args.add(arg);
+                        Object arg = getParameterOfMatchingType(parameterType, s_arg);
+                        if (null != arg)
+                        {
+                            args.add(arg);
+                        }
                     }
                 }
             }
@@ -142,8 +145,13 @@ public class Resource
         Object response = null;
         try
         {
+            Object[] args = populateArgs(messageBody, resourcePath);
+            if (referencedMethod.getParameters().length != args.length)
+            {
+                return Response.status(Status.NOT_FOUND).build();
+            }
             Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
-            response = referencedMethod.invoke(resourceObj, populateArgs(messageBody, resourcePath));
+            response = referencedMethod.invoke(resourceObj, args);
         }
         catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e)
         {

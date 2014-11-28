@@ -167,9 +167,17 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     try
                     {
                         Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get());
-                        fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                                        HttpResponseStatus.valueOf(rsp.getStatus()),
-                                        copiedBuffer(((String)rsp.getEntity()).getBytes()));
+                        if (null != (String) rsp.getEntity())
+                        {
+                            fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                                            HttpResponseStatus.valueOf(rsp.getStatus()),
+                                            copiedBuffer(((String)rsp.getEntity()).getBytes()));
+                        }
+                        else
+                        {
+                            fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                                    HttpResponseStatus.valueOf(rsp.getStatus()));
+                        }
                     }
                     catch (Exception e)
                     {
