@@ -409,4 +409,14 @@ public class TestResourcePath
             verifyMatrixParams(rp.get(), expectedParams);
         }
     }
+    
+    @Test
+    public void testMultipleParamsInStringGlobsAllToSingle()
+    {
+        Optional<ResourcePath> rp = ResourcePath.withPattern(phEnd).parse("/one/two/three/four/five;a=1&b=2&c=3");
+        assertTrue(rp.isPresent());
+        Map<String, String> expectedParams = Maps.newHashMap();
+        expectedParams.put("a", "1&b=2&c=3");
+        verifyMatrixParams(rp.get(), expectedParams);
+    }
 }

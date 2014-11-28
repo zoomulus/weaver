@@ -131,12 +131,19 @@ public class RestServerTestResource
     }
     
     @GET
-    @Path("get/matrix/multiple/{p1}/{p2}")
+    @Path("get/matrix/multiple/{p1: first;1=one}/{p2: second;two=2")
     public Response getMatrixParamMultiple(@PathParam("p1") final String p1,
             @MatrixParam("1") final String one,
             @MatrixParam("two") int two,
             @PathParam("p2") final String p2)
     {
         return Response.status(Status.OK).entity(String.format("p1:%s,n:%s;p2:%s,n:%d", p1, one, p2, two)).build();
+    }
+    
+    @GET
+    @Path("get/matrix/multiple/{rep1}/{rep2}")
+    public Response getMatrixParamRepeated(@MatrixParam("var") final String name)
+    {
+        return Response.status(Status.OK).entity("var:" + name).build();
     }
 }

@@ -191,6 +191,20 @@ public class RestServerTest
         verifyOkResult(new RequestResult("get/matrix/multiple/first;1=one/second;two=2"), "p1:first,n:one;p2:second,n:2");
     }
     
+    @Test
+    public void testGetMatrixParamRepeatedMatchesReturnsLast() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/matrix/multiple/rep1;var=alice/rep2;var=bob"), "var:bob");
+    }
+    
+    @Test
+    public void testGetMatrixParamDoesntParseMultipleParamsInSingleStatement() throws ClientProtocolException, IOException
+    {
+        // This is how MatrixParam should behave; if you want to split the whole string
+        // you have to use PathSegment and do it yourself, you big baby
+        verifyOkResult(new RequestResult("get/matrix/single/12345;name=bob&age=30&home=Nowhere"), "id:12345,name:bob&age=30&home=Nowhere");
+    }
+    
     // Test conversion of outputs from native types, string, JSON-serializable classes to Response
     // Test handling of null outputs as 204 NO CONTENT
     // Test all http methods

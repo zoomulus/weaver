@@ -116,7 +116,7 @@ public class ResourcePath
                     pathParts.add(ppParts[0]);
                     if (ppParts.length > 1)
                     {
-                        String[] matrixParamParts = ppParts[1].split("=");
+                        String[] matrixParamParts = ppParts[1].split("=", 2);
                         if (matrixParamParts.length >= 2)
                         {
                             matrixParams.put(matrixParamParts[0], matrixParamParts[1]);
