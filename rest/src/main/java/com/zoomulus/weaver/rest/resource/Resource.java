@@ -18,6 +18,8 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Value;
 import lombok.experimental.Builder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -171,12 +173,24 @@ public class Resource
         {
             return Response.status(Status.OK).entity((String) response).build();
         }
+        
+        // If this class has a toString delcared directly on it, prefer that method
+        else if (hasDeclaredToString(response.getClass()))
+        {
+            return Response.status(Status.OK).entity(response.toString()).build();
+        }
+        // Otherwise do a JSON conversion if possible
         else
         {
-            // Try to convert object to JSON
-            // Return string of JSON if successful
+            try
+            {
+                return Response.status(Status.OK).entity(new ObjectMapper().writeValueAsString(response)).build();
+            }
+            catch (JsonProcessingException e) { }
         }
-        return Response.status(Status.OK).entity("from Resource class").build();
+        
+        // As a last resort use whatever toString gives us
+        return Response.status(Status.OK).entity(response.toString()).build();
     }
     
     public Optional<String> getPathParam(final String name)
@@ -210,5 +224,17 @@ public class Resource
         }
         catch (NoSuchMethodException e) { }
         return Optional.empty();
+    }
+    
+    private boolean hasDeclaredToString(final Class<?> klass)
+    {
+        for (final Method m : klass.getDeclaredMethods())
+        {
+            if (m.getName().equals("toString") &&
+                    m.getReturnType() == String.class &&
+                    m.getParameterCount() == 0)
+                return true;
+        }
+        return false;
     }
 }

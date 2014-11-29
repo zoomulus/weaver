@@ -40,14 +40,18 @@ public class RestServerTest
             final HttpResponse httpRsp = rsp.returnResponse();
             status = httpRsp.getStatusLine().getStatusCode();
             reason = httpRsp.getStatusLine().getReasonPhrase();
-            InputStream is = httpRsp.getEntity().getContent();
-            ByteBuffer buf = ByteBuffer.allocate(is.available());
-            while (is.available() > 0)
+            if (null != httpRsp.getEntity())
             {
-                buf.put((byte) is.read());
+                InputStream is = httpRsp.getEntity().getContent();
+                ByteBuffer buf = ByteBuffer.allocate(is.available());
+                while (is.available() > 0)
+                {
+                    buf.put((byte) is.read());
+                }
+                is.close();
+                content = new String(buf.array());
             }
-            is.close();
-            content = new String(buf.array());
+            else content = null;
         }
     }
     
@@ -289,6 +293,113 @@ public class RestServerTest
     public void testGetCustomClassMatrixParamWithoutStringConversionFails() throws ClientProtocolException, IOException
     {
         verifyInternalServerErrorResult(new RequestResult("get/matrix/typematch/custominvalid/x;var=test"));
+    }
+    
+    @Test
+    public void testConvertNativeBooleanToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/boolean/true"), "true");
+    }
+    
+    @Test
+    public void testConvertNativeByteToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/byte/127"), "127");
+    }
+    
+    @Test
+    public void testConvertNativeCharToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/char/c"), "c");
+    }
+    
+    @Test
+    public void testConvertNativeShortToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/short/20000"), "20000");
+    }
+    
+    @Test
+    public void testConvertNativeIntToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/int/4000000"), "4000000");
+    }
+    
+    @Test
+    public void testConvertNativeLongToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/long/8000000000"), "8000000000");
+    }
+    
+    @Test
+    public void testConvertNativeFloatToResponse() throws ClientProtocolException, IOException
+    {
+        float f = 1234567890.1121314151f;
+        final RequestResult rr = new RequestResult(String.format("get/return/float/%f", f));
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(Float.valueOf(f), Float.valueOf(rr.content()));
+    }
+    
+    @Test
+    public void testConvertNativeDoubleToResponse() throws ClientProtocolException, IOException
+    {
+        double d = 102030405060708090.019181716151413121;
+        final RequestResult rr = new RequestResult(String.format("get/return/double/%f", d));
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(Double.valueOf(d), Double.valueOf(rr.content()));
+    }
+    
+    @Test
+    public void testConvertStringToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/string/abc123"), "abc123");
+    }
+    
+    @Test
+    public void testConvertJsonSerializableClassToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/person/bob"), "{\"name\":\"bob\",\"age\":30,\"city\":\"Nowhere\"}");
+    }
+    
+    @Test
+    public void testConvertClassToResponseWithToString() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/tostring/xyz789"), "xyz789");
+    }
+    
+    @Test
+    public void testConvertNativeArrayToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/array/1,2,3"), "[\"1\",\"2\",\"3\"]");
+    }
+    
+    @Test
+    public void testConvertListToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/list/1,2,3"), "[1,2,3]");
+    }
+    
+    @Test
+    public void testConvertMapToResponse() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/return/map/bob/30/Nowhere"), "{\"city\":\"Nowhere\",\"name\":\"bob\",\"age\":\"30\"}");
+    }
+    
+    @Test
+    public void testHandlerReturnsNullSends204() throws ClientProtocolException, IOException
+    {
+        final RequestResult rr = new RequestResult("get/return/null");
+        assertEquals(Status.NO_CONTENT.getStatusCode(), rr.status());
+        assertEquals(Status.NO_CONTENT.getReasonPhrase(), rr.reason());
+    }
+    
+    @Test
+    public void testHandlerThrowsExceptionSends500() throws ClientProtocolException, IOException
+    {
+        final RequestResult rr = new RequestResult("get/return/throws");
+        verifyInternalServerErrorResult(rr);
     }
     
     // Test conversion of outputs from native types, string, JSON-serializable classes to Response
