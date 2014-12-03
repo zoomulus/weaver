@@ -19,8 +19,6 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Value;
 import lombok.experimental.Builder;
 
-import org.jboss.resteasy.specimpl.PathSegmentImpl;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;

@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Getter;
@@ -16,7 +15,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
-import org.jboss.resteasy.specimpl.PathSegmentImpl;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -187,34 +185,25 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetListOfPathSegment()
+    public void testGetPathSegmentNoMatrixParams() throws ClientProtocolException, IOException
     {
-        
+        verifyOkResult(new RequestResult("get/pathsegment/ps1"), "pp:ps1;kval:null,jval:null");
     }
     
     @Test
-    public void testGetPathSegmentMultipleMatrixParams()
+    public void testGetPathSegmentNoPathParams() throws ClientProtocolException, IOException
     {
-        
+        verifyOkResult(new RequestResult("get/pathsegment/;k=v;j=x"), "pp:;kval:v,jval:x");
     }
     
-    @Test
-    public void testGetPathSegmentDuplicateMatrixParams()
-    {
-        
-    }
-    
-    @Test
-    public void testGetPathSegmentNoMatrixParams()
-    {
-        
-    }
-    
-    @Test
-    public void testGetPathSegmentNoPathParams()
-    {
-        
-    }
+    // TODO: *Possibly* support List<PathSegment>.
+    //
+    // This is a part of the spec but to me it seems an unnecessary complication.
+    // It seems more reasonable to me to not convolute the processing of the path
+    // for that special case, and instead expect users to figure out how to work around it.
+    // I'm going to wait until someone makes me support List<PathSegment> before
+    // I add it.
+    // Of course if someone else wants to add support for it, whatever. -MR
     
     @Test
     public void testGetMatrixParamSingle() throws ClientProtocolException, IOException
