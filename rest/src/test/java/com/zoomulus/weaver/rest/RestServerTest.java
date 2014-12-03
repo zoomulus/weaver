@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Getter;
@@ -15,11 +16,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.jboss.resteasy.specimpl.PathSegmentImpl;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.zoomulus.weaver.core.connector.ServerConnector;
@@ -179,7 +180,41 @@ public class RestServerTest
         verifyInternalServerErrorResult(new RequestResult("get/typematch/custominvalid/test"));
     }
     
-    // Probably do PathSegment here
+    @Test
+    public void testGetPathSegment() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/pathsegment/ps1;k=v;j=x"), "pp:ps1;kval:v,jval:x");
+    }
+    
+    @Test
+    public void testGetListOfPathSegment()
+    {
+        
+    }
+    
+    @Test
+    public void testGetPathSegmentMultipleMatrixParams()
+    {
+        
+    }
+    
+    @Test
+    public void testGetPathSegmentDuplicateMatrixParams()
+    {
+        
+    }
+    
+    @Test
+    public void testGetPathSegmentNoMatrixParams()
+    {
+        
+    }
+    
+    @Test
+    public void testGetPathSegmentNoPathParams()
+    {
+        
+    }
     
     @Test
     public void testGetMatrixParamSingle() throws ClientProtocolException, IOException

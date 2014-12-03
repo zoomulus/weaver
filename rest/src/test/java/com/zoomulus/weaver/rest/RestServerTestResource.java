@@ -7,6 +7,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -127,6 +128,16 @@ public class RestServerTestResource
     public Response getCustomInvalidMatch(@PathParam("value") final CustomInvalid c)
     {
         return Response.status(Status.OK).entity(c.toString()).build();
+    }
+    
+    @GET
+    @Path("get/pathsegment/{ps}")
+    public Response getPathSegment(@PathParam("ps") final PathSegment ps)
+    {
+        return Response.status(Status.OK).entity(String.format("pp:%s;kval:%s,jval:%s",
+                ps.getPath(),
+                ps.getMatrixParameters().getFirst("k"),
+                ps.getMatrixParameters().getFirst("j"))).build();
     }
     
     @GET

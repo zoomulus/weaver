@@ -6,10 +6,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+
+import javax.ws.rs.core.PathSegment;
 
 import org.junit.Test;
 
@@ -418,5 +421,38 @@ public class TestResourcePath
         Map<String, String> expectedParams = Maps.newHashMap();
         expectedParams.put("a", "1&b=2&c=3");
         verifyMatrixParams(rp.get(), expectedParams);
+    }
+    
+    @Test
+    public void testPathSegment()
+    {
+        Optional<ResourcePath> rp = ResourcePath.withPattern(phEnd).parse("/one/two/three/four/five;a=1");
+        assertTrue(rp.isPresent());
+        final Optional<PathSegment> ps = rp.get().getPathSegment("end");
+        assertTrue(ps.isPresent());
+        assertEquals("five", ps.get().getPath());
+        assertEquals("1", ps.get().getMatrixParameters().getFirst("a"));
+    }
+    
+    @Test
+    public void testMultiplePathSegments()
+    {
+        Optional<ResourcePath> rp = ResourcePath.withPattern(phMult).parse("/one/two;a=1/three;b=2;c=3;d=4/four/five;a=5;a=6");
+        assertTrue(rp.isPresent());
+        final Optional<PathSegment> ps1 = rp.get().getPathSegment("first");
+        final Optional<PathSegment> ps2 = rp.get().getPathSegment("second");
+        final Optional<PathSegment> ps3 = rp.get().getPathSegment("third");
+        assertTrue(ps1.isPresent());
+        assertTrue(ps2.isPresent());
+        assertTrue(ps3.isPresent());
+        assertEquals("two", ps1.get().getPath());
+        assertEquals("1", ps1.get().getMatrixParameters().getFirst("a"));
+        assertEquals("three", ps2.get().getPath());
+        assertEquals("2", ps2.get().getMatrixParameters().getFirst("b"));
+        assertEquals("3", ps2.get().getMatrixParameters().getFirst("c"));
+        assertEquals("4", ps2.get().getMatrixParameters().getFirst("d"));
+        assertEquals("five", ps3.get().getPath());
+        assertEquals("5", ps3.get().getMatrixParameters().get("a").get(0));
+        assertEquals("6", ps3.get().getMatrixParameters().get("a").get(1));
     }
 }

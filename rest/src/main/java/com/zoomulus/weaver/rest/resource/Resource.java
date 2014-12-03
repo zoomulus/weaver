@@ -12,11 +12,14 @@ import java.util.Optional;
 
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Value;
 import lombok.experimental.Builder;
+
+import org.jboss.resteasy.specimpl.PathSegmentImpl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -119,7 +122,17 @@ public class Resource
                     String s_arg = null;
                     if (annotation instanceof PathParam)
                     {
-                        s_arg = resourcePath.get(((PathParam) annotation).value());
+                        final String paramValue = ((PathParam) annotation).value();
+                        
+                        if (PathSegment.class.isAssignableFrom(parameterType))
+                        {
+                            Optional<PathSegment> ps = resourcePath.getPathSegment(paramValue);
+                            if (ps.isPresent()) args.add(ps.get());
+                        }
+                        else
+                        {
+                            s_arg = resourcePath.get(paramValue);
+                        }
                     }
                     else if (annotation instanceof MatrixParam)
                     {

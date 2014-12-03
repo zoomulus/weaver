@@ -7,28 +7,35 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.ws.rs.core.PathSegment;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+
+import org.jboss.resteasy.specimpl.PathSegmentImpl;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-//@EqualsAndHashCode(exclude={"pattern"})
 public class ResourcePath
 {
-//    private final String pattern;
     private final String path;
+    private final Map<String, PathSegment> pathSegments;
     private final Map<String, String> values;
     private final Map<String, String> matrixParams;
     
     private ResourcePath(final String path)
     {
-        this(path, Maps.newHashMap(), Maps.newHashMap());
+        this(path, Maps.newHashMap(), Maps.newHashMap(), Maps.newHashMap());
     }
     
-    private ResourcePath(final String path, final Map<String, String> values, final Map<String, String> matrixParams)
+    private ResourcePath(final String path,
+            final Map<String, PathSegment> pathSegments,
+            final Map<String, String> values,
+            final Map<String, String> matrixParams)
     {
         this.path = path;
+        this.pathSegments = pathSegments;
         this.values = values;
         this.matrixParams = matrixParams;
     }
@@ -73,6 +80,11 @@ public class ResourcePath
         return matrixParams.get(key);
     }
     
+    public Optional<PathSegment> getPathSegment(final String pathParamName)
+    {
+        return Optional.ofNullable(pathSegments.get(pathParamName)); 
+    }
+    
     public static ResourcePathParser withPattern(final String pattern)
     {
         return new ResourcePathParser(pattern);
@@ -108,10 +120,12 @@ public class ResourcePath
                 if (0 != patternPart.length()) patternParts.add(patternPart);
             }
             List<String> pathParts = Lists.newArrayList();
+            List<String> pathSegmentParts = Lists.newArrayList();
             for (final String pathPart : path.split("/"))
             {
                 if (0 != pathPart.length())
                 {
+                    pathSegmentParts.add(pathPart);
                     String[] ppParts = pathPart.split(";");
                     pathParts.add(ppParts[0]);
                     if (ppParts.length > 1)
@@ -132,6 +146,7 @@ public class ResourcePath
             }
             
             final Map<String, String> values = Maps.newHashMap();
+            final Map<String, PathSegment> pathSegments = Maps.newHashMap();
             for (int i=0; i<len; i++)
             {
                 final String patternPart = patternParts.get(i);
@@ -145,7 +160,8 @@ public class ResourcePath
                         final String regex = wcParts[1].substring(0, wcParts[1].length()-1).trim();
                         if (pathParts.get(i).matches(regex))
                         {
-                            values.put(key,  pathParts.get(i));
+                            pathSegments.put(key, new PathSegmentImpl(pathSegmentParts.get(i), false));
+                            values.put(key, pathParts.get(i));
                         }
                         else
                         {
@@ -154,7 +170,9 @@ public class ResourcePath
                     }
                     else
                     {
-                        values.put(keyFromRawPlaceholder(patternPart), pathParts.get(i));
+                        final String key = keyFromRawPlaceholder(patternPart);
+                        pathSegments.put(key, new PathSegmentImpl(pathSegmentParts.get(i), false));
+                        values.put(key, pathParts.get(i));
                     }
                 }
                 else if (! patternPart.equals(pathParts.get(i)))
@@ -163,7 +181,7 @@ public class ResourcePath
                 }
             }
             
-            return Optional.of(new ResourcePath(path, values, matrixParams));
+            return Optional.of(new ResourcePath(path, pathSegments, values, matrixParams));
         }
     }
 }
