@@ -23,6 +23,7 @@ import java.util.Set;
 
 import javax.ws.rs.core.Response;
 
+import com.google.common.collect.Maps;
 import com.zoomulus.weaver.rest.resource.DefaultResourceScannerStrategy;
 import com.zoomulus.weaver.rest.resource.Resource;
 import com.zoomulus.weaver.rest.resource.ResourceIdentifier;
@@ -32,7 +33,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
 {
     Optional<HttpRequest> request = Optional.empty();
     Optional<HttpHeaders> headers = Optional.empty();
-    Optional<Map<String, List<String>>> parameters = Optional.empty();
+    Map<String, List<String>> queryParams = Maps.newHashMap();
     
     final Set<Class<?>> resourceClasses;
     final Map<ResourceIdentifier, Resource> resources;
@@ -122,16 +123,13 @@ public class RestHandler extends ChannelInboundHandlerAdapter
             }
             else
             {
-                handlingResource = parseResource(request.getMethod(), request.getUri());
+                handlingResource = parseResource(request.getMethod(), request.getUri().split("\\?")[0]);
                 
                 //if (! haveMatchingResource(resourceIdentifier))
                 if (! handlingResource.isPresent() || ! handlingResourcePath.isPresent())
                 {
                     FullHttpResponse fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                            HttpResponseStatus.NOT_FOUND,
-                            copiedBuffer(String.format("No matching resource found for path \"%s\" and method \"%s\"",
-                                    request.getUri(),
-                                    request.getMethod().name()).getBytes()));
+                            HttpResponseStatus.NOT_FOUND);
                     
                     fullRsp.headers().set(HttpHeaders.Names.CONTENT_LENGTH, fullRsp.content().readableBytes());
                     if (isHttpKeepaliveRequest())
@@ -143,8 +141,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                 }
                 else
                 {
-                    //handlingResource = Optional.of(resources.get(resourceIdentifier));
-                    parameters = Optional.of(new QueryStringDecoder(request.getUri()).parameters()); 
+                    queryParams = new QueryStringDecoder(request.getUri()).parameters(); 
                 }
             }
         }
@@ -166,7 +163,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     
                     try
                     {
-                        Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get());
+                        Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get(), queryParams);
                         if (null != (String) rsp.getEntity())
                         {
                             fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,

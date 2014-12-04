@@ -7,10 +7,12 @@ import javax.ws.rs.GET;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -362,5 +364,26 @@ public class RestServerTestResource
     public Response getThrowsException()
     {
         throw new RuntimeException("get/return/throws fail");
+    }
+    
+    @GET
+    @Path("get/queryparams/single")
+    public String getQueryParams(@QueryParam("firstname") final String firstName)
+    {
+        return firstName;
+    }
+    
+    @GET
+    @Path("get/queryparams/multiple")
+    public String getQueryParams(@QueryParam("lastname") final String lastName, @QueryParam("firstname") final String firstName)
+    {
+        return String.format("%s %s", firstName, lastName);
+    }
+    
+    @GET
+    @Path("get/queryparams/multsamekey")
+    public String getQueryParams(@QueryParam("name") final List<String> names)
+    {
+        return Joiner.on(",").join(names);
     }
 }

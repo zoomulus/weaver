@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -35,22 +36,14 @@ public class Resource
     
     Map<String, String> pathParams = Maps.newConcurrentMap();
     
+    // TODO:
     // @Consumes / @Produces
     // Single unnamed parameter - body (input stream, byte array, or String - depending on content type?)
-    // @PathParam w/ @Path e.g. @Path("{id"}), @PathParam("id") int id
-    //  regex matching also, e.g. @Path("{id : \\d+}")
-    //  Also handle matrix params, e.g. @Path("{/e55/{year}") with uri path /e55;color=black/2006
-    //  would match year as 2006
-    // Support PathSegment (?)
+    // Support List<PathSegment> (maybe)
     // Handle javax.ws.rs.WebApplicationException (chap 7)
-    // Return type - javax.ws.rs.core.StreamingOutput
-    //  Support other types (OutputStream, byte array, String, or JSON-serializable object) automatically
-    //  sent to StreamingOutput
     // Support providing annotations on an interface, not implementation
     // Should work on subclasses also, but subclass must still have @Path annotation
     // Support all injected parameter types:
-    //  - PathParam
-    //  - MatrixParam
     //  - QueryParam
     //  - FormParam
     //  - HeaderParam
@@ -99,7 +92,8 @@ public class Resource
         return arg;
     }
     
-    private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
+    private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath, final Map<String, List<String>> queryParams)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
     {
         final List<Object> args = Lists.newArrayList();
         
@@ -136,6 +130,18 @@ public class Resource
                     {
                         s_arg = resourcePath.matrixParamGet((((MatrixParam) annotation).value()));                        
                     }
+                    else if (annotation instanceof QueryParam)
+                    {
+                        final List<String> params = queryParams.get(((QueryParam) annotation).value());
+                        if (List.class.isAssignableFrom(parameterType))
+                        {
+                            args.add(params);
+                        }
+                        else if (null != params && ! params.isEmpty())
+                        {
+                            s_arg = params.get(0);
+                        }
+                    }
                     
                     if (null != s_arg)
                     {
@@ -153,12 +159,12 @@ public class Resource
         return args.toArray();
     }
     
-    public Response invoke(final String messageBody, final ResourcePath resourcePath)
+    public Response invoke(final String messageBody, final ResourcePath resourcePath, final Map<String, List<String>> queryParams)
     {
         Object response = null;
         try
         {
-            Object[] args = populateArgs(messageBody, resourcePath);
+            Object[] args = populateArgs(messageBody, resourcePath, queryParams);
             if (referencedMethod.getParameters().length != args.length)
             {
                 return Response.status(Status.NOT_FOUND).build();

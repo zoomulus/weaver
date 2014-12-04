@@ -1,6 +1,7 @@
 package com.zoomulus.weaver.rest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +22,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.base.Strings;
 import com.zoomulus.weaver.core.connector.ServerConnector;
 import com.zoomulus.weaver.rest.connector.RestServerConnector;
 
@@ -54,11 +56,19 @@ public class RestServerTest
         }
     }
     
+    
+    
+    // HTTP Method Tests
+    
     @Test
     public void testGet() throws ClientProtocolException, IOException
     {
         verifyOkResult(new RequestResult("get"), "get");
     }
+    
+    
+    
+    // PathParam tests
     
     @Test
     public void testGetId() throws ClientProtocolException, IOException
@@ -69,7 +79,7 @@ public class RestServerTest
     @Test
     public void testGetIdNoIdFails() throws ClientProtocolException, IOException
     {
-        verifyNotFoundResult(new RequestResult("get/id"), "/get/id", "GET");
+        verifyNotFoundResult(new RequestResult("get/id"));
     }
     
     @Test
@@ -178,6 +188,10 @@ public class RestServerTest
         verifyInternalServerErrorResult(new RequestResult("get/typematch/custominvalid/test"));
     }
     
+    
+    
+    // PathSegment Tests
+    
     @Test
     public void testGetPathSegment() throws ClientProtocolException, IOException
     {
@@ -204,6 +218,10 @@ public class RestServerTest
     // I'm going to wait until someone makes me support List<PathSegment> before
     // I add it.
     // Of course if someone else wants to add support for it, whatever. -MR
+    
+    
+    
+    // MatrixParam Tests
     
     @Test
     public void testGetMatrixParamSingle() throws ClientProtocolException, IOException
@@ -426,8 +444,35 @@ public class RestServerTest
         verifyInternalServerErrorResult(rr);
     }
     
-    // Test conversion of outputs from native types, string, JSON-serializable classes to Response
-    // Test handling of null outputs as 204 NO CONTENT
+    
+    
+    // QueryParam Tests
+    
+    @Test
+    public void testSingleQueryParam() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/queryparams/single?firstname=bob"), "bob");
+    }
+    
+    @Test
+    public void testMultipleQueryParam() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/queryparams/multiple?firstname=bob&lastname=bobson"), "bob bobson");
+    }
+    
+    @Test
+    public void testMultipleQueryParamForSameKey() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new RequestResult("get/queryparams/multsamekey?name=alice&name=bob&name=eve"), "alice,bob,eve");
+    }
+    
+    @Test
+    public void testNoQueryParamReturnsNotFound() throws ClientProtocolException, IOException
+    {
+        verifyNotFoundResult(new RequestResult("get/queryparams/single"));
+    }
+    
+    // TODO:
     // Test all http methods
     // Test POST/PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
@@ -442,11 +487,11 @@ public class RestServerTest
         assertEquals(expectedResponse, rr.content());
     }
     
-    private void verifyNotFoundResult(final RequestResult rr, final String path, final String method)
+    private void verifyNotFoundResult(final RequestResult rr)
     {
         assertEquals(Status.NOT_FOUND.getStatusCode(), rr.status());
         assertEquals(Status.NOT_FOUND.getReasonPhrase(), rr.reason());
-        assertEquals(String.format("No matching resource found for path \"%s\" and method \"%s\"", path, method), rr.content());
+        assertTrue(Strings.isNullOrEmpty(rr.content()));
     }
     
     private void verifyInternalServerErrorResult(final RequestResult rr)
