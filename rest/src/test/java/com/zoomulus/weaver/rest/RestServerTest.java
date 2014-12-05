@@ -30,14 +30,17 @@ public class RestServerTest
 {
     @Getter
     @Accessors(fluent=true)
-    class RequestResult
+    abstract class RequestResult
     {
         private final int status;
         private final String reason;
         private final String content;
+        
+        protected static final String host = "http://localhost:22002/";
+        
         public RequestResult(final String uri) throws ClientProtocolException, IOException
         {
-            final Response rsp = Request.Get("http://localhost:22002/" + uri).execute();
+            final Response rsp = getRequest(uri).execute();
             final HttpResponse httpRsp = rsp.returnResponse();
             status = httpRsp.getStatusLine().getStatusCode();
             reason = httpRsp.getStatusLine().getReasonPhrase();
@@ -54,6 +57,60 @@ public class RestServerTest
             }
             else content = null;
         }
+        
+        protected abstract Request getRequest(final String uri);
+    }
+    
+    class GetRequestResult extends RequestResult
+    {
+        public GetRequestResult(final String uri) throws ClientProtocolException, IOException
+        {
+            super(uri);
+        }
+        
+        protected Request getRequest(final String uri)
+        {
+            return Request.Get(host + uri);
+        }
+    }
+    
+    class PostRequestResult extends RequestResult
+    {
+        public PostRequestResult(final String uri) throws ClientProtocolException, IOException
+        {
+            super(uri);
+        }
+        
+        protected Request getRequest(final String uri)
+        {
+            return Request.Post(host + uri);
+        }
+    }
+    
+    class PutRequestResult extends RequestResult
+    {
+        public PutRequestResult(final String uri) throws ClientProtocolException, IOException
+        {
+            super(uri);
+        }
+        
+        protected Request getRequest(final String uri)
+        {
+            return Request.Put(host + uri);
+        }
+    }
+    
+    class DeleteRequestResult extends RequestResult
+    {
+        public DeleteRequestResult(final String uri) throws ClientProtocolException, IOException
+        {
+            super(uri);
+        }
+        
+        protected Request getRequest(final String uri)
+        {
+            return Request.Delete(host + uri);
+        }
     }
     
     
@@ -63,7 +120,25 @@ public class RestServerTest
     @Test
     public void testGet() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get"), "get");
+        verifyOkResult(new GetRequestResult("get"), "get");
+    }
+    
+    @Test
+    public void testPost() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new PostRequestResult("post"), "post");
+    }
+    
+    @Test
+    public void testPut() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new PutRequestResult("put"), "put");
+    }
+    
+    @Test
+    public void testDelete() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new DeleteRequestResult("delete"), "delete");
     }
     
     
@@ -73,62 +148,62 @@ public class RestServerTest
     @Test
     public void testGetId() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/id/id.12345.0"), "id:id.12345.0");
+        verifyOkResult(new GetRequestResult("get/id/id.12345.0"), "id:id.12345.0");
     }
     
     @Test
     public void testGetIdNoIdFails() throws ClientProtocolException, IOException
     {
-        verifyNotFoundResult(new RequestResult("get/id"));
+        verifyNotFoundResult(new GetRequestResult("get/id"));
     }
     
     @Test
     public void testGetMatchingId() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/idmatch/12345"), "id:12345");
+        verifyOkResult(new GetRequestResult("get/idmatch/12345"), "id:12345");
     }
     
     @Test
     public void testGetMultipleMatches() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/multiple/abc123/789xyz"), "second:789xyz,first:abc123");
+        verifyOkResult(new GetRequestResult("get/multiple/abc123/789xyz"), "second:789xyz,first:abc123");
     }
     
     @Test
     public void testGetRepeatedMatchesReturnsLast() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/multiple/first/123/second/456"), "id:456");
+        verifyOkResult(new GetRequestResult("get/multiple/first/123/second/456"), "id:456");
     }
     
     @Test
     public void testGetIntParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/int/4000000"), "4000000");
+        verifyOkResult(new GetRequestResult("get/typematch/int/4000000"), "4000000");
     }
     
     @Test
     public void testGetIntWithFloatValueFails() throws ClientProtocolException, IOException
     {
-        verifyInternalServerErrorResult(new RequestResult("get/typematch/int/123.45"));
+        verifyInternalServerErrorResult(new GetRequestResult("get/typematch/int/123.45"));
     }
     
     @Test
     public void testGetShortParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/short/20000"), "20000");
+        verifyOkResult(new GetRequestResult("get/typematch/short/20000"), "20000");
     }
     
     @Test
     public void testGetLongParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/long/8000000000"), "8000000000");        
+        verifyOkResult(new GetRequestResult("get/typematch/long/8000000000"), "8000000000");        
     }
     
     @Test
     public void testGetFloatParam() throws ClientProtocolException, IOException
     {
         float floatVal = 1234567890.1121314151f;
-        final RequestResult rr = new RequestResult(String.format("get/typematch/float/%f", floatVal));
+        final GetRequestResult rr = new GetRequestResult(String.format("get/typematch/float/%f", floatVal));
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Float.valueOf(floatVal), Float.valueOf(rr.content()));
@@ -138,7 +213,7 @@ public class RestServerTest
     public void testGetDoubleParam() throws ClientProtocolException, IOException
     {
         double doubleVal = 102030405060708090.019181716151413121;
-        final RequestResult rr = new RequestResult(String.format("get/typematch/double/%f", doubleVal));
+        final GetRequestResult rr = new GetRequestResult(String.format("get/typematch/double/%f", doubleVal));
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Double.valueOf(doubleVal), Double.valueOf(rr.content()));
@@ -147,45 +222,45 @@ public class RestServerTest
     @Test
     public void testGetDoubleWithIntValueConverts() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/double/13579"), "13579.0");
+        verifyOkResult(new GetRequestResult("get/typematch/double/13579"), "13579.0");
     }
     
     @Test
     public void testGetByteParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/byte/127"), "127");        
+        verifyOkResult(new GetRequestResult("get/typematch/byte/127"), "127");        
     }
     
     @Test
     public void testGetBooleanParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/boolean/true"), "true");        
-        verifyOkResult(new RequestResult("get/typematch/boolean/false"), "false");        
-        verifyOkResult(new RequestResult("get/typematch/boolean/True"), "true");        
-        verifyOkResult(new RequestResult("get/typematch/boolean/FALSE"), "false");        
+        verifyOkResult(new GetRequestResult("get/typematch/boolean/true"), "true");        
+        verifyOkResult(new GetRequestResult("get/typematch/boolean/false"), "false");        
+        verifyOkResult(new GetRequestResult("get/typematch/boolean/True"), "true");        
+        verifyOkResult(new GetRequestResult("get/typematch/boolean/FALSE"), "false");        
     }
     
     public void testGetStandardClassWithString() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/Integer/5"), "5");
+        verifyOkResult(new GetRequestResult("get/typematch/Integer/5"), "5");
     }
     
     @Test
     public void testGetCustomClassWithStringConstructor() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/customwithstringctor/test"), "test");
+        verifyOkResult(new GetRequestResult("get/typematch/customwithstringctor/test"), "test");
     }
     
     @Test
     public void testGetCustomClassWithStringViaValueOf() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/typematch/customvalueofstring/tset"), "tset");
+        verifyOkResult(new GetRequestResult("get/typematch/customvalueofstring/tset"), "tset");
     }
     
     @Test
     public void testGetCustomClassWithoutStringConversionFails() throws ClientProtocolException, IOException
     {
-        verifyInternalServerErrorResult(new RequestResult("get/typematch/custominvalid/test"));
+        verifyInternalServerErrorResult(new GetRequestResult("get/typematch/custominvalid/test"));
     }
     
     
@@ -195,19 +270,19 @@ public class RestServerTest
     @Test
     public void testGetPathSegment() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/pathsegment/ps1;k=v;j=x"), "pp:ps1;kval:v,jval:x");
+        verifyOkResult(new GetRequestResult("get/pathsegment/ps1;k=v;j=x"), "pp:ps1;kval:v,jval:x");
     }
     
     @Test
     public void testGetPathSegmentNoMatrixParams() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/pathsegment/ps1"), "pp:ps1;kval:null,jval:null");
+        verifyOkResult(new GetRequestResult("get/pathsegment/ps1"), "pp:ps1;kval:null,jval:null");
     }
     
     @Test
     public void testGetPathSegmentNoPathParams() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/pathsegment/;k=v;j=x"), "pp:;kval:v,jval:x");
+        verifyOkResult(new GetRequestResult("get/pathsegment/;k=v;j=x"), "pp:;kval:v,jval:x");
     }
     
     // TODO: *Possibly* support List<PathSegment>.
@@ -226,19 +301,19 @@ public class RestServerTest
     @Test
     public void testGetMatrixParamSingle() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/single/12345;name=bob"), "id:12345,name:bob");
+        verifyOkResult(new GetRequestResult("get/matrix/single/12345;name=bob"), "id:12345,name:bob");
     }
     
     @Test
     public void testGetMatrixParamMultiple() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/multiple/first;1=one/second;two=2"), "p1:first,n:one;p2:second,n:2");
+        verifyOkResult(new GetRequestResult("get/matrix/multiple/first;1=one/second;two=2"), "p1:first,n:one;p2:second,n:2");
     }
     
     @Test
     public void testGetMatrixParamRepeatedMatchesReturnsLast() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/multiple/rep/rep1;var=alice/rep2;var=bob"), "var:bob");
+        verifyOkResult(new GetRequestResult("get/matrix/multiple/rep/rep1;var=alice/rep2;var=bob"), "var:bob");
     }
     
     @Test
@@ -246,38 +321,38 @@ public class RestServerTest
     {
         // This is how MatrixParam should behave; if you want to split the whole string
         // you have to use PathSegment and do it yourself, you big baby
-        verifyOkResult(new RequestResult("get/matrix/single/12345;name=bob&age=30&home=Nowhere"), "id:12345,name:bob&age=30&home=Nowhere");
+        verifyOkResult(new GetRequestResult("get/matrix/single/12345;name=bob&age=30&home=Nowhere"), "id:12345,name:bob&age=30&home=Nowhere");
     }
     
     @Test
     public void testGetIntMatrixParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/int/x;var=4000000"), "4000000");
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/int/x;var=4000000"), "4000000");
     }
     
     @Test
     public void testGetIntMatrixParamWithFloatValueFails() throws ClientProtocolException, IOException
     {
-        verifyInternalServerErrorResult(new RequestResult("get/matrix/typematch/int/x;var=123.45"));
+        verifyInternalServerErrorResult(new GetRequestResult("get/matrix/typematch/int/x;var=123.45"));
     }
     
     @Test
     public void testGetShortMatrixParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/short/x;var=20000"), "20000");
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/short/x;var=20000"), "20000");
     }
     
     @Test
     public void testGetLongMatrixParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/long/x;var=8000000000"), "8000000000");        
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/long/x;var=8000000000"), "8000000000");        
     }
     
     @Test
     public void testGetFloatMatrixParam() throws ClientProtocolException, IOException
     {
         float floatVal = 1234567890.1121314151f;
-        final RequestResult rr = new RequestResult(String.format("get/matrix/typematch/float/x;var=%f", floatVal));
+        final GetRequestResult rr = new GetRequestResult(String.format("get/matrix/typematch/float/x;var=%f", floatVal));
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Float.valueOf(floatVal), Float.valueOf(rr.content()));
@@ -287,7 +362,7 @@ public class RestServerTest
     public void testGetDoubleMatrixParam() throws ClientProtocolException, IOException
     {
         double doubleVal = 102030405060708090.019181716151413121;
-        final RequestResult rr = new RequestResult(String.format("get/matrix/typematch/double/x;var=%f", doubleVal));
+        final GetRequestResult rr = new GetRequestResult(String.format("get/matrix/typematch/double/x;var=%f", doubleVal));
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Double.valueOf(doubleVal), Double.valueOf(rr.content()));
@@ -296,88 +371,88 @@ public class RestServerTest
     @Test
     public void testGetDoubleMatrixParamWithIntValueConverts() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/double/x;var=13579"), "13579.0");
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/double/x;var=13579"), "13579.0");
     }
     
     @Test
     public void testGetByteMatrixParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/byte/x;var=127"), "127");        
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/byte/x;var=127"), "127");        
     }
     
     @Test
     public void testGetBooleanMatrixParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/boolean/x;var=true"), "true");        
-        verifyOkResult(new RequestResult("get/matrix/typematch/boolean/x;var=false"), "false");        
-        verifyOkResult(new RequestResult("get/matrix/typematch/boolean/x;var=True"), "true");        
-        verifyOkResult(new RequestResult("get/matrix/typematch/boolean/x;var=FALSE"), "false");        
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/boolean/x;var=true"), "true");        
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/boolean/x;var=false"), "false");        
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/boolean/x;var=True"), "true");        
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/boolean/x;var=FALSE"), "false");        
     }
     
     public void testGetStandardClassMatrixParamWithString() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/Integer/x;var=5"), "5");
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/Integer/x;var=5"), "5");
     }
     
     @Test
     public void testGetCustomClassMatrixParamWithStringConstructor() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/customwithstringctor/x;var=test"), "test");
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/customwithstringctor/x;var=test"), "test");
     }
     
     @Test
     public void testGetCustomClassMatrixParamWithStringViaValueOf() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/matrix/typematch/customvalueofstring/x;var=tset"), "tset");
+        verifyOkResult(new GetRequestResult("get/matrix/typematch/customvalueofstring/x;var=tset"), "tset");
     }
     
     @Test
     public void testGetCustomClassMatrixParamWithoutStringConversionFails() throws ClientProtocolException, IOException
     {
-        verifyInternalServerErrorResult(new RequestResult("get/matrix/typematch/custominvalid/x;var=test"));
+        verifyInternalServerErrorResult(new GetRequestResult("get/matrix/typematch/custominvalid/x;var=test"));
     }
     
     @Test
     public void testConvertNativeBooleanToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/boolean/true"), "true");
+        verifyOkResult(new GetRequestResult("get/return/boolean/true"), "true");
     }
     
     @Test
     public void testConvertNativeByteToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/byte/127"), "127");
+        verifyOkResult(new GetRequestResult("get/return/byte/127"), "127");
     }
     
     @Test
     public void testConvertNativeCharToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/char/c"), "c");
+        verifyOkResult(new GetRequestResult("get/return/char/c"), "c");
     }
     
     @Test
     public void testConvertNativeShortToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/short/20000"), "20000");
+        verifyOkResult(new GetRequestResult("get/return/short/20000"), "20000");
     }
     
     @Test
     public void testConvertNativeIntToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/int/4000000"), "4000000");
+        verifyOkResult(new GetRequestResult("get/return/int/4000000"), "4000000");
     }
     
     @Test
     public void testConvertNativeLongToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/long/8000000000"), "8000000000");
+        verifyOkResult(new GetRequestResult("get/return/long/8000000000"), "8000000000");
     }
     
     @Test
     public void testConvertNativeFloatToResponse() throws ClientProtocolException, IOException
     {
         float f = 1234567890.1121314151f;
-        final RequestResult rr = new RequestResult(String.format("get/return/float/%f", f));
+        final GetRequestResult rr = new GetRequestResult(String.format("get/return/float/%f", f));
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Float.valueOf(f), Float.valueOf(rr.content()));
@@ -387,7 +462,7 @@ public class RestServerTest
     public void testConvertNativeDoubleToResponse() throws ClientProtocolException, IOException
     {
         double d = 102030405060708090.019181716151413121;
-        final RequestResult rr = new RequestResult(String.format("get/return/double/%f", d));
+        final GetRequestResult rr = new GetRequestResult(String.format("get/return/double/%f", d));
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Double.valueOf(d), Double.valueOf(rr.content()));
@@ -396,43 +471,43 @@ public class RestServerTest
     @Test
     public void testConvertStringToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/string/abc123"), "abc123");
+        verifyOkResult(new GetRequestResult("get/return/string/abc123"), "abc123");
     }
     
     @Test
     public void testConvertJsonSerializableClassToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/person/bob"), "{\"name\":\"bob\",\"age\":30,\"city\":\"Nowhere\"}");
+        verifyOkResult(new GetRequestResult("get/return/person/bob"), "{\"name\":\"bob\",\"age\":30,\"city\":\"Nowhere\"}");
     }
     
     @Test
     public void testConvertClassToResponseWithToString() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/tostring/xyz789"), "xyz789");
+        verifyOkResult(new GetRequestResult("get/return/tostring/xyz789"), "xyz789");
     }
     
     @Test
     public void testConvertNativeArrayToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/array/1,2,3"), "[\"1\",\"2\",\"3\"]");
+        verifyOkResult(new GetRequestResult("get/return/array/1,2,3"), "[\"1\",\"2\",\"3\"]");
     }
     
     @Test
     public void testConvertListToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/list/1,2,3"), "[1,2,3]");
+        verifyOkResult(new GetRequestResult("get/return/list/1,2,3"), "[1,2,3]");
     }
     
     @Test
     public void testConvertMapToResponse() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/return/map/bob/30/Nowhere"), "{\"city\":\"Nowhere\",\"name\":\"bob\",\"age\":\"30\"}");
+        verifyOkResult(new GetRequestResult("get/return/map/bob/30/Nowhere"), "{\"city\":\"Nowhere\",\"name\":\"bob\",\"age\":\"30\"}");
     }
     
     @Test
     public void testHandlerReturnsNullSends204() throws ClientProtocolException, IOException
     {
-        final RequestResult rr = new RequestResult("get/return/null");
+        final GetRequestResult rr = new GetRequestResult("get/return/null");
         assertEquals(Status.NO_CONTENT.getStatusCode(), rr.status());
         assertEquals(Status.NO_CONTENT.getReasonPhrase(), rr.reason());
     }
@@ -440,7 +515,7 @@ public class RestServerTest
     @Test
     public void testHandlerThrowsExceptionSends500() throws ClientProtocolException, IOException
     {
-        final RequestResult rr = new RequestResult("get/return/throws");
+        final GetRequestResult rr = new GetRequestResult("get/return/throws");
         verifyInternalServerErrorResult(rr);
     }
     
@@ -451,25 +526,25 @@ public class RestServerTest
     @Test
     public void testSingleQueryParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/queryparams/single?firstname=bob"), "bob");
+        verifyOkResult(new GetRequestResult("get/queryparams/single?firstname=bob"), "bob");
     }
     
     @Test
     public void testMultipleQueryParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/queryparams/multiple?firstname=bob&lastname=bobson"), "bob bobson");
+        verifyOkResult(new GetRequestResult("get/queryparams/multiple?firstname=bob&lastname=bobson"), "bob bobson");
     }
     
     @Test
     public void testMultipleQueryParamForSameKey() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new RequestResult("get/queryparams/multsamekey?name=alice&name=bob&name=eve"), "alice,bob,eve");
+        verifyOkResult(new GetRequestResult("get/queryparams/multsamekey?name=alice&name=bob&name=eve"), "alice,bob,eve");
     }
     
     @Test
     public void testNoQueryParamReturnsNotFound() throws ClientProtocolException, IOException
     {
-        verifyNotFoundResult(new RequestResult("get/queryparams/single"));
+        verifyNotFoundResult(new GetRequestResult("get/queryparams/single"));
     }
     
     // TODO:
@@ -487,14 +562,14 @@ public class RestServerTest
         assertEquals(expectedResponse, rr.content());
     }
     
-    private void verifyNotFoundResult(final RequestResult rr)
+    private void verifyNotFoundResult(final GetRequestResult rr)
     {
         assertEquals(Status.NOT_FOUND.getStatusCode(), rr.status());
         assertEquals(Status.NOT_FOUND.getReasonPhrase(), rr.reason());
         assertTrue(Strings.isNullOrEmpty(rr.content()));
     }
     
-    private void verifyInternalServerErrorResult(final RequestResult rr)
+    private void verifyInternalServerErrorResult(final GetRequestResult rr)
     {
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), rr.status());
         assertEquals(Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), rr.reason());

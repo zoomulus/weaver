@@ -3,8 +3,11 @@ package com.zoomulus.weaver.rest;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.MatrixParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -24,6 +27,27 @@ public class RestServerTestResource
     public Response get()
     {
         return Response.status(Status.OK).entity("get").build();
+    }
+    
+    @POST
+    @Path("post")
+    public Response post()
+    {
+        return Response.status(Status.OK).entity("post").build();
+    }
+    
+    @PUT
+    @Path("put")
+    public Response put()
+    {
+        return Response.status(Status.OK).entity("put").build();
+    }
+    
+    @DELETE
+    @Path("delete")
+    public Response delete()
+    {
+        return Response.status(Status.OK).entity("delete").build();
     }
     
     @GET
