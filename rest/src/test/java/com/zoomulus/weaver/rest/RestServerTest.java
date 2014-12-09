@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 
 import javax.ws.rs.core.Response.Status;
@@ -16,6 +17,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.apache.http.entity.ContentType;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -76,14 +78,27 @@ public class RestServerTest
     
     class PostRequestResult extends RequestResult
     {
+        private final String body;
+        private final ContentType contentType;
         public PostRequestResult(final String uri) throws ClientProtocolException, IOException
         {
+            this(uri, null, ContentType.APPLICATION_FORM_URLENCODED);
+        }
+        public PostRequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
+        {
             super(uri);
+            this.body = body;
+            this.contentType = contentType;
         }
         
         protected Request getRequest(final String uri)
         {
-            return Request.Post(host + uri);
+            final Request request = Request.Post(host + uri);
+            if (! Strings.isNullOrEmpty(body))
+            {
+                request.bodyString(body, contentType);
+            }
+            return request;
         }
     }
     
@@ -545,6 +560,17 @@ public class RestServerTest
     public void testNoQueryParamReturnsNotFound() throws ClientProtocolException, IOException
     {
         verifyNotFoundResult(new GetRequestResult("get/queryparams/single"));
+    }
+    
+    
+    
+    // FormParam Tests
+    
+    @Test
+    public void testSingleFormParam() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p1=v1", "UTF-8");
+        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
     }
     
     // TODO:

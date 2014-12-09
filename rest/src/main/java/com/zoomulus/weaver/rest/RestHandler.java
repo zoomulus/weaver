@@ -77,7 +77,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     ResourcePath
                         .withPattern(entry.getKey().getPath())
                         .parse(requestPath);
-            if (rp.isPresent())
+            if (rp.isPresent() && entry.getKey().getMethod() == method)
             {
                 handlingResourcePath = rp;
                 resource = Optional.of(entry.getValue());
@@ -141,7 +141,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                 }
                 else
                 {
-                    queryParams = new QueryStringDecoder(request.getUri()).parameters(); 
+                    queryParams = new QueryStringDecoder(request.getUri()).parameters();
                 }
             }
         }
@@ -163,7 +163,9 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     
                     try
                     {
-                        Response rsp = handlingResource.get().invoke(buffer.toString(), handlingResourcePath.get(), queryParams);
+                        Response rsp = handlingResource.get().invoke(buffer.toString(),
+                                handlingResourcePath.get(),
+                                queryParams);
                         if (null != (String) rsp.getEntity())
                         {
                             fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,

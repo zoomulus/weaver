@@ -1,6 +1,7 @@
 package com.zoomulus.weaver.rest.resource;
 
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -10,9 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -34,7 +38,7 @@ public class Resource
     String path;
     HttpMethod httpMethod;
     
-    Map<String, String> pathParams = Maps.newConcurrentMap();
+    Map<String, String> pathParams = Maps.newHashMap();
     
     // TODO:
     // @Consumes / @Produces
@@ -92,7 +96,10 @@ public class Resource
         return arg;
     }
     
-    private Object[] populateArgs(final String messageBody, final ResourcePath resourcePath, final Map<String, List<String>> queryParams)
+    private Object[] populateArgs(final String messageBody,
+            final ResourcePath resourcePath,
+            final Map<String, List<String>> queryParams,
+            final Map<String, List<String>> formParams)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
     {
         final List<Object> args = Lists.newArrayList();
@@ -130,9 +137,11 @@ public class Resource
                     {
                         s_arg = resourcePath.matrixParamGet((((MatrixParam) annotation).value()));                        
                     }
-                    else if (annotation instanceof QueryParam)
+                    else if (annotation instanceof QueryParam || annotation instanceof FormParam)
                     {
-                        final List<String> params = queryParams.get(((QueryParam) annotation).value());
+                        final List<String> params = (annotation instanceof QueryParam) ?
+                                queryParams.get(((QueryParam) annotation).value()) :
+                                formParams.get(((FormParam) annotation).value());
                         if (List.class.isAssignableFrom(parameterType))
                         {
                             args.add(params);
@@ -164,7 +173,9 @@ public class Resource
         Object response = null;
         try
         {
-            Object[] args = populateArgs(messageBody, resourcePath, queryParams);
+            Map<String, List<String>> formParams = parseFormData(messageBody);
+            
+            Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams);
             if (referencedMethod.getParameters().length != args.length)
             {
                 return Response.status(Status.NOT_FOUND).build();
@@ -253,5 +264,29 @@ public class Resource
                 return true;
         }
         return false;
+    }
+    
+    private Map<String, List<String>> parseFormData(final String body)
+    {
+        Map<String, List<String>> formParams = Maps.newHashMap();
+        
+        if (HttpMethod.POST == httpMethod ||
+                HttpMethod.PUT == httpMethod)
+        {
+            Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
+            if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
+            
+            if (null != consumesAnnotation)
+            {
+                List<String> contentTypes = Lists.newArrayList(((Consumes)consumesAnnotation).value());
+                if (contentTypes.contains(MediaType.APPLICATION_FORM_URLENCODED))
+                {
+                    // Now we know this method expects a form, so decode the body
+                    formParams = new QueryStringDecoder(body).parameters();
+                }
+            }
+        }
+        
+        return formParams;
     }
 }
