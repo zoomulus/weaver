@@ -421,4 +421,14 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity(p1).build();
     }
+    
+    @POST
+    @Path("post/formparam/multiple")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response postFormParamMultiple(@FormParam("p1") final String p1,
+            @FormParam("p3") final String p3,
+            @FormParam("p2") final String p2)
+    {
+        return Response.status(Status.OK).entity(String.format("%s,%s,%s", p1, p2, p3)).build();
+    }
 }

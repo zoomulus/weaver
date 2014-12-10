@@ -2,6 +2,7 @@ package com.zoomulus.weaver.rest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import io.netty.util.CharsetUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +43,17 @@ public class RestServerTest
         
         public RequestResult(final String uri) throws ClientProtocolException, IOException
         {
-            final Response rsp = getRequest(uri).execute();
+            this(uri, null, ContentType.TEXT_PLAIN);
+        }
+        
+        public RequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
+        {
+            final Request req = getRequest(uri);
+            if (! Strings.isNullOrEmpty(body))
+            {
+                req.bodyString(body, contentType);
+            }
+            final Response rsp = req.execute();
             final HttpResponse httpRsp = rsp.returnResponse();
             status = httpRsp.getStatusLine().getStatusCode();
             reason = httpRsp.getStatusLine().getReasonPhrase();
@@ -78,27 +89,19 @@ public class RestServerTest
     
     class PostRequestResult extends RequestResult
     {
-        private final String body;
-        private final ContentType contentType;
         public PostRequestResult(final String uri) throws ClientProtocolException, IOException
         {
-            this(uri, null, ContentType.APPLICATION_FORM_URLENCODED);
+            super(uri);
         }
+        
         public PostRequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
         {
-            super(uri);
-            this.body = body;
-            this.contentType = contentType;
+            super(uri, body, contentType);
         }
         
         protected Request getRequest(final String uri)
         {
-            final Request request = Request.Post(host + uri);
-            if (! Strings.isNullOrEmpty(body))
-            {
-                request.bodyString(body, contentType);
-            }
-            return request;
+            return Request.Post(host + uri);
         }
     }
     
@@ -569,8 +572,15 @@ public class RestServerTest
     @Test
     public void testSingleFormParam() throws ClientProtocolException, IOException
     {
-        final String formdata = URLEncoder.encode("p1=v1", "UTF-8");
+        final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
         verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+    }
+    
+    @Test
+    public void testMultipleFormParam() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p3=v3&p2=v2&p1=v1", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1,v2,v3");
     }
     
     // TODO:

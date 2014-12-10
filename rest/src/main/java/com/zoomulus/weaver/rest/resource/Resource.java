@@ -2,11 +2,14 @@ package com.zoomulus.weaver.rest.resource;
 
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.util.CharsetUtil;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -173,7 +176,17 @@ public class Resource
         Object response = null;
         try
         {
-            Map<String, List<String>> formParams = parseFormData(messageBody);
+            String decodedBody = null;
+            try
+            {
+                decodedBody = URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                decodedBody = messageBody;
+            }
+            
+            Map<String, List<String>> formParams = decodedBody != null ? parseFormData(decodedBody) : Maps.newHashMap();
             
             Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams);
             if (referencedMethod.getParameters().length != args.length)
@@ -282,7 +295,7 @@ public class Resource
                 if (contentTypes.contains(MediaType.APPLICATION_FORM_URLENCODED))
                 {
                     // Now we know this method expects a form, so decode the body
-                    formParams = new QueryStringDecoder(body).parameters();
+                    formParams = new QueryStringDecoder(body, false).parameters();
                 }
             }
         }

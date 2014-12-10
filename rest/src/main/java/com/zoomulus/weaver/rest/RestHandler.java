@@ -40,7 +40,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
     
     Optional<Resource> handlingResource = Optional.empty();
     Optional<ResourcePath> handlingResourcePath = Optional.empty();
-    final StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder();
     
     public RestHandler(final Set<Class<?>> resourceClasses)
     {
@@ -197,6 +197,8 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     }
                     
                     ctx.writeAndFlush(fullRsp);
+                    
+                    buffer = new StringBuilder();
                 }
             }
         }
