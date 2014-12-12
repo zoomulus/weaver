@@ -453,4 +453,92 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity(String.format("qp1=%s,qp2=%s,qp3=%s,fp1=%s,fp2=%s,fp3=%s", qp1, qp2, qp3, fp1, fp2, fp3)).build();
     }
+    
+    @POST
+    @Path("post/formparam/typematch/boolean")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormparamTypematchBoolean(@FormParam("p") boolean v)
+    {
+        return Boolean.toString(v);
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/byte")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public byte postFormparamTypematchByte(@FormParam("p") byte v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/short")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Short postFormparamTypematchShort(@FormParam("p") short v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/int")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Integer postFormparamTypematchInt(@FormParam("p") int v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/long")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Long postFormparamTypematchLong(@FormParam("p") long v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/float")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Float postFormparamTypematchFloat(@FormParam("p") float v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/double")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Double postFormparamTypematchDouble(@FormParam("p") double v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/Integer")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Integer postFormparamTypematchInteger(@FormParam("p") final Integer v)
+    {
+        return v;
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/customwithstringctor")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormparamTypematchCustomWithStringCtor(@FormParam("p") final CustomWithStringCtor v)
+    {
+        return v.getS();
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/customvalueofstring")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormparamTypematchCustomValueOfString(@FormParam("p") final CustomValueOfString v)
+    {
+        return v.toString();
+    }
+    
+    @POST
+    @Path("post/formparam/typematch/custominvalid")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormparamTypematchCustomInvalid(@FormParam("p") final CustomInvalid v)
+    {
+        return "";
+    }
 }

@@ -593,6 +593,108 @@ public class RestServerTest
             "qp1=qv1,qp2=qv2,qp3=qv3,fp1=fv1,fp2=fv2,fp3=fv3");
     }
     
+    @Test
+    public void testFormPostBoolean() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=true", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/boolean", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "true");
+    }
+    
+    @Test
+    public void testFormPostByte() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=127", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/byte", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "127");
+    }
+    
+    @Test
+    public void testFormPostShort() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=20000", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/short", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "20000");
+    }
+    
+    @Test
+    public void testFormPostInt() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=4000000", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/int", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "4000000");
+    }
+    
+    @Test
+    public void testFormPostIntWithFloatValueFails() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=123.45", CharsetUtil.UTF_8.name());
+        verifyInternalServerErrorResult(new PostRequestResult("post/formparam/typematch/int",
+                formdata, ContentType.APPLICATION_FORM_URLENCODED));
+    }
+    
+    @Test
+    public void testFormPostFloat() throws ClientProtocolException, IOException
+    {
+        float floatVal = 1234567890.1121314151f;
+        final String formdata = URLEncoder.encode(String.format("p=%f", floatVal), CharsetUtil.UTF_8.name());
+        final PostRequestResult rr = new PostRequestResult("post/formparam/typematch/float", formdata, ContentType.APPLICATION_FORM_URLENCODED);
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(Float.valueOf(floatVal), Float.valueOf(rr.content()));
+    }
+    
+    @Test
+    public void testFormPostDouble() throws ClientProtocolException, IOException
+    {
+        double doubleVal = 102030405060708090.019181716151413121;
+        final String formdata = URLEncoder.encode(String.format("p=%f", doubleVal), CharsetUtil.UTF_8.name());
+        final PostRequestResult rr = new PostRequestResult("post/formparam/typematch/double", formdata, ContentType.APPLICATION_FORM_URLENCODED);
+        assertEquals(Status.OK.getStatusCode(), rr.status());
+        assertEquals(Status.OK.getReasonPhrase(), rr.reason());
+        assertEquals(Double.valueOf(doubleVal), Double.valueOf(rr.content()));
+    }
+    
+    @Test
+    public void testFormPostLong() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=8000000000", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/long", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "8000000000");
+    }
+    
+    @Test
+    public void testFormPostInteger() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=4000000", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/Integer", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "4000000");
+    }
+    
+    @Test
+    public void testFormPostCustomWithStringCtor() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=bob", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/customwithstringctor", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "bob");
+    }
+    
+    @Test
+    public void testFormPostCustomValueOfString() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=bill", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/customvalueofstring", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "bill");
+    }
+    
+    @Test
+    public void testFormPostCustomInvalid() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p=ben", CharsetUtil.UTF_8.name());
+        verifyInternalServerErrorResult(new PostRequestResult("post/formparam/typematch/custominvalid",
+                formdata, ContentType.APPLICATION_FORM_URLENCODED));
+    }
+    
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
@@ -607,14 +709,14 @@ public class RestServerTest
         assertEquals(expectedResponse, rr.content());
     }
     
-    private void verifyNotFoundResult(final GetRequestResult rr)
+    private void verifyNotFoundResult(final RequestResult rr)
     {
         assertEquals(Status.NOT_FOUND.getStatusCode(), rr.status());
         assertEquals(Status.NOT_FOUND.getReasonPhrase(), rr.reason());
         assertTrue(Strings.isNullOrEmpty(rr.content()));
     }
     
-    private void verifyInternalServerErrorResult(final GetRequestResult rr)
+    private void verifyInternalServerErrorResult(final RequestResult rr)
     {
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), rr.status());
         assertEquals(Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), rr.reason());
