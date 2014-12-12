@@ -422,6 +422,15 @@ public class RestServerTestResource
         return Response.status(Status.OK).entity(p1).build();
     }
     
+    // Handle POST of different content types
+    // Disambiguate on POST to same paths with different content types
+    // Handle post when @Consumes is declared at class level
+    // Handle POST with @QueryParams and @FormParams
+    // Handle POST with non-matching params / missing params
+    // Type matching on @FormParam
+    //  - What is even supposed to happen here?
+    //  - I think it should match and send them NULL.
+    
     @POST
     @Path("post/formparam/multiple")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -430,5 +439,18 @@ public class RestServerTestResource
             @FormParam("p2") final String p2)
     {
         return Response.status(Status.OK).entity(String.format("%s,%s,%s", p1, p2, p3)).build();
+    }
+    
+    @POST
+    @Path("/post/queryandform")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response postQueryAndForm(@QueryParam("qp1") final String qp1,
+            @FormParam("fp1") final String fp1,
+            @FormParam("fp2") final String fp2,
+            @QueryParam("qp2") final String qp2,
+            @FormParam("fp3") final String fp3,
+            @QueryParam("qp3") final String qp3)
+    {
+        return Response.status(Status.OK).entity(String.format("qp1=%s,qp2=%s,qp3=%s,fp1=%s,fp2=%s,fp3=%s", qp1, qp2, qp3, fp1, fp2, fp3)).build();
     }
 }

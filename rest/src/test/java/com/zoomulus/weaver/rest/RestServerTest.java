@@ -583,9 +583,18 @@ public class RestServerTest
         verifyOkResult(new PostRequestResult("post/formparam/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1,v2,v3");
     }
     
+    @Test
+    public void testQueryAndForm() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("fp2=fv2&fp3=fv3&fp1=fv1", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/queryandform?qp1=qv1&qp3=qv3&qp2=qv2",
+                formdata,
+                ContentType.APPLICATION_FORM_URLENCODED),
+            "qp1=qv1,qp2=qv2,qp3=qv3,fp1=fv1,fp2=fv2,fp3=fv3");
+    }
+    
     // TODO:
-    // Test all http methods
-    // Test POST/PUT retrieves payload
+    // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
     // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
 
