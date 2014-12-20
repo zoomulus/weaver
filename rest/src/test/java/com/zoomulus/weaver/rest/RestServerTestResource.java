@@ -422,15 +422,6 @@ public class RestServerTestResource
         return Response.status(Status.OK).entity(p1).build();
     }
     
-    // Handle POST of different content types
-    // Disambiguate on POST to same paths with different content types
-    // Handle post when @Consumes is declared at class level
-    // Handle POST with @QueryParams and @FormParams
-    // Handle POST with non-matching params / missing params
-    // Type matching on @FormParam
-    //  - What is even supposed to happen here?
-    //  - I think it should match and send them NULL.
-    
     @POST
     @Path("post/formparam/multiple")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)

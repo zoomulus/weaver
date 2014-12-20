@@ -1,12 +1,15 @@
 package com.zoomulus.weaver.rest.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import io.netty.handler.codec.http.HttpMethod;
 
 import java.util.Map;
 import java.util.Set;
+
+import javax.ws.rs.core.MediaType;
 
 import org.junit.Test;
 
@@ -175,5 +178,99 @@ public class TestDefaultResourceScannerStrategy
         verifySingle(results, "/single/put/", HttpMethod.PUT, 11);
         
         verifyFull(results);
-    }    
+    }
+    
+    @Test
+    public void testRememberClassConsumes()
+    {
+        final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
+        final Resource r = ris.get(new ResourceIdentifier("/ctr/r1", HttpMethod.POST));
+        assertTrue(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));
+        assertFalse(r.consumes(MediaType.APPLICATION_JSON));
+    }
+    
+    @Test
+    public void testRememberMethodConsumes()
+    {
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(singlePost);
+        final Resource r = ris.values().iterator().next();
+        assertTrue(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));
+        assertFalse(r.consumes(MediaType.APPLICATION_JSON));
+    }
+    
+    @Test
+    public void testMethodConsumesExtendsClassConsumes()
+    {
+        final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
+        final Resource r = ris.get(new ResourceIdentifier("/ctr/r2", HttpMethod.POST));
+        assertTrue(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));
+        assertTrue(r.consumes(MediaType.APPLICATION_JSON));        
+    }
+    
+    @Test
+    public void testAllowMultipleConsumes()
+    {
+        final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
+        final Resource r = ris.get(new ResourceIdentifier("/ctr/r3", HttpMethod.POST));
+        assertTrue(r.consumes(MediaType.APPLICATION_JSON));
+        assertTrue(r.consumes(MediaType.APPLICATION_XML));
+    }
+    
+    @Test
+    public void testNoConsumesOnGet()
+    {
+        final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
+        final Resource r = ris.get(new ResourceIdentifier("/ctr/r4", HttpMethod.GET));
+        assertFalse(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));        
+        assertFalse(r.consumes(MediaType.APPLICATION_JSON));
+    }
+    
+    @Test
+    public void testDefaultConsumesTextPlain()
+    {
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(singlePut);
+        final Resource r = ris.values().iterator().next();
+        assertTrue(r.consumes(MediaType.TEXT_PLAIN));
+    }
+        
+    @Test
+    public void testRememberClassProduces()
+    {
+        final Set<Class<?>> s = Sets.newHashSet(ProducesTestResource.class);
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
+        final Resource r = ris.get(new ResourceIdentifier("/ptr/r1", HttpMethod.GET));
+        assertTrue(r.produces(MediaType.TEXT_HTML));
+        assertFalse(r.produces(MediaType.TEXT_PLAIN));
+    }
+    
+    @Test
+    public void testRememberMethodProduces()
+    {
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(singlePost);
+        final Resource r = ris.values().iterator().next();
+        assertTrue(r.produces(MediaType.TEXT_HTML));
+        assertFalse(r.produces(MediaType.APPLICATION_JSON));
+    }
+    
+    @Test
+    public void testMethodProducesExtendsClassProduces()
+    {
+        final Set<Class<?>> s = Sets.newHashSet(ProducesTestResource.class);
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
+        final Resource r = ris.get(new ResourceIdentifier("/ptr/r2", HttpMethod.GET));
+        assertTrue(r.produces(MediaType.TEXT_HTML));
+        assertTrue(r.produces(MediaType.TEXT_XML));        
+    }
+    
+    @Test
+    public void testDefaultProducesTextPlain()
+    {
+        final Map<ResourceIdentifier, Resource> ris = scanner.scan(singleGet);
+        final Resource r = ris.values().iterator().next();
+        assertTrue(r.produces(MediaType.TEXT_PLAIN));
+    }
 }

@@ -40,6 +40,8 @@ public class Resource
     Method referencedMethod;
     String path;
     HttpMethod httpMethod;
+    List<String> consumesContentTypes;
+    List<String> producesContentTypes;
     
     Map<String, String> pathParams = Maps.newHashMap();
     
@@ -237,6 +239,16 @@ public class Resource
     public Optional<String> getPathParam(final String name)
     {
         return Optional.ofNullable(pathParams.get(name));
+    }
+    
+    public boolean consumes(final String contentType)
+    {
+        return consumesContentTypes.contains(contentType);
+    }
+    
+    public boolean produces(final String contentType)
+    {
+        return producesContentTypes.contains(contentType);
     }
     
     
