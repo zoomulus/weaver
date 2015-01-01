@@ -695,10 +695,25 @@ public class RestServerTest
                 formdata, ContentType.APPLICATION_FORM_URLENCODED));
     }
     
+    @Test
+    public void testFormPostWithClassLevelConsumes() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("form/post/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "p1=v1");
+        verifyNotAcceptableResult(new PostRequestResult("form/post/single", "p1=v1", ContentType.TEXT_PLAIN));
+    }
+    
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
     // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
+    // Handle POST of different content types
+    // Disambiguate on POST to same paths with different content types
+    // Handle post when @Consumes is declared at class level
+    // Handle POST with non-matching params / missing params
+    //  - What is even supposed to happen here?
+    //  - I think it should match and send them NULL.
+    
 
     private static RestServer server;
     
@@ -716,6 +731,13 @@ public class RestServerTest
         assertTrue(Strings.isNullOrEmpty(rr.content()));
     }
     
+    private void verifyNotAcceptableResult(final RequestResult rr)
+    {
+        assertEquals(Status.NOT_ACCEPTABLE.getStatusCode(), rr.status());
+        assertEquals(Status.NOT_ACCEPTABLE.getReasonPhrase(), rr.reason());
+        assertTrue(Strings.isNullOrEmpty(rr.content()));
+    }
+    
     private void verifyInternalServerErrorResult(final RequestResult rr)
     {
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), rr.status());
@@ -728,6 +750,7 @@ public class RestServerTest
         final ServerConnector connector = RestServerConnector.builder()
                 .withPort(22002)
                 .withResource(RestServerTestResource.class)
+                .withResource(RestServerTestResourceFormData.class)
                 .build();
         server = new RestServer(connector);
         server.start();

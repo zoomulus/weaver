@@ -165,6 +165,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     {
                         Response rsp = handlingResource.get().invoke(buffer.toString(),
                                 handlingResourcePath.get(),
+                                this.headers,
                                 queryParams);
                         if (null != (String) rsp.getEntity())
                         {

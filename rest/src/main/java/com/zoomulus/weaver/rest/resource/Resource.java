@@ -1,5 +1,6 @@
 package com.zoomulus.weaver.rest.resource;
 
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.CharsetUtil;
@@ -10,6 +11,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,13 +22,15 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Value;
 import lombok.experimental.Builder;
+
+import org.apache.http.ParseException;
+import org.apache.http.entity.ContentType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -173,22 +178,25 @@ public class Resource
         return args.toArray();
     }
     
-    public Response invoke(final String messageBody, final ResourcePath resourcePath, final Map<String, List<String>> queryParams)
+    public Response invoke(final String messageBody,
+            final ResourcePath resourcePath,
+            final Optional<HttpHeaders> headers,
+            final Map<String, List<String>> queryParams)
     {
         Object response = null;
         try
         {
-            String decodedBody = null;
-            try
+            final List<ContentType> acceptedContentTypes = getAcceptedContentTypes();
+            final List<ContentType> requestContentTypes = getRequestContentTypes(headers);
+            final ContentType contentType = getAgreedContentType(requestContentTypes, acceptedContentTypes);
+            if (null == contentType && ! acceptedContentTypes.isEmpty())
             {
-                decodedBody = URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
-            }
-            catch (UnsupportedEncodingException e)
-            {
-                decodedBody = messageBody;
+                return Response.status(Status.NOT_ACCEPTABLE).build();
             }
             
-            Map<String, List<String>> formParams = decodedBody != null ? parseFormData(decodedBody) : Maps.newHashMap();
+            String decodedBody = getDecodedBody(messageBody, contentType);
+            
+            Map<String, List<String>> formParams = parseFormData(decodedBody, contentType);
             
             Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams);
             if (referencedMethod.getParameters().length != args.length)
@@ -291,25 +299,95 @@ public class Resource
         return false;
     }
     
-    private Map<String, List<String>> parseFormData(final String body)
+    private List<ContentType> getAcceptedContentTypes()
+    {
+        Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
+        if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
+        final List<ContentType> acceptedContentTypes = Lists.newArrayList();
+        if (null != consumesAnnotation)
+        {
+            for (final String cts : ((Consumes)consumesAnnotation).value())
+            {
+                try
+                {
+                    final ContentType ct = ContentType.parse(cts);
+                    acceptedContentTypes.add(ct);
+                }
+                catch (ParseException | UnsupportedCharsetException e) { }
+            }
+        }
+        return acceptedContentTypes;
+    }
+    
+    private List<ContentType> getRequestContentTypes(final Optional<HttpHeaders> headers)
+    {
+        final List<ContentType> requestContentTypes = Lists.newArrayList();
+        if (headers.isPresent())
+        {
+            for (final String cts : headers.get().getAll(HttpHeaders.Names.CONTENT_TYPE))
+            {
+                try
+                {
+                    final ContentType ct = ContentType.parse(cts);
+                    requestContentTypes.add(ct);
+                }
+                catch (ParseException | UnsupportedCharsetException e) { }
+            }
+        }
+        return requestContentTypes;
+    }
+    
+    private ContentType getAgreedContentType(final List<ContentType> requestContentTypes, final List<ContentType> acceptedContentTypes)
+    {
+        for (final ContentType rct : requestContentTypes)
+        {
+            for (final ContentType act : acceptedContentTypes)
+            {
+                if (rct.getMimeType().equalsIgnoreCase(act.getMimeType()))
+                {
+                    return rct;
+                }
+            }
+        }
+        return null;
+    }
+    
+    private String getDecodedBody(final String messageBody, final ContentType contentType)
+    {
+        Charset charset = null != contentType ? contentType.getCharset() : CharsetUtil.UTF_8;
+        if (null == charset) charset = CharsetUtil.UTF_8;
+        try
+        {
+            return URLDecoder.decode(messageBody, charset.name());
+        }
+        catch (UnsupportedEncodingException e1)
+        {
+            if (charset != CharsetUtil.UTF_8)
+            {
+                try
+                {
+                    return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
+                }
+                catch (UnsupportedEncodingException e2) { }
+            }
+        }
+        
+        return messageBody;
+    }
+    
+    private Map<String, List<String>> parseFormData(final String body, final ContentType contentType)
     {
         Map<String, List<String>> formParams = Maps.newHashMap();
+        
+        if (null == body || null == contentType) return formParams;
+        
+        if (! contentType.getMimeType().equalsIgnoreCase(ContentType.APPLICATION_FORM_URLENCODED.getMimeType()))
+            return formParams;
         
         if (HttpMethod.POST == httpMethod ||
                 HttpMethod.PUT == httpMethod)
         {
-            Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
-            if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
-            
-            if (null != consumesAnnotation)
-            {
-                List<String> contentTypes = Lists.newArrayList(((Consumes)consumesAnnotation).value());
-                if (contentTypes.contains(MediaType.APPLICATION_FORM_URLENCODED))
-                {
-                    // Now we know this method expects a form, so decode the body
-                    formParams = new QueryStringDecoder(body, false).parameters();
-                }
-            }
+            formParams = new QueryStringDecoder(body, false).parameters();
         }
         
         return formParams;
