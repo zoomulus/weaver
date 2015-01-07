@@ -532,4 +532,28 @@ public class RestServerTestResource
     {
         return "";
     }
+    
+    @POST
+    @Path("post/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String postXml(final String payload)
+    {
+        return payload;
+    }
+    
+    @POST
+    @Path("post/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String postJson(final String payload)
+    {
+        return payload;
+    }
+    
+    @POST
+    @Path("post/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String postText(final String payload)
+    {
+        return payload;
+    }
 }

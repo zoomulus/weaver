@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Strings;
@@ -703,19 +704,52 @@ public class RestServerTest
         verifyNotAcceptableResult(new PostRequestResult("form/post/single", "p1=v1", ContentType.TEXT_PLAIN));
     }
     
+    @Test
+    public void testPostDifferentContentTypes() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new PostRequestResult("post/xml", xml, ContentType.APPLICATION_XML), xml);
+        verifyOkResult(new PostRequestResult("post/json", json, ContentType.APPLICATION_JSON), json);
+        verifyOkResult(new PostRequestResult("post/text", text, ContentType.TEXT_PLAIN), text);
+    }
+    
+    // We are not going to support this for now.
+    // The spec allows for an endpoint to accept and deliver multiple content types, but
+    // also that a single resource can disambiguate between requests based on the content type
+    // provided.  In our implementation that means the value for @Consumes would have to be
+    // used to identify a resource in the ResourceIdentifier class.  This ruins the quicker
+    // lookup Weaver is trying to achieve - and for no real purpose, because it is a minor matter
+    // for the implementer to simply look at the @HeaderParam("Content-Type") and make a decision
+    // based on that instead of writing two endpoints.
+    @Ignore
+    @Test
+    public void testPostDisambiguatesOnContentType() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new PostRequestResult("post/bycontenttype", xml, ContentType.APPLICATION_XML), "xml");
+        verifyOkResult(new PostRequestResult("post/bycontenttype", json, ContentType.APPLICATION_JSON), "json");
+        verifyOkResult(new PostRequestResult("post/bycontenttype", text, ContentType.TEXT_PLAIN), "text");
+    }
+    
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
+    // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching method
     // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
-    // Handle POST of different content types
-    // Disambiguate on POST to same paths with different content types
-    // Handle post when @Consumes is declared at class level
-    // Handle POST with non-matching params / missing params
-    //  - What is even supposed to happen here?
-    //  - I think it should match and send them NULL.
+    // Handle query with missing/nonmatching @FormParam/@QueryParam
+    //  - Missing (parameter is specified in handler, but not present in request)
+    //    - If the parameter is a native type:
+    //      - If @DefaultValue is specified, use that
+    //      - Otherwise return a 400 error
+    //      - No missing parameters allowed (no "NULL" value for primitives)
+    //    - If the parameter is a class type:
+    //      - If @DefaultValue is specified, use that
+    //      - Else, if @Required is specified, return a 400 error
+    //      - Otherwise, use NULL
     
 
     private static RestServer server;
+    private final String json = "{ \"property\" : \"value\", \"array\" : [1, 2, 3], \"embedded\" : { \"ep\" : \"ev\" } }";
+    private final String xml = "<xml><mynode myattr=\"myval\">text</mynode></xml>";
+    private final String text = "abc123";
     
     private void verifyOkResult(final RequestResult rr, final String expectedResponse)
     {
