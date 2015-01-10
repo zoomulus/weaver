@@ -561,11 +561,34 @@ public class RestServerTest
     }
     
     @Test
-    public void testNoQueryParamReturnsNotFound() throws ClientProtocolException, IOException
+    public void testNoObjectQueryParamSendsNullValue() throws ClientProtocolException, IOException
     {
-        verifyNotFoundResult(new GetRequestResult("get/queryparams/single"));
+        verifyOkResult(new GetRequestResult("get/queryparams/single"), "null");
     }
     
+    @Test
+    public void testObjectQueryParamWithRequiredParamWorks() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new GetRequestResult("get/queryparams/requiredsingle?firstname=bob"), "bob");
+    }
+    
+    @Test
+    public void testNoObjectQueryParamWithRequiredParamReturns400() throws ClientProtocolException, IOException
+    {
+        verify400Result(new GetRequestResult("get/queryparams/requiredsingle"));
+    }
+    
+    @Test
+    public void testNoNativeQueryParamReturns400() throws ClientProtocolException, IOException
+    {
+        verify400Result(new GetRequestResult("get/queryparams/int"));
+    }
+    
+    @Test
+    public void testNonmatchingQueryParamIsIgnored() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new GetRequestResult("get/queryparams/single?firstname=tim&lastname=timson"), "tim");
+    }
     
     
     // FormParam Tests
@@ -592,6 +615,39 @@ public class RestServerTest
                 formdata,
                 ContentType.APPLICATION_FORM_URLENCODED),
             "qp1=qv1,qp2=qv2,qp3=qv3,fp1=fv1,fp2=fv2,fp3=fv3");
+    }
+    
+    @Test
+    public void testNoObjectFormParamSendsNullValue() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p2=v2", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "null");
+    }
+    
+    @Test
+    public void testObjectFormParamWithRequiredParamWorks() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparams/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+    }
+
+    @Test
+    public void testNoObjectFormParamWithRequiredParamReturns400() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("p2=v2", CharsetUtil.UTF_8.name());
+        verify400Result(new PostRequestResult("post/formparam/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED));
+    }
+    
+    @Test
+    public void testNoNativeFormParamReturns400()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testNonmatchingFormParamIsIgnored()
+    {
+        // TODO
     }
     
     @Test
@@ -696,6 +752,9 @@ public class RestServerTest
                 formdata, ContentType.APPLICATION_FORM_URLENCODED));
     }
     
+    
+    // Consumes tests
+    
     @Test
     public void testFormPostWithClassLevelConsumes() throws ClientProtocolException, IOException
     {
@@ -729,6 +788,82 @@ public class RestServerTest
         verifyOkResult(new PostRequestResult("post/bycontenttype", text, ContentType.TEXT_PLAIN), "text");
     }
     
+    
+    // @DefaultValue
+    
+    @Test
+    public void testDefaultValueNativeQueryParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testDefaultValueCustomQueryParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testDefaultValueMultipleQueryParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testSomeDefaultValuesMultipleQueryParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testProvidedQueryParamOverridesDefaultValue()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testObjectQueryParamWithRequiredParamAndDefaultValueWorks() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new GetRequestResult("get/queryparams/requiredanddefaultsingle?firstname=bob"), "bob");
+        verifyOkResult(new GetRequestResult("get/queryparams/requiredanddefaultsingle"), "tim");
+    }    
+    
+    @Test
+    public void testDefaultValueNativeFormParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testDefaultValueCustomFormParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testDefaultValueMultipleFormParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testSomeDefaultValuesMultipleFormParam()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testProvidedFormParamOverridesDefaultValue()
+    {
+        // TODO
+    }
+    
+    @Test
+    public void testDefaultValueQueryAndFormParam()
+    {
+        // TODO
+    }
+    
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
@@ -742,8 +877,11 @@ public class RestServerTest
     //      - No missing parameters allowed (no "NULL" value for primitives)
     //    - If the parameter is a class type:
     //      - If @DefaultValue is specified, use that
-    //      - Else, if @Required is specified, return a 400 error
+    //      - Else, if @RequiredParam is specified, return a 400 error
     //      - Otherwise, use NULL
+    //  - Nonmatching - Ignore the parameter.
+    //    - We could, at some point, define an annotation (@StrictParams?) which
+    //      would mean that strict matching is enforced, or 400 level error.
     
 
     private static RestServer server;
@@ -770,6 +908,12 @@ public class RestServerTest
         assertEquals(Status.NOT_ACCEPTABLE.getStatusCode(), rr.status());
         assertEquals(Status.NOT_ACCEPTABLE.getReasonPhrase(), rr.reason());
         assertTrue(Strings.isNullOrEmpty(rr.content()));
+    }
+    
+    private void verify400Result(final RequestResult rr)
+    {
+        assertEquals(Status.BAD_REQUEST.getStatusCode(), rr.status());
+        assertEquals(Status.BAD_REQUEST.getReasonPhrase(), rr.reason());
     }
     
     private void verifyInternalServerErrorResult(final RequestResult rr)

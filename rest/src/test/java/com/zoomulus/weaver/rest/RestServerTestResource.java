@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.MatrixParam;
@@ -21,6 +22,7 @@ import javax.ws.rs.core.Response.Status;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.zoomulus.weaver.rest.annotations.RequiredParam;
 
 @Path("/")
 public class RestServerTestResource
@@ -397,6 +399,28 @@ public class RestServerTestResource
     @Path("get/queryparams/single")
     public String getQueryParams(@QueryParam("firstname") final String firstName)
     {
+        return null != firstName ? firstName : "null";
+    }
+    
+    @GET
+    @Path("/get/queryparams/int")
+    public int getQueryParamsInt(@QueryParam("age") int age)
+    {
+        return age;
+    }
+    
+    @GET
+    @Path("/get/queryparams/requiredsingle")
+    public String getQueryParamsReqd(@RequiredParam @QueryParam("firstname") final String firstName)
+    {
+        return firstName;
+    }
+    
+    // There is no good reason a client should do this, but they might anyway
+    @GET
+    @Path("/get/queryparams/requiredanddefaultsingle")
+    public String getQueryParamsReqdAndDefault(@RequiredParam @DefaultValue("tim") @QueryParam("firstname") final String firstName)
+    {
         return firstName;
     }
     
@@ -418,6 +442,13 @@ public class RestServerTestResource
     @Path("post/formparam/single")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response postFormParam(@FormParam("p1") final String p1)
+    {
+        return Response.status(Status.OK).entity(p1 != null ? p1 : "null").build();
+    }
+    
+    @POST
+    @Path("post/formparam/requiredsingle")
+    public Response postFormParamReqd(@RequiredParam @FormParam("p1") final String p1)
     {
         return Response.status(Status.OK).entity(p1).build();
     }

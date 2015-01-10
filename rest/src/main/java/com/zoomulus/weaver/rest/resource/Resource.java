@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.zoomulus.weaver.rest.annotations.RequiredParam;
 
 @Value
 @Builder
@@ -125,13 +127,37 @@ public class Resource
             }
             else
             {
+                Annotation paramTypeAnnotation = null;
+                Annotation defaultValueAnnotation = null;
+                Annotation requiredParamAnnotation = null;
+                boolean allowNullArg = false;
                 for (final Annotation annotation : paramAnnotations)
                 {
-                    Class<?> parameterType = parameterTypes[idx];
-                    String s_arg = null;
-                    if (annotation instanceof PathParam)
+                    if (annotation instanceof PathParam ||
+                            annotation instanceof MatrixParam ||
+                            annotation instanceof QueryParam ||
+                            annotation instanceof FormParam)
                     {
-                        final String paramValue = ((PathParam) annotation).value();
+                        paramTypeAnnotation = annotation;
+                    }
+                    else if (annotation instanceof DefaultValue)
+                    {
+                        defaultValueAnnotation = annotation;
+                    }
+                    else if (annotation instanceof RequiredParam)
+                    {
+                        requiredParamAnnotation = annotation;
+                    }
+                }
+                
+                Class<?> parameterType = parameterTypes[idx];
+                String s_arg = null;
+
+                if (null != paramTypeAnnotation)
+                {
+                    if (paramTypeAnnotation instanceof PathParam)
+                    {
+                        final String paramValue = ((PathParam) paramTypeAnnotation).value();
                         
                         if (PathSegment.class.isAssignableFrom(parameterType))
                         {
@@ -143,33 +169,52 @@ public class Resource
                             s_arg = resourcePath.get(paramValue);
                         }
                     }
-                    else if (annotation instanceof MatrixParam)
+                    else if (paramTypeAnnotation instanceof MatrixParam)
                     {
-                        s_arg = resourcePath.matrixParamGet((((MatrixParam) annotation).value()));                        
+                        s_arg = resourcePath.matrixParamGet(((MatrixParam) paramTypeAnnotation).value());
                     }
-                    else if (annotation instanceof QueryParam || annotation instanceof FormParam)
+                    else if (paramTypeAnnotation instanceof QueryParam ||
+                            paramTypeAnnotation instanceof FormParam)
                     {
-                        final List<String> params = (annotation instanceof QueryParam) ?
-                                queryParams.get(((QueryParam) annotation).value()) :
-                                formParams.get(((FormParam) annotation).value());
-                        if (List.class.isAssignableFrom(parameterType))
+                        final List<String> params = (paramTypeAnnotation instanceof QueryParam) ?
+                                queryParams.get(((QueryParam) paramTypeAnnotation).value()) :
+                                formParams.get(((FormParam) paramTypeAnnotation).value());
+                        if (null != params && ! params.isEmpty())
                         {
-                            args.add(params);
+                            if (List.class.isAssignableFrom(parameterType))
+                            {
+                                args.add(params);
+                            }
+                            else
+                            {
+                                s_arg = params.get(0);
+                            }
                         }
-                        else if (null != params && ! params.isEmpty())
+                        else if (! parameterType.isPrimitive())
                         {
-                            s_arg = params.get(0);
+                            if (null != defaultValueAnnotation)
+                            {
+                                s_arg = ((DefaultValue) defaultValueAnnotation).value();
+                            }
+                            else
+                            {
+                                allowNullArg = (null == requiredParamAnnotation);
+                            }
                         }
                     }
-                    
-                    if (null != s_arg)
+                }
+                
+                if (null != s_arg)
+                {
+                    Object arg = getParameterOfMatchingType(parameterType, s_arg);
+                    if (null != arg)
                     {
-                        Object arg = getParameterOfMatchingType(parameterType, s_arg);
-                        if (null != arg)
-                        {
-                            args.add(arg);
-                        }
+                        args.add(arg);
                     }
+                }
+                else if (allowNullArg)
+                {
+                    args.add(null);
                 }
             }
             ++idx;
@@ -201,7 +246,7 @@ public class Resource
             Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams);
             if (referencedMethod.getParameters().length != args.length)
             {
-                return Response.status(Status.NOT_FOUND).build();
+                return Response.status(Status.BAD_REQUEST).build();
             }
             Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
             response = referencedMethod.invoke(resourceObj, args);
