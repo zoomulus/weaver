@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
+import com.zoomulus.weaver.rest.annotations.StrictParams;
 
 @Value
 @Builder
@@ -70,6 +71,157 @@ public class Resource
     //  - Encoded
     // Support ParamConverter<T>
     // Ensure most optimal match works
+    
+    private Optional<Constructor<?>> getStringConstructor(final Class<?> klass)
+    {
+        for (final Constructor<?> ctor : klass.getConstructors())
+        {
+            final Class<?>[] params = ctor.getParameterTypes();
+            if (params.length != 1)
+            {
+                continue;
+            }
+            if (params[0] == String.class)
+            {
+                return Optional.of(ctor);
+            }
+        }
+        return Optional.empty();
+    }
+    
+    private Optional<Method> getValueOfStringMethod(final Class<?> klass)
+    {
+        try
+        {
+            return Optional.of(klass.getDeclaredMethod("valueOf", String.class));            
+        }
+        catch (NoSuchMethodException e) { }
+        return Optional.empty();
+    }
+    
+    private boolean hasDeclaredToString(final Class<?> klass)
+    {
+        for (final Method m : klass.getDeclaredMethods())
+        {
+            if (m.getName().equals("toString") &&
+                    m.getReturnType() == String.class &&
+                    m.getParameterCount() == 0)
+                return true;
+        }
+        return false;
+    }
+    
+    private List<ContentType> getAcceptedContentTypes()
+    {
+        Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
+        if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
+        final List<ContentType> acceptedContentTypes = Lists.newArrayList();
+        if (null != consumesAnnotation)
+        {
+            for (final String cts : ((Consumes)consumesAnnotation).value())
+            {
+                try
+                {
+                    final ContentType ct = ContentType.parse(cts);
+                    acceptedContentTypes.add(ct);
+                }
+                catch (ParseException | UnsupportedCharsetException e) { }
+            }
+        }
+        return acceptedContentTypes;
+    }
+    
+    private List<ContentType> getRequestContentTypes(final Optional<HttpHeaders> headers)
+    {
+        final List<ContentType> requestContentTypes = Lists.newArrayList();
+        if (headers.isPresent())
+        {
+            for (final String cts : headers.get().getAll(HttpHeaders.Names.CONTENT_TYPE))
+            {
+                try
+                {
+                    final ContentType ct = ContentType.parse(cts);
+                    requestContentTypes.add(ct);
+                }
+                catch (ParseException | UnsupportedCharsetException e) { }
+            }
+        }
+        return requestContentTypes;
+    }
+    
+    private ContentType getAgreedContentType(final List<ContentType> requestContentTypes, final List<ContentType> acceptedContentTypes)
+    {
+        for (final ContentType rct : requestContentTypes)
+        {
+            for (final ContentType act : acceptedContentTypes)
+            {
+                if (rct.getMimeType().equalsIgnoreCase(act.getMimeType()))
+                {
+                    return rct;
+                }
+            }
+        }
+        return null;
+    }
+    
+    private String getDecodedBody(final String messageBody, final ContentType contentType)
+    {
+        Charset charset = null != contentType ? contentType.getCharset() : CharsetUtil.UTF_8;
+        if (null == charset) charset = CharsetUtil.UTF_8;
+        try
+        {
+            return URLDecoder.decode(messageBody, charset.name());
+        }
+        catch (UnsupportedEncodingException e1)
+        {
+            if (charset != CharsetUtil.UTF_8)
+            {
+                try
+                {
+                    return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
+                }
+                catch (UnsupportedEncodingException e2) { }
+            }
+        }
+        
+        return messageBody;
+    }
+    
+    private Map<String, List<String>> parseFormData(final String body, final ContentType contentType)
+    {
+        Map<String, List<String>> formParams = Maps.newHashMap();
+        
+        if (null == body || null == contentType) return formParams;
+        
+        if (! contentType.getMimeType().equalsIgnoreCase(ContentType.APPLICATION_FORM_URLENCODED.getMimeType()))
+            return formParams;
+        
+        if (HttpMethod.POST == httpMethod ||
+                HttpMethod.PUT == httpMethod)
+        {
+            formParams = new QueryStringDecoder(body, false).parameters();
+        }
+        
+        return formParams;
+    }    
+    
+    private boolean passesStrictParamsCheck(int nArgs, int nQueryParams, int nFormParams)
+    {
+        boolean hasStrictParams = false;
+        for (final Annotation annotation : referencedMethod.getAnnotations())
+        {
+            if (annotation instanceof StrictParams)
+            {
+                hasStrictParams = true;
+                break;
+            }
+        }
+        if (hasStrictParams && nArgs != (nQueryParams + nFormParams))
+        {
+            return false;
+        }
+        return true;
+    }
     
     private Object getParameterOfMatchingType(final Class<?> parameterType, final String s_arg)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
@@ -245,6 +397,10 @@ public class Resource
             {
                 return Response.status(Status.BAD_REQUEST).build();
             }
+            else if (! passesStrictParamsCheck(args.length, queryParams.size(), formParams.size()))
+            {
+                return Response.status(Status.BAD_REQUEST).build();
+            }
             Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
             response = referencedMethod.invoke(resourceObj, args);
         }
@@ -299,139 +455,5 @@ public class Resource
     public boolean produces(final String contentType)
     {
         return producesContentTypes.contains(contentType);
-    }
-    
-    
-    private Optional<Constructor<?>> getStringConstructor(final Class<?> klass)
-    {
-        for (final Constructor<?> ctor : klass.getConstructors())
-        {
-            final Class<?>[] params = ctor.getParameterTypes();
-            if (params.length != 1)
-            {
-                continue;
-            }
-            if (params[0] == String.class)
-            {
-                return Optional.of(ctor);
-            }
-        }
-        return Optional.empty();
-    }
-    
-    private Optional<Method> getValueOfStringMethod(final Class<?> klass)
-    {
-        try
-        {
-            return Optional.of(klass.getDeclaredMethod("valueOf", String.class));            
-        }
-        catch (NoSuchMethodException e) { }
-        return Optional.empty();
-    }
-    
-    private boolean hasDeclaredToString(final Class<?> klass)
-    {
-        for (final Method m : klass.getDeclaredMethods())
-        {
-            if (m.getName().equals("toString") &&
-                    m.getReturnType() == String.class &&
-                    m.getParameterCount() == 0)
-                return true;
-        }
-        return false;
-    }
-    
-    private List<ContentType> getAcceptedContentTypes()
-    {
-        Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
-        if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
-        final List<ContentType> acceptedContentTypes = Lists.newArrayList();
-        if (null != consumesAnnotation)
-        {
-            for (final String cts : ((Consumes)consumesAnnotation).value())
-            {
-                try
-                {
-                    final ContentType ct = ContentType.parse(cts);
-                    acceptedContentTypes.add(ct);
-                }
-                catch (ParseException | UnsupportedCharsetException e) { }
-            }
-        }
-        return acceptedContentTypes;
-    }
-    
-    private List<ContentType> getRequestContentTypes(final Optional<HttpHeaders> headers)
-    {
-        final List<ContentType> requestContentTypes = Lists.newArrayList();
-        if (headers.isPresent())
-        {
-            for (final String cts : headers.get().getAll(HttpHeaders.Names.CONTENT_TYPE))
-            {
-                try
-                {
-                    final ContentType ct = ContentType.parse(cts);
-                    requestContentTypes.add(ct);
-                }
-                catch (ParseException | UnsupportedCharsetException e) { }
-            }
-        }
-        return requestContentTypes;
-    }
-    
-    private ContentType getAgreedContentType(final List<ContentType> requestContentTypes, final List<ContentType> acceptedContentTypes)
-    {
-        for (final ContentType rct : requestContentTypes)
-        {
-            for (final ContentType act : acceptedContentTypes)
-            {
-                if (rct.getMimeType().equalsIgnoreCase(act.getMimeType()))
-                {
-                    return rct;
-                }
-            }
-        }
-        return null;
-    }
-    
-    private String getDecodedBody(final String messageBody, final ContentType contentType)
-    {
-        Charset charset = null != contentType ? contentType.getCharset() : CharsetUtil.UTF_8;
-        if (null == charset) charset = CharsetUtil.UTF_8;
-        try
-        {
-            return URLDecoder.decode(messageBody, charset.name());
-        }
-        catch (UnsupportedEncodingException e1)
-        {
-            if (charset != CharsetUtil.UTF_8)
-            {
-                try
-                {
-                    return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
-                }
-                catch (UnsupportedEncodingException e2) { }
-            }
-        }
-        
-        return messageBody;
-    }
-    
-    private Map<String, List<String>> parseFormData(final String body, final ContentType contentType)
-    {
-        Map<String, List<String>> formParams = Maps.newHashMap();
-        
-        if (null == body || null == contentType) return formParams;
-        
-        if (! contentType.getMimeType().equalsIgnoreCase(ContentType.APPLICATION_FORM_URLENCODED.getMimeType()))
-            return formParams;
-        
-        if (HttpMethod.POST == httpMethod ||
-                HttpMethod.PUT == httpMethod)
-        {
-            formParams = new QueryStringDecoder(body, false).parameters();
-        }
-        
-        return formParams;
     }
 }

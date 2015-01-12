@@ -23,6 +23,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
+import com.zoomulus.weaver.rest.annotations.StrictParams;
 
 @Path("/")
 public class RestServerTestResource
@@ -655,5 +656,23 @@ public class RestServerTestResource
             @DefaultValue("111") @QueryParam("age") int age)
     {
         return String.format("%s %s,%s,%d", firstName, lastName, gender, age);
+    }
+    
+    
+    @GET
+    @Path("/get/strictparams")
+    @StrictParams
+    public String getStrict(@QueryParam("name") final String name)
+    {
+        return name;
+    }
+    
+    @POST
+    @Path("/post/strictparams")
+    @StrictParams
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postStrict(@FormParam("name") final String name)
+    {
+        return name;
     }
 }

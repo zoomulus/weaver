@@ -896,15 +896,25 @@ public class RestServerTest
                 "tim timson,male,111");
     }
     
+    
+    // StrictParams tests
+    @Test
+    public void testNonmatchingQueryParamWithStrictParamsFails() throws ClientProtocolException, IOException
+    {
+        verify400Result(new GetRequestResult("get/strictparams?name=bob&catname=killer"));
+    }
+    
+    @Test
+    public void testNonmatchingFormParamWithStrictParamsFails() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("name=bob&catname=killer", CharsetUtil.UTF_8.name());
+        verify400Result(new PostRequestResult("post/strictparams", formdata, ContentType.APPLICATION_FORM_URLENCODED));
+    }
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
     // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching method
     // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
-    // Handle query with missing/nonmatching @FormParam/@QueryParam
-    //  - Nonmatching - Ignore the parameter.
-    //    - We could, at some point, define an annotation (@StrictParams?) which
-    //      would mean that strict matching is enforced, or 400 level error.
     // More intelligent error handling when a message body is found but no @Consumes decorator on resource.
     
 
