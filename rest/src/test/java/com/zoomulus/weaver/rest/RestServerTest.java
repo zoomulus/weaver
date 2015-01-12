@@ -50,7 +50,7 @@ public class RestServerTest
         public RequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
         {
             final Request req = getRequest(uri);
-            if (! Strings.isNullOrEmpty(body))
+            if (null != body)
             {
                 req.bodyString(body, contentType);
             }
@@ -628,7 +628,7 @@ public class RestServerTest
     public void testObjectFormParamWithRequiredParamWorks() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparams/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+        verifyOkResult(new PostRequestResult("post/formparam/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
     }
 
     @Test
@@ -639,15 +639,35 @@ public class RestServerTest
     }
     
     @Test
-    public void testNoNativeFormParamReturns400()
+    public void testNoNativeFormParamReturns400() throws ClientProtocolException, IOException
     {
-        // TODO
+        final String formdata = URLEncoder.encode("q=w", CharsetUtil.UTF_8.name());
+        verify400Result(new PostRequestResult("post/formparam/typematch/int", formdata, ContentType.APPLICATION_FORM_URLENCODED));
     }
     
     @Test
-    public void testNonmatchingFormParamIsIgnored()
+    public void testNonmatchingFormParamIsIgnored() throws ClientProtocolException, IOException
     {
-        // TODO
+        final String formdata = URLEncoder.encode("p1=v1&p2=v2", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+    }
+    
+    @Test
+    public void testEmptyFormWithObjectParamSendsNull() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new PostRequestResult("post/formparam/single", "", ContentType.APPLICATION_FORM_URLENCODED), "null");
+    }
+    
+    @Test
+    public void testEmptyFormWithRequiredObjectParamReturns400() throws ClientProtocolException, IOException
+    {
+        verify400Result(new PostRequestResult("post/formparam/requiredsingle", "", ContentType.APPLICATION_FORM_URLENCODED));
+    }
+    
+    @Test
+    public void testEmptyFormWithNativeParamReturns400() throws ClientProtocolException, IOException
+    {
+        verify400Result(new PostRequestResult("post/formparam/typematch/int", "", ContentType.APPLICATION_FORM_URLENCODED));
     }
     
     @Test
@@ -789,79 +809,91 @@ public class RestServerTest
     }
     
     
-    // @DefaultValue
+    // DefaultValue tests
     
     @Test
-    public void testDefaultValueNativeQueryParam()
+    public void testDefaultValueNativeQueryParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/int"), "111");
     }
     
     @Test
-    public void testDefaultValueCustomQueryParam()
+    public void testDefaultValueObjectQueryParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/string"), "tim");
     }
     
     @Test
-    public void testDefaultValueMultipleQueryParam()
+    public void testDefaultValueMultipleQueryParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/multiple"), "tim,111");
     }
     
     @Test
-    public void testSomeDefaultValuesMultipleQueryParam()
+    public void testSomeDefaultValuesMultipleQueryParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/multiple?name=bob"), "bob,111");
     }
     
     @Test
-    public void testProvidedQueryParamOverridesDefaultValue()
+    public void testProvidedQueryParamOverridesDefaultValue() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/string?name=bob"), "bob");
     }
     
     @Test
     public void testObjectQueryParamWithRequiredParamAndDefaultValueWorks() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new GetRequestResult("get/queryparams/requiredanddefaultsingle?firstname=bob"), "bob");
-        verifyOkResult(new GetRequestResult("get/queryparams/requiredanddefaultsingle"), "tim");
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/requiredanddefaultsingle?firstname=bob"), "bob");
+        verifyOkResult(new GetRequestResult("get/defaultvalue/query/requiredanddefaultsingle"), "tim");
     }    
     
     @Test
-    public void testDefaultValueNativeFormParam()
+    public void testDefaultValueNativeFormParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/int", "", ContentType.APPLICATION_FORM_URLENCODED), "111");
     }
     
     @Test
-    public void testDefaultValueCustomFormParam()
+    public void testDefaultValueObjectFormParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/string", "", ContentType.APPLICATION_FORM_URLENCODED), "tim");
     }
     
     @Test
-    public void testDefaultValueMultipleFormParam()
+    public void testDefaultValueMultipleFormParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/multiple", "", ContentType.APPLICATION_FORM_URLENCODED), "tim,111");
     }
     
     @Test
-    public void testSomeDefaultValuesMultipleFormParam()
+    public void testSomeDefaultValuesMultipleFormParam() throws ClientProtocolException, IOException
     {
-        // TODO
+        final String formdata = URLEncoder.encode("age=222", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED), "tim,222");
     }
     
     @Test
-    public void testProvidedFormParamOverridesDefaultValue()
+    public void testProvidedFormParamOverridesDefaultValue() throws ClientProtocolException, IOException
     {
-        // TODO
+        final String formdata = URLEncoder.encode("name=bob", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/string", formdata, ContentType.APPLICATION_FORM_URLENCODED), "bob");
     }
     
     @Test
-    public void testDefaultValueQueryAndFormParam()
+    public void testObjectFormParamWithRequiredParamAndDefaultValueWorks() throws ClientProtocolException, IOException
     {
-        // TODO
+        final String formdata = URLEncoder.encode("name=bob", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/requiredanddefaultsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED), "bob");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/requiredanddefaultsingle", "", ContentType.APPLICATION_FORM_URLENCODED), "tim");
+    }    
+    
+    @Test
+    public void testDefaultValueQueryAndFormParam() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("firstname=tim", CharsetUtil.UTF_8.name());
+        verifyOkResult(new PostRequestResult("post/defaultvalue/queryandform?gender=male", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+                "tim timson,male,111");
     }
     
     // TODO:
@@ -870,18 +902,10 @@ public class RestServerTest
     // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching method
     // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
     // Handle query with missing/nonmatching @FormParam/@QueryParam
-    //  - Missing (parameter is specified in handler, but not present in request)
-    //    - If the parameter is a native type:
-    //      - If @DefaultValue is specified, use that
-    //      - Otherwise return a 400 error
-    //      - No missing parameters allowed (no "NULL" value for primitives)
-    //    - If the parameter is a class type:
-    //      - If @DefaultValue is specified, use that
-    //      - Else, if @RequiredParam is specified, return a 400 error
-    //      - Otherwise, use NULL
     //  - Nonmatching - Ignore the parameter.
     //    - We could, at some point, define an annotation (@StrictParams?) which
     //      would mean that strict matching is enforced, or 400 level error.
+    // More intelligent error handling when a message body is found but no @Consumes decorator on resource.
     
 
     private static RestServer server;

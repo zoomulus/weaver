@@ -416,14 +416,6 @@ public class RestServerTestResource
         return firstName;
     }
     
-    // There is no good reason a client should do this, but they might anyway
-    @GET
-    @Path("/get/queryparams/requiredanddefaultsingle")
-    public String getQueryParamsReqdAndDefault(@RequiredParam @DefaultValue("tim") @QueryParam("firstname") final String firstName)
-    {
-        return firstName;
-    }
-    
     @GET
     @Path("get/queryparams/multiple")
     public String getQueryParams(@QueryParam("lastname") final String lastName, @QueryParam("firstname") final String firstName)
@@ -448,6 +440,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/requiredsingle")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response postFormParamReqd(@RequiredParam @FormParam("p1") final String p1)
     {
         return Response.status(Status.OK).entity(p1).build();
@@ -586,5 +579,81 @@ public class RestServerTestResource
     public String postText(final String payload)
     {
         return payload;
+    }
+    
+    
+    @GET
+    @Path("/get/defaultvalue/query/int")
+    public int getQueryParamsDefaultInt(@DefaultValue("111") @QueryParam("age") int age)
+    {
+        return age;
+    }
+    
+    @GET
+    @Path("/get/defaultvalue/query/string")
+    public String getQueryParamsDefaultString(@DefaultValue("tim") @QueryParam("name") final String name)
+    {
+        return name;
+    }
+    
+    @GET
+    @Path("/get/defaultvalue/query/multiple")
+    public String getQueryParamsDefaultMultiple(@DefaultValue("tim") @QueryParam("name") final String name,
+            @DefaultValue("111") @QueryParam("age") int age)
+    {
+        return String.format("%s,%d", name, age);
+    }
+    
+    // There is no good reason a client should do this, but they might anyway
+    @GET
+    @Path("/get/defaultvalue/query/requiredanddefaultsingle")
+    public String getQueryParamsReqdAndDefault(@RequiredParam @DefaultValue("tim") @QueryParam("firstname") final String firstName)
+    {
+        return firstName;
+    }
+    
+    @POST
+    @Path("/post/defaultvalue/form/int")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public int postFormParamsDefaultInt(@DefaultValue("111") @FormParam("age") int age)
+    {
+        return age;
+    }
+    
+    @POST
+    @Path("/post/defaultvalue/form/string")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormParamsDefaultString(@DefaultValue("tim") @FormParam("name") final String name)
+    {
+        return name;
+    }
+    
+    @POST
+    @Path("/post/defaultvalue/form/multiple")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormParamsDefaultMultiple(@DefaultValue("tim") @FormParam("name") final String name,
+            @FormParam("age") @DefaultValue("111") int age)
+    {
+        return String.format("%s,%d", name, age);
+    }
+    
+    // Again - no good reason for a client to do this but we shouldn't blow up if they do
+    @POST
+    @Path("/post/defaultvalue/form/requiredanddefaultsingle")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postFormParamsReqdAndDefault(@RequiredParam @DefaultValue("tim") @FormParam("name") final String name)
+    {
+        return name;
+    }
+    
+    @POST
+    @Path("/post/defaultvalue/queryandform")
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String postQueryAndForm(@RequiredParam @FormParam("firstname") final String firstName,
+            @DefaultValue("timson") @FormParam("lastname") final String lastName,
+            @DefaultValue("female") @QueryParam("gender") final String gender,
+            @DefaultValue("111") @QueryParam("age") int age)
+    {
+        return String.format("%s %s,%s,%d", firstName, lastName, gender, age);
     }
 }

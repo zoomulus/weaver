@@ -190,16 +190,13 @@ public class Resource
                                 s_arg = params.get(0);
                             }
                         }
+                        else if (null != defaultValueAnnotation)
+                        {
+                            s_arg = ((DefaultValue) defaultValueAnnotation).value();
+                        }
                         else if (! parameterType.isPrimitive())
                         {
-                            if (null != defaultValueAnnotation)
-                            {
-                                s_arg = ((DefaultValue) defaultValueAnnotation).value();
-                            }
-                            else
-                            {
-                                allowNullArg = (null == requiredParamAnnotation);
-                            }
+                            allowNullArg = (null == requiredParamAnnotation);
                         }
                     }
                 }
