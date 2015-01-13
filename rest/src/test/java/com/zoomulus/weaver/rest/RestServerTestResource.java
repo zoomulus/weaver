@@ -8,7 +8,9 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
 import javax.ws.rs.MatrixParam;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -54,6 +56,20 @@ public class RestServerTestResource
     public Response delete()
     {
         return Response.status(Status.OK).entity("delete").build();
+    }
+    
+    @HEAD
+    @Path("head")
+    public Response head()
+    {
+        return Response.status(Status.OK).build();
+    }
+    
+    @OPTIONS
+    @Path("options")
+    public Response options()
+    {
+        return Response.status(Status.OK).entity("options").build();
     }
     
     @GET
@@ -580,6 +596,33 @@ public class RestServerTestResource
     public String postText(final String payload)
     {
         return payload;
+    }
+    
+    // Shouldn't work
+    @GET
+    @Path("get/consumes")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String getConsumes(final String payload)
+    {
+        return null;
+    }
+    
+    // Shouldn't work
+    @HEAD
+    @Path("head/consumes")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String headConsumes(final String payload)
+    {
+        return null;
+    }
+    
+    // Shouldn't work
+    @OPTIONS
+    @Path("options/consumes")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String optionsConsumes(final String payload)
+    {
+        return null;
     }
     
     

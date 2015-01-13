@@ -381,6 +381,14 @@ public class Resource
         try
         {
             final List<ContentType> acceptedContentTypes = getAcceptedContentTypes();
+            if (acceptedContentTypes.size() > 0 &&
+                    (HttpMethod.GET == httpMethod ||
+                    HttpMethod.HEAD == httpMethod ||
+                    HttpMethod.OPTIONS == httpMethod))
+            {
+                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+            }
+            
             final List<ContentType> requestContentTypes = getRequestContentTypes(headers);
             final ContentType contentType = getAgreedContentType(requestContentTypes, acceptedContentTypes);
             if (null == contentType && ! acceptedContentTypes.isEmpty())

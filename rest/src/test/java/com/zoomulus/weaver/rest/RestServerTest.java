@@ -132,6 +132,32 @@ public class RestServerTest
         }
     }
     
+    class HeadRequestResult extends RequestResult
+    {
+        public HeadRequestResult(final String uri) throws ClientProtocolException, IOException
+        {
+            super(uri);
+        }
+        
+        protected Request getRequest(final String uri)
+        {
+            return Request.Head(host + uri);
+        }
+    }
+    
+    class OptionsRequestResult extends RequestResult
+    {
+        public OptionsRequestResult(final String uri) throws ClientProtocolException, IOException
+        {
+            super(uri);
+        }
+        
+        protected Request getRequest(final String uri)
+        {
+            return Request.Options(host + uri);
+        }
+    }
+    
     
     
     // HTTP Method Tests
@@ -158,6 +184,18 @@ public class RestServerTest
     public void testDelete() throws ClientProtocolException, IOException
     {
         verifyOkResult(new DeleteRequestResult("delete"), "delete");
+    }
+    
+    @Test
+    public void testHead() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new HeadRequestResult("head"), null);
+    }
+    
+    @Test
+    public void testOptions() throws ClientProtocolException, IOException
+    {
+        verifyOkResult(new OptionsRequestResult("options"), "options");
     }
     
     
@@ -304,14 +342,18 @@ public class RestServerTest
         verifyOkResult(new GetRequestResult("get/pathsegment/;k=v;j=x"), "pp:;kval:v,jval:x");
     }
     
-    // TODO: *Possibly* support List<PathSegment>.
-    //
     // This is a part of the spec but to me it seems an unnecessary complication.
     // It seems more reasonable to me to not convolute the processing of the path
     // for that special case, and instead expect users to figure out how to work around it.
     // I'm going to wait until someone makes me support List<PathSegment> before
     // I add it.
     // Of course if someone else wants to add support for it, whatever. -MR
+    @Ignore
+    @Test
+    public void testGetPathSegmentList()
+    {
+        
+    }
     
     
     
@@ -791,6 +833,32 @@ public class RestServerTest
         verifyOkResult(new PostRequestResult("post/text", text, ContentType.TEXT_PLAIN), text);
     }
     
+    @Test
+    public void testConsumesOnGetReturns500() throws ClientProtocolException, IOException
+    {
+        verifyInternalServerErrorResult(new GetRequestResult("/get/consumes"));
+    }
+    
+    @Test
+    public void testConsumesOnHeadReturns500() throws ClientProtocolException, IOException
+    {
+        verifyInternalServerErrorResult(new HeadRequestResult("/head/consumes"));
+    }
+    
+    @Test
+    public void testConsumesOnOptionsReturns500() throws ClientProtocolException, IOException
+    {
+        verifyInternalServerErrorResult(new OptionsRequestResult("/options/consumes"));
+    }
+    
+    // TODO: Intelligent handling of supplied data if @Consumes is not defined on the resource.
+    // - 500-level error if @FormParam is declared within a @GET, @HEAD, or @OPTIONS method.
+    // - If the method is @POST, @PUT, or @DELETE:
+    //   - If the resource has any parameters decorated with @FormParam and @Consumes is not
+    //     defined, assume application/x-www-form-urlencoded.
+    //   - If a message body is found but @Consumes is not defined, 500-level error.
+    
+    
     // We are not going to support this for now.
     // The spec allows for an endpoint to accept and deliver multiple content types, but
     // also that a single resource can disambiguate between requests based on the content type
@@ -910,12 +978,40 @@ public class RestServerTest
         final String formdata = URLEncoder.encode("name=bob&catname=killer", CharsetUtil.UTF_8.name());
         verify400Result(new PostRequestResult("post/strictparams", formdata, ContentType.APPLICATION_FORM_URLENCODED));
     }
+    
+    
+    // Produces tests
+    // TODO: Intelligent type conversion on the return value based on the @Produces setting.
+    // - If the return type is Response or String, we assume that the content
+    //   was already formatted how it is wanted.  Ignore @Produces and return
+    //   the data as it was specified.
+    // - Otherwise:
+    //   - If the @Produces type is application/json or application/xml,
+    //     use the mapper to try to convert the object to a string.
+    //   - Else fail with an appropriate error code (500-level).
+    //
+    // TODO: If @Produces is not set, try to make a guess about the return Content-Type.
+    // - If the return type of the resource is String or Response, we are going
+    //   to return the data as-is without making any guesses about how to format it.
+    //   - If the return type is String or the entity in the Response is a String,
+    //     set the return Content-Type to text/plain if @Produces wasn't set.
+    //   - If the return type is a byte[], set the return Content-Type to
+    //     application/octet-stream if @Produces wasn't set
+    //   - Otherwise, if the return type is an object, we should:
+    //     - Check if toString was explicitly set on the object; if so, call toString()
+    //       for the return data and set the Content-Type to text/plain
+    //     - Try to convert the object to JSON and if that works set the Content-Type to
+    //       application/json
+    //     - If nothing else works, call toString() on the object, use that for the
+    //       return data and set the Content-Type to text/plain
+    //
+    // TODO: Verify correct return Content-Type on responses
+
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
     // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching method
     // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
-    // More intelligent error handling when a message body is found but no @Consumes decorator on resource.
     
 
     private static RestServer server;
