@@ -851,12 +851,34 @@ public class RestServerTest
         verifyInternalServerErrorResult(new OptionsRequestResult("/options/consumes"));
     }
     
-    // TODO: Intelligent handling of supplied data if @Consumes is not defined on the resource.
-    // - 500-level error if @FormParam is declared within a @GET, @HEAD, or @OPTIONS method.
-    // - If the method is @POST, @PUT, or @DELETE:
-    //   - If the resource has any parameters decorated with @FormParam and @Consumes is not
-    //     defined, assume application/x-www-form-urlencoded.
-    //   - If a message body is found but @Consumes is not defined, 500-level error.
+    // I'm not sure about this one but I think I want to try it out.
+    // What we are basically saying here is we should never do a
+    // POST, PUT, or DELETE we expect a message body but
+    // the Consumes content-type is not defined.  This should
+    // cover the bulk of the proactive error-checking cases.
+    //
+    // Note that this has nothing to do with whether the requester
+    // sends data in the payload - it has to do with whether
+    // the resource claims to expect a message body but doesn't
+    // say what content-type it thinks it is.  This would usually
+    // be a coding error so we are trying to surface it.
+    @Test
+    public void testPostMessageBodyWithoutConsumesReturns500() throws ClientProtocolException, IOException
+    {
+        verifyInternalServerErrorResult(new PostRequestResult("/post/bodywithnoconsumes", "body", ContentType.TEXT_PLAIN));
+    }
+    
+    @Test
+    public void testPutMessageBodyWithoutConsumesReturns500() throws ClientProtocolException, IOException
+    {
+        verifyInternalServerErrorResult(new PutRequestResult("/put/bodywithnoconsumes"));
+    }
+    
+    @Test
+    public void testDeleteMessageBodyWithoutConsumesReturns500() throws ClientProtocolException, IOException
+    {
+        verifyInternalServerErrorResult(new DeleteRequestResult("/delete/bodywithnoconsumes"));
+    }
     
     
     // We are not going to support this for now.

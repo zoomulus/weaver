@@ -718,4 +718,27 @@ public class RestServerTestResource
     {
         return name;
     }
+    
+    
+    // These next three resources intentionally do not have @Consumes defined
+    @POST
+    @Path("/post/bodywithnoconsumes")
+    public String postBodyWithNoConsumes(final String payload)
+    {
+        return null;
+    }
+    
+    @PUT
+    @Path("/put/bodywithnoconsumes")
+    public String putBodyWithNoConsumes(final String payload)
+    {
+        return null;
+    }
+    
+    @DELETE
+    @Path("/delete/bodywithnoconsumes")
+    public String deleteBodyWithNoConsumes(final String payload)
+    {
+        return null;
+    }
 }

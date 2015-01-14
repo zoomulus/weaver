@@ -223,6 +223,15 @@ public class Resource
         return true;
     }
     
+    private boolean expectsMessageBody()
+    {
+        for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
+        {
+            if (0 == paramAnnotations.length) return true;
+        }
+        return false;
+    }
+    
     private Object getParameterOfMatchingType(final Class<?> parameterType, final String s_arg)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
@@ -381,6 +390,7 @@ public class Resource
         try
         {
             final List<ContentType> acceptedContentTypes = getAcceptedContentTypes();
+            
             if (acceptedContentTypes.size() > 0 &&
                     (HttpMethod.GET == httpMethod ||
                     HttpMethod.HEAD == httpMethod ||
@@ -389,8 +399,14 @@ public class Resource
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
             
+            if (acceptedContentTypes.size() == 0 && expectsMessageBody())
+            {
+                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+            }
+            
             final List<ContentType> requestContentTypes = getRequestContentTypes(headers);
             final ContentType contentType = getAgreedContentType(requestContentTypes, acceptedContentTypes);
+            
             if (null == contentType && ! acceptedContentTypes.isEmpty())
             {
                 return Response.status(Status.NOT_ACCEPTABLE).build();
