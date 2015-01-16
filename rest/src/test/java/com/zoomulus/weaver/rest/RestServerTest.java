@@ -1003,10 +1003,223 @@ public class RestServerTest
     
     
     // Produces tests
+    
+    @Test
+    public void testGetResponseWithStringEntityWithProducesJsonDataIsUnmodified()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetStringWithProducesJsonReturnsJsonizedString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetObjectWithProducesJsonReturnsJsonizedObject()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetNativeTypeWithProducesJsonReturnsJsonizedValue()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetUnJsonifiableObjectWithProducesJsonReturns500()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithStringEntityWithProducesXmlDataIsUnmodified()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetStringWithProducesXmlReturnsXmlizedString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetObjectWithProducesXmlReturnsXmlizedObject()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetNativeTypeWithProducesXmlReturnsXmlizedValue()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetUnXmlizableObjectWithProducesXmlReturns500()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithStringEntityWithProducesTextDataIsUnmodified()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectEntityWithProducesJsonReturnsJson()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithNativeEntityWithProducesJsonReturnsJson()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithNonJsonizableEntityWithProducesJsonReturns500()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectEntityWithProducesXmlReturnsXml()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithNativeEntityWithProducesXmlReturnsXml()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithNonXmlizableEntityWithProducesXmlReturns500()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectEntityWithProducesTextReturnsToString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithNativeEntityWithProducesTextReturnsStringRep()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectEntityWithOtherProducesReturns500()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithStringEntityWithNoProducesReturnsString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectWithToStringEntityWithNoProducesReturnsToString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectWithJsonConversionWithNoProducesReturnsJson()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithObjectWithNoJsonConversionWithNoProducesReturnsDefaultToString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetResponseWithNativeEntityWithNoProducesReturnsStringRep()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetStringWithNoProducesReturnsString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetObjectWithToStringWithNoProducesReturnsString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetJsonizableObjectWithNoProducesReturnsJson()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetNonJsonizableObjectWithNoProducesReturnsDefaultToString()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
+    @Test
+    public void testGetNativeTypeWithNoProducesReturnsStringRep()
+    {
+        // TODO: Check returned response payload
+        // TODO: Check returned Content-Type header
+    }
+    
     // TODO: Intelligent type conversion on the return value based on the @Produces setting.
-    // - If the return type is Response or String, we assume that the content
+    // - If the return type is Response, if the entity is a String we assume that the content
     //   was already formatted how it is wanted.  Ignore @Produces and return
     //   the data as it was specified.
+    //   If the entity is not a String, we treat it as though that entity type were returned
+    //   directly.
     // - Otherwise:
     //   - If the @Produces type is application/json or application/xml,
     //     use the mapper to try to convert the object to a string.
