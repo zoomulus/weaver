@@ -15,6 +15,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
@@ -740,5 +741,64 @@ public class RestServerTestResource
     public String deleteBodyWithNoConsumes(final String payload)
     {
         return null;
+    }
+    
+    
+    
+    // @Produces resources
+    @GET
+    @Path("/get/produces/response/string/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getResponseStringProducesJson()
+    {
+        return Response.status(Status.OK).entity("not actually json").build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/string/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getResponseStringProducesXml()
+    {
+        return Response.status(Status.OK).entity("not actually xml").build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/string/text")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response getResponseStringProducesText()
+    {
+        return Response.status(Status.OK).entity("some text").build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/object/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getResponseObjectProducesJson()
+    {
+        return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/object/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getResponseObjectProducesXml()
+    {
+        return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/native/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getResponseNativeProducesJson()
+    {
+        return Response.status(Status.OK).entity(new Integer(5)).build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/native/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getResponseNativeProducesXml()
+    {
+        return Response.status(Status.OK).entity(new Integer(5)).build();
     }
 }

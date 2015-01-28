@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.collect.Maps;
@@ -167,11 +168,13 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                                 handlingResourcePath.get(),
                                 this.headers,
                                 queryParams);
-                        if (null != (String) rsp.getEntity())
+                        if (null != rsp.getEntity())
                         {
+                            final String entity = (rsp.getEntity() instanceof String ? (String) rsp.getEntity() : rsp.getEntity().toString());
                             fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                             HttpResponseStatus.valueOf(rsp.getStatus()),
-                                            copiedBuffer(((String)rsp.getEntity()).getBytes()));
+                                            copiedBuffer(entity.getBytes()));
+                            fullRsp.headers().set("Content-Type", (null != rsp.getMediaType() ? rsp.getMediaType().getType() : MediaType.TEXT_PLAIN));
                         }
                         else
                         {

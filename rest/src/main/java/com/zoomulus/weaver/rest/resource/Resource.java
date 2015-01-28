@@ -22,7 +22,9 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -164,6 +166,46 @@ public class Resource
         return null;
     }
     
+    private Optional<String> getProducesContentType()
+    {
+        Annotation producesAnnotation = referencedMethod.getAnnotation(Produces.class);
+        if (null == producesAnnotation) producesAnnotation = referencedClass.getAnnotation(Produces.class);
+        if (null != producesAnnotation)
+        {
+            final String[] contentTypes = ((Produces)producesAnnotation).value();
+            
+            // Only set the content type if there is exactly one value defined in @Produces;
+            // otherwise we can't know what to set it to
+            if (1 == contentTypes.length)
+            {
+                return Optional.of(contentTypes[0]);
+            }
+        }
+        return Optional.empty();
+    }
+    
+    private String getStringRepresentationForObject(final Object o)
+    {
+        if (o instanceof String) return (String) o;
+        else if (hasDeclaredToString(o.getClass()))
+        {
+            o.toString();
+        }
+        // Otherwise do a JSON conversion if possible
+        else
+        {
+            try
+            {
+                // TODO: Reuse the same object mapper
+                return new ObjectMapper().writeValueAsString(o);
+            }
+            catch (JsonProcessingException e) { }
+        }
+        
+        // As a last resort use whatever toString gives us
+        return o.toString();
+    }
+        
     private String getDecodedBody(final String messageBody, final ContentType contentType)
     {
         Charset charset = null != contentType ? contentType.getCharset() : CharsetUtil.UTF_8;
@@ -438,32 +480,21 @@ public class Resource
         {
             return Response.status(Status.NO_CONTENT).build();
         }
+        
         if (response instanceof Response)
         {
+            // We assume the user knew what they were doing.  Return the response unmodified.
+            // Do not modify the entity, set the return Content-Type, etc.
             return (Response) response;
         }
-        else if (response instanceof String)
-        {
-            return Response.status(Status.OK).entity((String) response).build();
-        }
         
-        // If this class has a toString delcared directly on it, prefer that method
-        else if (hasDeclaredToString(response.getClass()))
-        {
-            return Response.status(Status.OK).entity(response.toString()).build();
-        }
-        // Otherwise do a JSON conversion if possible
-        else
-        {
-            try
-            {
-                return Response.status(Status.OK).entity(new ObjectMapper().writeValueAsString(response)).build();
-            }
-            catch (JsonProcessingException e) { }
-        }
+        final Optional<String> contentType = getProducesContentType();
         
-        // As a last resort use whatever toString gives us
-        return Response.status(Status.OK).entity(response.toString()).build();
+        return Response
+                .status(Status.OK)
+                .entity(getStringRepresentationForObject(response))
+                .type(contentType.isPresent() ? contentType.get() : MediaType.TEXT_PLAIN)
+                .build();
     }
     
     public Optional<String> getPathParam(final String name)

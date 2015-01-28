@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Getter;
@@ -39,6 +40,7 @@ public class RestServerTest
         private final int status;
         private final String reason;
         private final String content;
+        private final MediaType contentType;
         
         protected static final String host = "http://localhost:22002/";
         
@@ -58,6 +60,7 @@ public class RestServerTest
             final HttpResponse httpRsp = rsp.returnResponse();
             status = httpRsp.getStatusLine().getStatusCode();
             reason = httpRsp.getStatusLine().getReasonPhrase();
+            this.contentType = MediaType.valueOf(ContentType.get(httpRsp.getEntity()).getMimeType());
             if (null != httpRsp.getEntity())
             {
                 InputStream is = httpRsp.getEntity().getContent();
@@ -1005,10 +1008,11 @@ public class RestServerTest
     // Produces tests
     
     @Test
-    public void testGetResponseWithStringEntityWithProducesJsonDataIsUnmodified()
+    public void testGetResponseWithStringEntityWithProducesJsonReturnsDataTextPlain() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/response/string/json");
+        verifyOkResult(result, "not actually json");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1040,8 +1044,11 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetResponseWithStringEntityWithProducesXmlDataIsUnmodified()
+    public void testGetResponseWithStringEntityWithProducesXmlReturnsDataTextPlain() throws ClientProtocolException, IOException
     {
+        final RequestResult result = new GetRequestResult("/get/produces/response/string/xml");
+        verifyOkResult(result, "not actually xml");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
         // TODO: Check returned response payload
         // TODO: Check returned Content-Type header
     }
@@ -1075,45 +1082,43 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetResponseWithStringEntityWithProducesTextDataIsUnmodified()
+    public void testGetResponseWithStringEntityWithProducesTextDataIsUnmodified() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/string/text");
+        verifyOkResult(result, "some text");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetResponseWithObjectEntityWithProducesJsonReturnsJson()
+    public void testGetResponseWithObjectEntityWithProducesJsonReturnsObjectToStringTextPlain() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/object/json");
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetResponseWithNativeEntityWithProducesJsonReturnsJson()
+    public void testGetResponseWithNativeEntityWithProducesJsonReturnsEntityToStringTextPlain() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/native/json");
+        verifyOkResult(result, "5");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetResponseWithNonJsonizableEntityWithProducesJsonReturns500()
+    public void testGetResponseWithObjectEntityWithProducesXmlReturnsObjectToStringTextPlain() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/object/xml");
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetResponseWithObjectEntityWithProducesXmlReturnsXml()
+    public void testGetResponseWithNativeEntityWithProducesXmlReturnsEntityToStringTextPlain() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithNativeEntityWithProducesXmlReturnsXml()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/native/xml");
+        verifyOkResult(result, "5");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1214,6 +1219,8 @@ public class RestServerTest
         // TODO: Check returned Content-Type header
     }
     
+    // TODO: Handle resources with multiple content types declared in @Produces
+    
     // TODO: Intelligent type conversion on the return value based on the @Produces setting.
     // - If the return type is Response, if the entity is a String we assume that the content
     //   was already formatted how it is wanted.  Ignore @Produces and return
@@ -1285,6 +1292,11 @@ public class RestServerTest
     {
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), rr.status());
         assertEquals(Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), rr.reason());
+    }
+    
+    private void verifyContentType(final RequestResult rr, final MediaType contentType)
+    {
+        assertEquals(contentType, rr.contentType());
     }
 
     @BeforeClass
