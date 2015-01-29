@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
@@ -60,9 +61,16 @@ public class RestServerTest
             final HttpResponse httpRsp = rsp.returnResponse();
             status = httpRsp.getStatusLine().getStatusCode();
             reason = httpRsp.getStatusLine().getReasonPhrase();
-            this.contentType = MediaType.valueOf(ContentType.get(httpRsp.getEntity()).getMimeType());
-            if (null != httpRsp.getEntity())
+            HttpEntity entity = httpRsp.getEntity();
+            if (null == entity)
             {
+                this.contentType = null;
+                content = null;
+            }
+            else
+            {
+                ContentType ct = ContentType.get(entity);
+                this.contentType = MediaType.valueOf(ct.getMimeType());
                 InputStream is = httpRsp.getEntity().getContent();
                 ByteBuffer buf = ByteBuffer.allocate(is.available());
                 while (is.available() > 0)
@@ -72,7 +80,6 @@ public class RestServerTest
                 is.close();
                 content = new String(buf.array());
             }
-            else content = null;
         }
         
         protected abstract Request getRequest(final String uri);

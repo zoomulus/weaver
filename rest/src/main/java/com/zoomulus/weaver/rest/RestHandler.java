@@ -174,7 +174,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                             fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                             HttpResponseStatus.valueOf(rsp.getStatus()),
                                             copiedBuffer(entity.getBytes()));
-                            fullRsp.headers().set("Content-Type", (null != rsp.getMediaType() ? rsp.getMediaType().getType() : MediaType.TEXT_PLAIN));
+                            fullRsp.headers().set("Content-Type", (null != rsp.getMediaType() ? rsp.getMediaType().toString() : MediaType.TEXT_PLAIN));
                         }
                         else
                         {
