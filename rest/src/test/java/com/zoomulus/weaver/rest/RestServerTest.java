@@ -1056,8 +1056,6 @@ public class RestServerTest
         final RequestResult result = new GetRequestResult("/get/produces/response/string/xml");
         verifyOkResult(result, "not actually xml");
         verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
     }
     
     @Test
@@ -1129,66 +1127,27 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetResponseWithNonXmlizableEntityWithProducesXmlReturns500()
+    public void testGetResponseWithStringEntityWithNoProducesReturnsString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/string/noproduces");
+        verifyOkResult(result, "text");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetResponseWithObjectEntityWithProducesTextReturnsToString()
+    public void testGetResponseWithObjectWithToStringEntityWithNoProducesReturnsToString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/object/noproduces");
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetResponseWithNativeEntityWithProducesTextReturnsStringRep()
+    public void testGetResponseWithNativeEntityWithNoProducesReturnsStringRep() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithObjectEntityWithOtherProducesReturns500()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithStringEntityWithNoProducesReturnsString()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithObjectWithToStringEntityWithNoProducesReturnsToString()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithObjectWithJsonConversionWithNoProducesReturnsJson()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithObjectWithNoJsonConversionWithNoProducesReturnsDefaultToString()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
-    }
-    
-    @Test
-    public void testGetResponseWithNativeEntityWithNoProducesReturnsStringRep()
-    {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/response/native/noproduces");
+        verifyOkResult(result, "111");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test

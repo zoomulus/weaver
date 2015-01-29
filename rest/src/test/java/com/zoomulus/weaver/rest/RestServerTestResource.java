@@ -801,4 +801,25 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity(new Integer(5)).build();
     }
+    
+    @GET
+    @Path("/get/produces/response/string/noproduces")
+    public Response getRepsonseStringNoProduces()
+    {
+        return Response.status(Status.OK).entity(new String("text")).build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/object/noproduces")
+    public Response getResponseObjectNoProduces()
+    {
+        return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).build();
+    }
+    
+    @GET
+    @Path("/get/produces/response/native/noproduces")
+    public Response getResponseNativeNoProduces()
+    {
+        return Response.status(Status.OK).entity(111).build();
+    }
 }
