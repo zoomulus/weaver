@@ -822,4 +822,12 @@ public class RestServerTestResource
     {
         return Response.status(Status.OK).entity(111).build();
     }
+    
+    @GET
+    @Path("/get/produces/string/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getStringJson()
+    {
+        return "text";
+    }
 }

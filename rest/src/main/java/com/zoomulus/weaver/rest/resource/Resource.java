@@ -166,7 +166,7 @@ public class Resource
         return null;
     }
     
-    private Optional<String> getProducesContentType()
+    private Optional<MediaType> getProducesContentType()
     {
         Annotation producesAnnotation = referencedMethod.getAnnotation(Produces.class);
         if (null == producesAnnotation) producesAnnotation = referencedClass.getAnnotation(Produces.class);
@@ -178,32 +178,14 @@ public class Resource
             // otherwise we can't know what to set it to
             if (1 == contentTypes.length)
             {
-                return Optional.of(contentTypes[0]);
+                try
+                {
+                    return Optional.of(MediaType.valueOf(contentTypes[0]));
+                }
+                catch (IllegalArgumentException e) { }
             }
         }
         return Optional.empty();
-    }
-    
-    private String getStringRepresentationForObject(final Object o)
-    {
-        if (o instanceof String) return (String) o;
-        else if (hasDeclaredToString(o.getClass()))
-        {
-            o.toString();
-        }
-        // Otherwise do a JSON conversion if possible
-        else
-        {
-            try
-            {
-                // TODO: Reuse the same object mapper
-                return new ObjectMapper().writeValueAsString(o);
-            }
-            catch (JsonProcessingException e) { }
-        }
-        
-        // As a last resort use whatever toString gives us
-        return o.toString();
     }
         
     private String getDecodedBody(final String messageBody, final ContentType contentType)
@@ -488,13 +470,68 @@ public class Resource
             return (Response) response;
         }
         
-        final Optional<String> contentType = getProducesContentType();
+        Optional<MediaType> contentType = getProducesContentType();
+        Optional<String> stringRep = Optional.empty();
         
-        return Response
-                .status(Status.OK)
-                .entity(getStringRepresentationForObject(response))
-                .type(contentType.isPresent() ? contentType.get() : MediaType.TEXT_PLAIN)
-                .build();
+        if (contentType.isPresent())
+        {
+            try
+            {
+                // TODO: Reuse the same one
+                stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
+            }
+            catch (JsonProcessingException e)
+            {
+                stringRep = Optional.empty();
+            }
+        }
+        else
+        {
+            if (response instanceof String)
+            {
+                contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                stringRep = Optional.of((String) response);
+            }
+            else if (hasDeclaredToString(response.getClass()))
+            {
+                contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                stringRep = Optional.of(response.toString());
+            }
+            // Otherwise do a JSON conversion if possible
+            else
+            {
+                try
+                {
+                    // TODO: Reuse the same object mapper
+                    stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
+                    contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                }
+                catch (JsonProcessingException e) { }
+            }
+            
+            // As a last resort use whatever toString gives us
+            if (! stringRep.isPresent())
+            {
+                contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                stringRep = Optional.of(response.toString());
+            }
+        }
+        
+        if (stringRep.isPresent())
+        {
+            return Response
+                    .status(Status.OK)
+                    .entity(stringRep.get())
+                    .type(contentType.isPresent() ? contentType.get().toString() : MediaType.TEXT_PLAIN)
+                    .build();
+        }
+        else
+        {
+            return Response
+                    .status(Status.NO_CONTENT)
+                    .entity(null)
+                    .build();
+        }
     }
     
     public Optional<String> getPathParam(final String name)

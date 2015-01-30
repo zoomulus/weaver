@@ -1023,10 +1023,11 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetStringWithProducesJsonReturnsJsonizedString()
+    public void testGetStringWithProducesJsonReturnsJsonizedString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/string/json");
+        verifyOkResult(result, "\"text\"");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
