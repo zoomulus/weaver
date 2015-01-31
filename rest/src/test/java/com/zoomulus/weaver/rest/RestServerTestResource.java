@@ -830,4 +830,60 @@ public class RestServerTestResource
     {
         return "text";
     }
+    
+    @GET
+    @Path("/get/produces/object/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public CustomWithStringCtor getObjectJson()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/produces/native/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public int getNativeJson()
+    {
+        return 111;
+    }
+    
+    @GET
+    @Path("/get/produces/invalid/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public CustomInvalid getInvalidJson()
+    {
+        return new CustomInvalid();
+    }
+    
+    @GET
+    @Path("/get/produces/string/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public String getStringXml()
+    {
+        return "text";
+    }
+    
+    @GET
+    @Path("/get/produces/object/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public CustomWithStringCtor getObjectXml()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/produces/native/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public int getNativeXml()
+    {
+        return 111;
+    }
+    
+    @GET
+    @Path("/get/produces/invalid/xml")
+    @Produces(MediaType.APPLICATION_XML)
+    public CustomInvalid getInvalidXml()
+    {
+        return new CustomInvalid();
+    }
 }

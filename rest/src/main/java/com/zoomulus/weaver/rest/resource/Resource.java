@@ -37,6 +37,7 @@ import org.apache.http.entity.ContentType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
@@ -472,20 +473,30 @@ public class Resource
         
         Optional<MediaType> contentType = getProducesContentType();
         Optional<String> stringRep = Optional.empty();
+        boolean triedJsonConversion = false;
         
         if (contentType.isPresent())
         {
             try
             {
-                // TODO: Reuse the same one
-                stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
+                // TODO: Reuse the same object mappers
+                if (contentType.get().equals(MediaType.APPLICATION_JSON_TYPE))
+                {
+                    triedJsonConversion = true;
+                    stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
+                }
+                else if (contentType.get().equals(MediaType.APPLICATION_XML_TYPE))
+                {
+                    stringRep = Optional.ofNullable(new XmlMapper().writeValueAsString(response));
+                }
             }
             catch (JsonProcessingException e)
             {
-                stringRep = Optional.empty();
+                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
         }
-        else
+        
+        if (! stringRep.isPresent())
         {
             if (response instanceof String)
             {
@@ -498,7 +509,7 @@ public class Resource
                 stringRep = Optional.of(response.toString());
             }
             // Otherwise do a JSON conversion if possible
-            else
+            else if (! triedJsonConversion)
             {
                 try
                 {

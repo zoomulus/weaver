@@ -1031,24 +1031,26 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetObjectWithProducesJsonReturnsJsonizedObject()
+    public void testGetObjectWithProducesJsonReturnsJsonizedObject() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/object/json");
+        verifyOkResult(result, "{\"s\":\"custom\"}");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testGetNativeTypeWithProducesJsonReturnsJsonizedValue()
+    public void testGetNativeTypeWithProducesJsonReturnsJsonizedValue() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/native/json");
+        verifyOkResult(result, "111");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testGetUnJsonifiableObjectWithProducesJsonReturns500()
+    public void testGetUnJsonifiableObjectWithProducesJsonReturns500() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/invalid/json");
+        verifyInternalServerErrorResult(result);
     }
     
     @Test
@@ -1060,31 +1062,34 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetStringWithProducesXmlReturnsXmlizedString()
+    public void testGetStringWithProducesXmlReturnsXmlizedString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/string/xml");
+        verifyOkResult(result, "<String xmlns=\"\">text</String>");
+        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
     @Test
-    public void testGetObjectWithProducesXmlReturnsXmlizedObject()
+    public void testGetObjectWithProducesXmlReturnsXmlizedObject() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/object/xml");
+        verifyOkResult(result, "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>");
+        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
     @Test
-    public void testGetNativeTypeWithProducesXmlReturnsXmlizedValue()
+    public void testGetNativeTypeWithProducesXmlReturnsXmlizedValue() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/native/xml");
+        verifyOkResult(result, "<Integer xmlns=\"\">111</Integer>");
+        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
     @Test
-    public void testGetUnXmlizableObjectWithProducesXmlReturns500()
+    public void testGetUnXmlizableObjectWithProducesXmlReturns500() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("get/produces/invalid/xml");
+        verifyInternalServerErrorResult(result);
     }
     
     @Test
