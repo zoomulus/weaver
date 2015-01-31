@@ -886,4 +886,39 @@ public class RestServerTestResource
     {
         return new CustomInvalid();
     }
+    
+    @GET
+    @Path("/get/produces/string/noproduces")
+    public String getStringNoProduces()
+    {
+        return "text";
+    }
+    
+    @GET
+    @Path("/get/produces/object/noproduces")
+    public CustomWithStringCtor getObjectNoProduces()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/produces/jsonobject/noproduces")
+    public CustomNoToString getJsonizableObjectNoProduces()
+    {
+        return new CustomNoToString("abc", 123);
+    }
+    
+    @GET
+    @Path("/get/produces/nonjsonobject/noproduces")
+    public CustomWithStringCtorChild getNonJsonizableObjectNoProduces()
+    {
+        return new CustomWithStringCtorChild("text");
+    }
+    
+    @GET
+    @Path("/get/produces/native/noproduces")
+    public int getNativeNoProduces()
+    {
+        return 111;
+    }
 }

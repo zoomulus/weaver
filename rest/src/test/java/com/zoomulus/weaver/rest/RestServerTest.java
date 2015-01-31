@@ -1157,75 +1157,56 @@ public class RestServerTest
     }
     
     @Test
-    public void testGetStringWithNoProducesReturnsString()
+    public void testGetStringWithNoProducesReturnsString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/string/noproduces");
+        verifyOkResult(result, "text");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetObjectWithToStringWithNoProducesReturnsString()
+    public void testGetObjectWithToStringWithNoProducesReturnsString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/object/noproduces");
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetJsonizableObjectWithNoProducesReturnsJson()
+    public void testGetJsonizableObjectWithNoProducesReturnsJson() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/jsonobject/noproduces");
+        verifyOkResult(result, "{\"s\":\"abc\",\"i\":123}");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testGetNonJsonizableObjectWithNoProducesReturnsDefaultToString()
+    public void testGetNonJsonizableObjectWithNoProducesReturnsDefaultToString() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result =  new GetRequestResult("/get/produces/nonjsonobject/noproduces");
+        verifyOkResult(result, "text");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testGetNativeTypeWithNoProducesReturnsStringRep()
+    public void testGetNativeTypeWithNoProducesReturnsStringRep() throws ClientProtocolException, IOException
     {
-        // TODO: Check returned response payload
-        // TODO: Check returned Content-Type header
+        final RequestResult result = new GetRequestResult("/get/produces/native/noproduces");
+        verifyOkResult(result, "111");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     // TODO: Handle resources with multiple content types declared in @Produces
+    // TODO: Handle odd or non-standard content types
     
-    // TODO: Intelligent type conversion on the return value based on the @Produces setting.
-    // - If the return type is Response, if the entity is a String we assume that the content
-    //   was already formatted how it is wanted.  Ignore @Produces and return
-    //   the data as it was specified.
-    //   If the entity is not a String, we treat it as though that entity type were returned
-    //   directly.
-    // - Otherwise:
-    //   - If the @Produces type is application/json or application/xml,
-    //     use the mapper to try to convert the object to a string.
-    //   - Else fail with an appropriate error code (500-level).
-    //
-    // TODO: If @Produces is not set, try to make a guess about the return Content-Type.
-    // - If the return type of the resource is String or Response, we are going
-    //   to return the data as-is without making any guesses about how to format it.
-    //   - If the return type is String or the entity in the Response is a String,
-    //     set the return Content-Type to text/plain if @Produces wasn't set.
-    //   - If the return type is a byte[], set the return Content-Type to
+    // TODO: Handle resources returning a stream.
+    // TODO: If the return type is a byte[], set the return Content-Type to
     //     application/octet-stream if @Produces wasn't set
-    //   - Otherwise, if the return type is an object, we should:
-    //     - Check if toString was explicitly set on the object; if so, call toString()
-    //       for the return data and set the Content-Type to text/plain
-    //     - Try to convert the object to JSON and if that works set the Content-Type to
-    //       application/json
-    //     - If nothing else works, call toString() on the object, use that for the
-    //       return data and set the Content-Type to text/plain
-    //
-    // TODO: Verify correct return Content-Type on responses
 
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
-    // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching method
-    // Bubble processing exceptions up somehow... (invalid/unclosed regexes for example)
+    // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching HTTP method
     
 
     private static RestServer server;
