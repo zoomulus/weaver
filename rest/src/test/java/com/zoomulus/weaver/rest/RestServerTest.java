@@ -41,7 +41,8 @@ public class RestServerTest
         private final int status;
         private final String reason;
         private final String content;
-        private final MediaType contentType;
+        private MediaType contentType;
+        private String sContentType;
         
         protected static final String host = "http://localhost:22002/";
         
@@ -65,12 +66,22 @@ public class RestServerTest
             if (null == entity)
             {
                 this.contentType = null;
+                this.sContentType = null;
                 content = null;
             }
             else
             {
                 ContentType ct = ContentType.get(entity);
-                this.contentType = MediaType.valueOf(ct.getMimeType());
+                try
+                {
+                    this.contentType = MediaType.valueOf(ct.getMimeType());
+                    this.sContentType = ct.getMimeType();
+                }
+                catch (IllegalArgumentException e)
+                {
+                    this.contentType = null;
+                    this.sContentType = ct.getMimeType();
+                }
                 InputStream is = httpRsp.getEntity().getContent();
                 ByteBuffer buf = ByteBuffer.allocate(is.available());
                 while (is.available() > 0)
@@ -1196,6 +1207,22 @@ public class RestServerTest
         verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
+    @Test
+    public void testResponseWithCustomContentTypeReturnsCorrectContentType() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/produces/response/custom");
+        verifyOkResult(result, "custom content");
+        verifyContentType(result, "application/z-nonstandard");
+    }
+    
+    @Test
+    public void testStringWithCustomContentTypeReturnsCorrectContentType() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/produces/string/custom");
+        verifyOkResult(result, "custom content");
+        verifyContentType(result, "application/z-nonstandard");
+    }
+    
     // TODO: Handle resources with multiple content types declared in @Produces
     // TODO: Handle odd or non-standard content types
     
@@ -1251,6 +1278,12 @@ public class RestServerTest
     {
         assertEquals(contentType, rr.contentType());
     }
+    
+    private void verifyContentType(final RequestResult rr, final String contentType)
+    {
+        assertEquals(contentType, rr.contentType.toString());
+    }
+    
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception

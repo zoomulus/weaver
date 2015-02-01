@@ -921,4 +921,19 @@ public class RestServerTestResource
     {
         return 111;
     }
+    
+    @GET
+    @Path("/get/produces/response/custom")
+    public Response getResponseProducesNonstandard()
+    {
+        return Response.status(Status.OK).entity("custom content").type("application/z-nonstandard").build();
+    }
+    
+    @GET
+    @Path("/get/produces/string/custom")
+    @Produces("application/z-nonstandard")
+    public String getStringProducesNonstandard()
+    {
+        return "custom content";
+    }
 }

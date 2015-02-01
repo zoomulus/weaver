@@ -500,12 +500,18 @@ public class Resource
         {
             if (response instanceof String)
             {
-                contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                if (! contentType.isPresent())
+                {
+                    contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                }
                 stringRep = Optional.of((String) response);
             }
             else if (hasDeclaredToString(response.getClass()))
             {
-                contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                if (! contentType.isPresent())
+                {
+                    contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                }
                 stringRep = Optional.of(response.toString());
             }
             // Otherwise do a JSON conversion if possible
@@ -515,7 +521,10 @@ public class Resource
                 {
                     // TODO: Reuse the same object mapper
                     stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
-                    contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                    if (! contentType.isPresent())
+                    {
+                        contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                    }
                 }
                 catch (JsonProcessingException e) { }
             }
@@ -523,7 +532,10 @@ public class Resource
             // As a last resort use whatever toString gives us
             if (! stringRep.isPresent())
             {
-                contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                if (! contentType.isPresent())
+                {
+                    contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                }
                 stringRep = Optional.of(response.toString());
             }
         }
