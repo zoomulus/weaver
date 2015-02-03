@@ -56,6 +56,9 @@ public class Resource
     
     Map<String, String> pathParams = Maps.newHashMap();
     
+    static ObjectMapper jsonMapper = new ObjectMapper();
+    static XmlMapper xmlMapper = new XmlMapper();
+    
     // TODO:
     // @Consumes / @Produces
     // Single unnamed parameter - body (input stream, byte array, or String - depending on content type?)
@@ -479,15 +482,14 @@ public class Resource
         {
             try
             {
-                // TODO: Reuse the same object mappers
                 if (contentType.get().equals(MediaType.APPLICATION_JSON_TYPE))
                 {
                     triedJsonConversion = true;
-                    stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
+                    stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                 }
                 else if (contentType.get().equals(MediaType.APPLICATION_XML_TYPE))
                 {
-                    stringRep = Optional.ofNullable(new XmlMapper().writeValueAsString(response));
+                    stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
                 }
             }
             catch (JsonProcessingException e)
@@ -519,8 +521,7 @@ public class Resource
             {
                 try
                 {
-                    // TODO: Reuse the same object mapper
-                    stringRep = Optional.ofNullable(new ObjectMapper().writeValueAsString(response));
+                    stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                     if (! contentType.isPresent())
                     {
                         contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
