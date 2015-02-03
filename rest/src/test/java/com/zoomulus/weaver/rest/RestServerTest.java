@@ -494,6 +494,9 @@ public class RestServerTest
         verifyInternalServerErrorResult(new GetRequestResult("get/matrix/typematch/custominvalid/x;var=test"));
     }
     
+    
+    // Type Conversions
+    
     @Test
     public void testConvertNativeBooleanToResponse() throws ClientProtocolException, IOException
     {
@@ -586,6 +589,16 @@ public class RestServerTest
         verifyOkResult(new GetRequestResult("get/return/map/bob/30/Nowhere"), "{\"city\":\"Nowhere\",\"name\":\"bob\",\"age\":\"30\"}");
     }
     
+    
+    // Http Response Code tests
+    
+    @Test
+    public void testGetHandlerReturns200() throws ClientProtocolException, IOException
+    {
+        final RequestResult rr = new GetRequestResult("get/return/normal");
+        verifyOkResult(rr, "normal");
+    }
+    
     @Test
     public void testHandlerReturnsNullSends204() throws ClientProtocolException, IOException
     {
@@ -600,6 +613,24 @@ public class RestServerTest
         final GetRequestResult rr = new GetRequestResult("get/return/throws");
         verifyInternalServerErrorResult(rr);
     }
+    
+    @Test
+    public void testNonmatchingHandlerSends404() throws ClientProtocolException, IOException
+    {
+        final GetRequestResult result = new GetRequestResult("get/return/missing");
+        verifyNotFoundResult(result);
+    }
+    
+    @Test
+    public void testPostToGetResourceSends405() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new PostRequestResult("get/return/normal");
+        verifyMethodNotAllowedResult(result);
+    }
+    
+    // TODO: 406 (Accept Header)
+    // TODO: 415 (ContentType != @Consumes)
+    // TODO: Custom status
     
     
     
@@ -1223,8 +1254,37 @@ public class RestServerTest
         verifyContentType(result, "application/z-nonstandard");
     }
     
-    // TODO: Handle resources with multiple content types declared in @Produces
-    // TODO: Handle odd or non-standard content types
+    @Test
+    public void testStringWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/produces/string/multipleproduces");
+        verifyOkResult(result, "text");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+    }
+    
+    @Test
+    public void testObjectWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/produces/object/multipleproduces");
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+    }
+    
+    @Test
+    public void testJsonizableObjectWithMultipleProducesReturnsApplicationJson() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/produces/jsonobject/multipleproduces");
+        verifyOkResult(result, "{\"s\":\"abc\",\"i\":123}");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+    }
+    
+    @Test
+    public void testNonJsonizableObjectWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/produces/nonjsonobject/multipleproduces");
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+    }
     
     // TODO: Handle resources returning a stream.
     // TODO: If the return type is a byte[], set the return Content-Type to
@@ -1253,6 +1313,12 @@ public class RestServerTest
         assertEquals(Status.NOT_FOUND.getStatusCode(), rr.status());
         assertEquals(Status.NOT_FOUND.getReasonPhrase(), rr.reason());
         assertTrue(Strings.isNullOrEmpty(rr.content()));
+    }
+    
+    private void verifyMethodNotAllowedResult(final RequestResult rr)
+    {
+        assertEquals(Status.METHOD_NOT_ALLOWED.getStatusCode(), rr.status());
+        assertEquals(Status.METHOD_NOT_ALLOWED.getReasonPhrase(), rr.reason());
     }
     
     private void verifyNotAcceptableResult(final RequestResult rr)

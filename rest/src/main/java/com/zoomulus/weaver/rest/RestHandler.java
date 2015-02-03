@@ -69,6 +69,13 @@ public class RestHandler extends ChannelInboundHandlerAdapter
         return true;
     }
     
+    private void reset()
+    {
+        handlingResource = Optional.empty();
+        handlingResourcePath = Optional.empty();
+        buffer = new StringBuilder();
+    }
+    
     protected Optional<Resource> parseResource(final HttpMethod method, final String requestPath)
     {
         Optional<Resource> resource = Optional.empty();
@@ -78,10 +85,14 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     ResourcePath
                         .withPattern(entry.getKey().getPath())
                         .parse(requestPath);
-            if (rp.isPresent() && entry.getKey().getMethod() == method)
+            if (rp.isPresent())// && entry.getKey().getMethod() == method)
             {
-                handlingResourcePath = rp;
                 resource = Optional.of(entry.getValue());
+                if (entry.getKey().getMethod() == method)
+                {
+                    handlingResourcePath = rp;
+                    return resource;
+                }
             }
         }
         return resource;
@@ -125,13 +136,25 @@ public class RestHandler extends ChannelInboundHandlerAdapter
             else
             {
                 handlingResource = parseResource(request.getMethod(), request.getUri().split("\\?")[0]);
+                FullHttpResponse fullRsp = null;
                 
-                //if (! haveMatchingResource(resourceIdentifier))
-                if (! handlingResource.isPresent() || ! handlingResourcePath.isPresent())
+                if (handlingResource.isPresent() && handlingResource.get().getHttpMethod() != request.getMethod())
                 {
-                    FullHttpResponse fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                    fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                            HttpResponseStatus.METHOD_NOT_ALLOWED);
+                }
+                else if (! handlingResource.isPresent() || ! handlingResourcePath.isPresent())
+                {
+                    fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                             HttpResponseStatus.NOT_FOUND);
-                    
+                }
+                else
+                {
+                    queryParams = new QueryStringDecoder(request.getUri()).parameters();
+                }
+                
+                if (null != fullRsp)
+                {
                     fullRsp.headers().set(HttpHeaders.Names.CONTENT_LENGTH, fullRsp.content().readableBytes());
                     if (isHttpKeepaliveRequest())
                     {
@@ -139,10 +162,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     }
                     
                     ctx.writeAndFlush(fullRsp);
-                }
-                else
-                {
-                    queryParams = new QueryStringDecoder(request.getUri()).parameters();
+                    reset();
                 }
             }
         }
@@ -201,8 +221,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                     }
                     
                     ctx.writeAndFlush(fullRsp);
-                    
-                    buffer = new StringBuilder();
+                    reset();
                 }
             }
         }

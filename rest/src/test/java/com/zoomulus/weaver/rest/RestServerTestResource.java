@@ -400,6 +400,13 @@ public class RestServerTestResource
     }
     
     @GET
+    @Path("get/return/normal")
+    public String getNormal()
+    {
+        return "normal";
+    }
+    
+    @GET
     @Path("get/return/null")
     public String getNull()
     {
@@ -935,5 +942,37 @@ public class RestServerTestResource
     public String getStringProducesNonstandard()
     {
         return "custom content";
+    }
+    
+    @GET
+    @Path("/get/produces/string/multipleproduces")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public String getStringProducesMultiple()
+    {
+        return "text";
+    }
+    
+    @GET
+    @Path("/get/produces/object/multipleproduces")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public CustomWithStringCtor getObjectProducesMultiple()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/produces/jsonobject/multipleproduces")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML})
+    public CustomNoToString getJsonObjectProducesMultiple()
+    {
+        return new CustomNoToString("abc", 123);
+    }
+    
+    @GET
+    @Path("/get/produces/nonjsonobject/multipleproduces")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public CustomWithStringCtorChild getNonJsonObjectProducesMultiple()
+    {
+        return new CustomWithStringCtorChild("custom");
     }
 }
