@@ -139,10 +139,20 @@ public class Resource
     
     private List<ContentType> getRequestContentTypes(final Optional<HttpHeaders> headers)
     {
+        return getContentTypesForHeader(headers, HttpHeaders.Names.CONTENT_TYPE);
+    }
+    
+    private List<ContentType> getAcceptContentTypes(final Optional<HttpHeaders> headers)
+    {
+        return getContentTypesForHeader(headers, HttpHeaders.Names.ACCEPT);
+    }
+    
+    private List<ContentType> getContentTypesForHeader(final Optional<HttpHeaders> headers, final String headerName)
+    {
         final List<ContentType> requestContentTypes = Lists.newArrayList();
         if (headers.isPresent())
         {
-            for (final String cts : headers.get().getAll(HttpHeaders.Names.CONTENT_TYPE))
+            for (final String cts : headers.get().getAll(headerName))
             {
                 try
                 {
@@ -170,26 +180,24 @@ public class Resource
         return null;
     }
     
-    private Optional<MediaType> getProducesContentType()
+    private List<ContentType> getProducesContentTypes()
     {
+        final List<ContentType> contentTypes = Lists.newArrayList();
         Annotation producesAnnotation = referencedMethod.getAnnotation(Produces.class);
         if (null == producesAnnotation) producesAnnotation = referencedClass.getAnnotation(Produces.class);
         if (null != producesAnnotation)
         {
-            final String[] contentTypes = ((Produces)producesAnnotation).value();
-            
-            // Only set the content type if there is exactly one value defined in @Produces;
-            // otherwise we can't know what to set it to
-            if (1 == contentTypes.length)
+            for (final String cts : ((Produces)producesAnnotation).value())
             {
                 try
                 {
-                    return Optional.of(MediaType.valueOf(contentTypes[0]));
+                    final ContentType ct = ContentType.parse(cts);
+                    contentTypes.add(ct);
                 }
-                catch (IllegalArgumentException e) { }
+                catch (ParseException | UnsupportedCharsetException e) { }
             }
         }
-        return Optional.empty();
+        return contentTypes;
     }
         
     private String getDecodedBody(final String messageBody, final ContentType contentType)
@@ -467,27 +475,41 @@ public class Resource
             return Response.status(Status.NO_CONTENT).build();
         }
         
+        final List<ContentType> acceptContentTypes = getAcceptContentTypes(headers);
+        final List<ContentType> producesContentTypes = getProducesContentTypes();
+        
+        Optional<ContentType> producesContentType =
+                acceptContentTypes.isEmpty() ?
+                        (producesContentTypes.size() == 1 ?
+                                Optional.of(producesContentTypes.get(0)) : Optional.empty()) :
+                        Optional.ofNullable(getAgreedContentType(acceptContentTypes, producesContentTypes));
+        
+        Optional<String> stringRep = Optional.empty();
+        boolean triedJsonConversion = false;
+        
+        // It is sub-optimal to do this check here - we could have done this before calling the endpoint
+        if (headers.isPresent() && headers.get().contains(HttpHeaders.Names.ACCEPT) && ! producesContentType.isPresent())
+        {
+            return Response.status(Status.NOT_ACCEPTABLE).build();
+        }
+        
         if (response instanceof Response)
         {
             // We assume the user knew what they were doing.  Return the response unmodified.
             // Do not modify the entity, set the return Content-Type, etc.
             return (Response) response;
-        }
+        }        
         
-        Optional<MediaType> contentType = getProducesContentType();
-        Optional<String> stringRep = Optional.empty();
-        boolean triedJsonConversion = false;
-        
-        if (contentType.isPresent())
+        if (producesContentType.isPresent())
         {
             try
             {
-                if (contentType.get().equals(MediaType.APPLICATION_JSON_TYPE))
+                if (producesContentType.get().getMimeType().equals(MediaType.APPLICATION_JSON))
                 {
                     triedJsonConversion = true;
                     stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                 }
-                else if (contentType.get().equals(MediaType.APPLICATION_XML_TYPE))
+                else if (producesContentType.get().getMimeType().equals(MediaType.APPLICATION_XML))
                 {
                     stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
                 }
@@ -502,17 +524,17 @@ public class Resource
         {
             if (response instanceof String)
             {
-                if (! contentType.isPresent())
+                if (! producesContentType.isPresent())
                 {
-                    contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                    producesContentType = Optional.of(ContentType.TEXT_PLAIN);
                 }
                 stringRep = Optional.of((String) response);
             }
             else if (hasDeclaredToString(response.getClass()))
             {
-                if (! contentType.isPresent())
+                if (! producesContentType.isPresent())
                 {
-                    contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                    producesContentType = Optional.of(ContentType.TEXT_PLAIN);
                 }
                 stringRep = Optional.of(response.toString());
             }
@@ -522,9 +544,9 @@ public class Resource
                 try
                 {
                     stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
-                    if (! contentType.isPresent())
+                    if (! producesContentType.isPresent())
                     {
-                        contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                        producesContentType = Optional.of(ContentType.APPLICATION_JSON);
                     }
                 }
                 catch (JsonProcessingException e) { }
@@ -533,9 +555,9 @@ public class Resource
             // As a last resort use whatever toString gives us
             if (! stringRep.isPresent())
             {
-                if (! contentType.isPresent())
+                if (! producesContentType.isPresent())
                 {
-                    contentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                    producesContentType = Optional.of(ContentType.TEXT_PLAIN);
                 }
                 stringRep = Optional.of(response.toString());
             }
@@ -546,7 +568,7 @@ public class Resource
             return Response
                     .status(Status.OK)
                     .entity(stringRep.get())
-                    .type(contentType.isPresent() ? contentType.get().toString() : MediaType.TEXT_PLAIN)
+                    .type(producesContentType.isPresent() ? producesContentType.get().getMimeType() : MediaType.TEXT_PLAIN)
                     .build();
         }
         else

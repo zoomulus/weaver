@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
@@ -29,6 +31,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.connector.ServerConnector;
 import com.zoomulus.weaver.rest.connector.RestServerConnector;
 
@@ -48,12 +51,24 @@ public class RestServerTest
         
         public RequestResult(final String uri) throws ClientProtocolException, IOException
         {
-            this(uri, null, ContentType.TEXT_PLAIN);
+            this(uri, null, ContentType.TEXT_PLAIN, Maps.newHashMap());
         }
         
         public RequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
         {
+            this(uri, body, contentType, Maps.newHashMap());
+        }
+        
+        public RequestResult(final String uri,
+                final String body,
+                final ContentType contentType,
+                final Map<String, String> headers) throws ClientProtocolException, IOException
+        {
             final Request req = getRequest(uri);
+            for (final Entry<String, String> header : headers.entrySet())
+            {
+                req.addHeader(header.getKey(), header.getValue());
+            }
             if (null != body)
             {
                 req.bodyString(body, contentType);
@@ -101,6 +116,11 @@ public class RestServerTest
         public GetRequestResult(final String uri) throws ClientProtocolException, IOException
         {
             super(uri);
+        }
+        
+        public GetRequestResult(final String uri, final Map<String, String> headers) throws ClientProtocolException, IOException
+        {
+            super(uri, null, ContentType.TEXT_PLAIN, headers);
         }
         
         protected Request getRequest(final String uri)
@@ -628,7 +648,15 @@ public class RestServerTest
         verifyMethodNotAllowedResult(result);
     }
     
-    // TODO: 406 (Accept Header)
+    @Test
+    public void testGetWithNonmatchingAcceptSends406() throws ClientProtocolException, IOException
+    {
+        final Map<String, String> headers = Maps.newHashMap();
+        headers.put("Accept", MediaType.APPLICATION_JSON);
+        final RequestResult result = new GetRequestResult("get/return/applicationxml", headers);
+        verifyNotAcceptableResult(result);
+    }
+    
     // TODO: 415 (ContentType != @Consumes)
     // TODO: Custom status
     

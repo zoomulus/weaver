@@ -421,6 +421,14 @@ public class RestServerTestResource
     }
     
     @GET
+    @Path("get/return/applicationxml")
+    @Produces(MediaType.APPLICATION_XML)
+    public Response getApplicationXml()
+    {
+        return Response.status(Status.OK).type(MediaType.APPLICATION_XML).entity("text").build();
+    }
+    
+    @GET
     @Path("get/queryparams/single")
     public String getQueryParams(@QueryParam("firstname") final String firstName)
     {
