@@ -445,7 +445,7 @@ public class Resource
             
             if (null == contentType && ! acceptedContentTypes.isEmpty())
             {
-                return Response.status(Status.NOT_ACCEPTABLE).build();
+                return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
             }
             
             String decodedBody = getDecodedBody(messageBody, contentType);

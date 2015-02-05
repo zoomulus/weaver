@@ -657,7 +657,14 @@ public class RestServerTest
         verifyNotAcceptableResult(result);
     }
     
-    // TODO: 415 (ContentType != @Consumes)
+    @Test
+    public void testPostWithNonmatchingContentTypeSends415() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new PostRequestResult("post/formparam/single",
+                "{\"type\":\"json\"}", ContentType.APPLICATION_JSON);
+        verifyUnsupportedMediaTypeResult(result);
+    }
+
     // TODO: Custom status
     
     
@@ -902,7 +909,7 @@ public class RestServerTest
     {
         final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
         verifyOkResult(new PostRequestResult("form/post/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "p1=v1");
-        verifyNotAcceptableResult(new PostRequestResult("form/post/single", "p1=v1", ContentType.TEXT_PLAIN));
+        verifyUnsupportedMediaTypeResult(new PostRequestResult("form/post/single", "p1=v1", ContentType.TEXT_PLAIN));
     }
     
     @Test
@@ -1314,6 +1321,8 @@ public class RestServerTest
         verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
+    // TODO: Use Accept header to guide automatic conversion (for String, toString, and JSON conversions)
+    
     // TODO: Handle resources returning a stream.
     // TODO: If the return type is a byte[], set the return Content-Type to
     //     application/octet-stream if @Produces wasn't set
@@ -1354,6 +1363,12 @@ public class RestServerTest
         assertEquals(Status.NOT_ACCEPTABLE.getStatusCode(), rr.status());
         assertEquals(Status.NOT_ACCEPTABLE.getReasonPhrase(), rr.reason());
         assertTrue(Strings.isNullOrEmpty(rr.content()));
+    }
+    
+    private void verifyUnsupportedMediaTypeResult(final RequestResult rr)
+    {
+        assertEquals(Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), rr.status());
+        assertEquals(Status.UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(), rr.reason());
     }
     
     private void verify400Result(final RequestResult rr)
