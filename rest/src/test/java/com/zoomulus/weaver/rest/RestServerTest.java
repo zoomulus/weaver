@@ -664,6 +664,37 @@ public class RestServerTest
                 "{\"type\":\"json\"}", ContentType.APPLICATION_JSON);
         verifyUnsupportedMediaTypeResult(result);
     }
+    
+    @Test
+    public void testEndpointCanReturn201() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new PostRequestResult("post/return/created");
+        assertEquals(Status.CREATED.getStatusCode(), result.status());
+        assertEquals(Status.CREATED.getReasonPhrase(), result.reason());
+    }
+    
+    @Test
+    public void testEndpointCanReturn202() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new PostRequestResult("post/return/accepted");
+        assertEquals(Status.ACCEPTED.getStatusCode(), result.status());
+        assertEquals(Status.ACCEPTED.getReasonPhrase(), result.reason());
+    }
+    
+    @Test
+    public void testEndpointCanReturnAnyValidHttpStatus() throws ClientProtocolException, IOException
+    {
+        RequestResult result = new GetRequestResult("get/return/custom?status=205");
+        assertEquals(205, result.status());
+        result = new GetRequestResult("get/return/custom?status=302");
+        assertEquals(302, result.status());
+        result = new GetRequestResult("get/return/custom?status=409");
+        assertEquals(409, result.status());
+        result = new GetRequestResult("get/return/custom?status=503");
+        assertEquals(503, result.status());
+        result = new GetRequestResult("get/return/custom?status=600");
+        assertEquals(600, result.status());
+    }
 
     // TODO: Custom status
     

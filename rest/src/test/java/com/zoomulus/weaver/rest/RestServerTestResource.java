@@ -428,6 +428,27 @@ public class RestServerTestResource
         return Response.status(Status.OK).type(MediaType.APPLICATION_XML).entity("text").build();
     }
     
+    @POST
+    @Path("post/return/created")
+    public Response endpointCanReturn201()
+    {
+        return Response.status(Status.CREATED).build();
+    }
+    
+    @POST
+    @Path("post/return/accepted")
+    public Response endpointCanReturn202()
+    {
+        return Response.status(Status.ACCEPTED).build();
+    }
+    
+    @GET
+    @Path("get/return/custom")
+    public Response endpointCanReturnCustomStatus(@QueryParam("status") final int status)
+    {
+        return Response.status(status).build();
+    }
+    
     @GET
     @Path("get/queryparams/single")
     public String getQueryParams(@QueryParam("firstname") final String firstName)
