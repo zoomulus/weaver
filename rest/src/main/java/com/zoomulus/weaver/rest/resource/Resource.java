@@ -117,61 +117,59 @@ public class Resource
         return false;
     }
     
-    private List<ContentType> getAcceptedContentTypes()
+    private List<MediaType> getAcceptedContentTypes()
     {
         Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
         if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
-        final List<ContentType> acceptedContentTypes = Lists.newArrayList();
+        final List<MediaType> acceptedContentTypes = Lists.newArrayList();
         if (null != consumesAnnotation)
         {
             for (final String cts : ((Consumes)consumesAnnotation).value())
             {
                 try
                 {
-                    final ContentType ct = ContentType.parse(cts);
-                    acceptedContentTypes.add(ct);
+                    acceptedContentTypes.add(MediaType.valueOf(cts));
                 }
-                catch (ParseException | UnsupportedCharsetException e) { }
+                catch (IllegalArgumentException e) { }
             }
         }
         return acceptedContentTypes;
     }
     
-    private List<ContentType> getRequestContentTypes(final Optional<HttpHeaders> headers)
+    private List<MediaType> getRequestContentTypes(final Optional<HttpHeaders> headers)
     {
         return getContentTypesForHeader(headers, HttpHeaders.Names.CONTENT_TYPE);
     }
     
-    private List<ContentType> getAcceptContentTypes(final Optional<HttpHeaders> headers)
+    private List<MediaType> getAcceptContentTypes(final Optional<HttpHeaders> headers)
     {
         return getContentTypesForHeader(headers, HttpHeaders.Names.ACCEPT);
     }
     
-    private List<ContentType> getContentTypesForHeader(final Optional<HttpHeaders> headers, final String headerName)
+    private List<MediaType> getContentTypesForHeader(final Optional<HttpHeaders> headers, final String headerName)
     {
-        final List<ContentType> requestContentTypes = Lists.newArrayList();
+        final List<MediaType> requestContentTypes = Lists.newArrayList();
         if (headers.isPresent())
         {
             for (final String cts : headers.get().getAll(headerName))
             {
                 try
                 {
-                    final ContentType ct = ContentType.parse(cts);
-                    requestContentTypes.add(ct);
+                    requestContentTypes.add(MediaType.valueOf(cts));
                 }
-                catch (ParseException | UnsupportedCharsetException e) { }
+                catch (IllegalArgumentException e) { }
             }
         }
         return requestContentTypes;
     }
     
-    private ContentType getAgreedContentType(final List<ContentType> requestContentTypes, final List<ContentType> acceptedContentTypes)
+    private MediaType getAgreedContentType(final List<MediaType> requestContentTypes, final List<MediaType> acceptedContentTypes)
     {
-        for (final ContentType rct : requestContentTypes)
+        for (final MediaType rct : requestContentTypes)
         {
-            for (final ContentType act : acceptedContentTypes)
+            for (final MediaType act : acceptedContentTypes)
             {
-                if (rct.getMimeType().equalsIgnoreCase(act.getMimeType()))
+                if (rct.toString().split(";")[0].equalsIgnoreCase(act.toString().split(";")[0]))
                 {
                     return rct;
                 }
@@ -180,56 +178,50 @@ public class Resource
         return null;
     }
     
-    private List<ContentType> getProducesContentTypes()
+    private List<MediaType> getProducesContentTypes(final Object response)
     {
-        final List<ContentType> contentTypes = Lists.newArrayList();
-        Annotation producesAnnotation = referencedMethod.getAnnotation(Produces.class);
-        if (null == producesAnnotation) producesAnnotation = referencedClass.getAnnotation(Produces.class);
-        if (null != producesAnnotation)
+        final List<MediaType> contentTypes = Lists.newArrayList();
+        if (response instanceof Response && ((Response)response).getMediaType() != null)
         {
-            for (final String cts : ((Produces)producesAnnotation).value())
+            contentTypes.add(((Response)response).getMediaType());
+        }
+        else
+        {
+            Annotation producesAnnotation = referencedMethod.getAnnotation(Produces.class);
+            if (null == producesAnnotation) producesAnnotation = referencedClass.getAnnotation(Produces.class);
+            if (null != producesAnnotation)
             {
-                try
+                for (final String cts : ((Produces)producesAnnotation).value())
                 {
-                    final ContentType ct = ContentType.parse(cts);
-                    contentTypes.add(ct);
+                    try
+                    {
+                        contentTypes.add(MediaType.valueOf(cts));
+                    }
+                    catch (IllegalArgumentException e) { }
                 }
-                catch (ParseException | UnsupportedCharsetException e) { }
             }
         }
         return contentTypes;
     }
         
-    private String getDecodedBody(final String messageBody, final ContentType contentType)
+    private String getDecodedBody(final String messageBody, final MediaType contentType)
     {
-        Charset charset = null != contentType ? contentType.getCharset() : CharsetUtil.UTF_8;
-        if (null == charset) charset = CharsetUtil.UTF_8;
         try
         {
-            return URLDecoder.decode(messageBody, charset.name());
+            return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
         }
-        catch (UnsupportedEncodingException e1)
-        {
-            if (charset != CharsetUtil.UTF_8)
-            {
-                try
-                {
-                    return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
-                }
-                catch (UnsupportedEncodingException e2) { }
-            }
-        }
+        catch (UnsupportedEncodingException e) { }
         
         return messageBody;
     }
     
-    private Map<String, List<String>> parseFormData(final String body, final ContentType contentType)
+    private Map<String, List<String>> parseFormData(final String body, final MediaType contentType)
     {
         Map<String, List<String>> formParams = Maps.newHashMap();
         
         if (null == body || null == contentType) return formParams;
         
-        if (! contentType.getMimeType().equalsIgnoreCase(ContentType.APPLICATION_FORM_URLENCODED.getMimeType()))
+        if (! contentType.toString().split(";")[0].equalsIgnoreCase(MediaType.APPLICATION_FORM_URLENCODED))
             return formParams;
         
         if (HttpMethod.POST == httpMethod ||
@@ -425,7 +417,7 @@ public class Resource
         Object response = null;
         try
         {
-            final List<ContentType> acceptedContentTypes = getAcceptedContentTypes();
+            final List<MediaType> acceptedContentTypes = getAcceptedContentTypes();
             
             if (acceptedContentTypes.size() > 0 &&
                     (HttpMethod.GET == httpMethod ||
@@ -440,8 +432,8 @@ public class Resource
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
             
-            final List<ContentType> requestContentTypes = getRequestContentTypes(headers);
-            final ContentType contentType = getAgreedContentType(requestContentTypes, acceptedContentTypes);
+            final List<MediaType> requestContentTypes = getRequestContentTypes(headers);
+            final MediaType contentType = getAgreedContentType(requestContentTypes, acceptedContentTypes);
             
             if (null == contentType && ! acceptedContentTypes.isEmpty())
             {
@@ -475,41 +467,43 @@ public class Resource
             return Response.status(Status.NO_CONTENT).build();
         }
         
-        final List<ContentType> acceptContentTypes = getAcceptContentTypes(headers);
-        final List<ContentType> producesContentTypes = getProducesContentTypes();
+        final List<MediaType> acceptContentTypes = getAcceptContentTypes(headers);
+        final List<MediaType> producesContentTypes = getProducesContentTypes(response);
         
-        Optional<ContentType> producesContentType =
+        Optional<MediaType> producesContentType =
                 acceptContentTypes.isEmpty() ?
                         (producesContentTypes.size() == 1 ?
                                 Optional.of(producesContentTypes.get(0)) : Optional.empty()) :
                         Optional.ofNullable(getAgreedContentType(acceptContentTypes, producesContentTypes));
-        
+                                
         Optional<String> stringRep = Optional.empty();
         boolean triedJsonConversion = false;
         
         // It is sub-optimal to do this check here - we could have done this before calling the endpoint
-        if (headers.isPresent() && headers.get().contains(HttpHeaders.Names.ACCEPT) && ! producesContentType.isPresent())
-        {
-            return Response.status(Status.NOT_ACCEPTABLE).build();
-        }
+//        if (headers.isPresent() && headers.get().contains(HttpHeaders.Names.ACCEPT) && ! producesContentType.isPresent())
+//        {
+//            return Response.status(Status.NOT_ACCEPTABLE).build();
+//        }
         
         if (response instanceof Response)
         {
-            // We assume the user knew what they were doing.  Return the response unmodified.
-            // Do not modify the entity, set the return Content-Type, etc.
+            if (! acceptContentTypes.isEmpty() && ! producesContentType.isPresent())
+            {
+                return Response.status(Status.NOT_ACCEPTABLE).build();
+            }
             return (Response) response;
-        }        
+        }
         
         if (producesContentType.isPresent())
         {
             try
             {
-                if (producesContentType.get().getMimeType().equals(MediaType.APPLICATION_JSON))
+                if (producesContentType.get().toString().equals(MediaType.APPLICATION_JSON))
                 {
                     triedJsonConversion = true;
                     stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                 }
-                else if (producesContentType.get().getMimeType().equals(MediaType.APPLICATION_XML))
+                else if (producesContentType.get().toString().equals(MediaType.APPLICATION_XML))
                 {
                     stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
                 }
@@ -526,7 +520,7 @@ public class Resource
             {
                 if (! producesContentType.isPresent())
                 {
-                    producesContentType = Optional.of(ContentType.TEXT_PLAIN);
+                    producesContentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
                 }
                 stringRep = Optional.of((String) response);
             }
@@ -534,7 +528,7 @@ public class Resource
             {
                 if (! producesContentType.isPresent())
                 {
-                    producesContentType = Optional.of(ContentType.TEXT_PLAIN);
+                    producesContentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
                 }
                 stringRep = Optional.of(response.toString());
             }
@@ -546,7 +540,7 @@ public class Resource
                     stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                     if (! producesContentType.isPresent())
                     {
-                        producesContentType = Optional.of(ContentType.APPLICATION_JSON);
+                        producesContentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
                     }
                 }
                 catch (JsonProcessingException e) { }
@@ -557,9 +551,27 @@ public class Resource
             {
                 if (! producesContentType.isPresent())
                 {
-                    producesContentType = Optional.of(ContentType.TEXT_PLAIN);
+                    producesContentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
                 }
                 stringRep = Optional.of(response.toString());
+            }
+        }
+        
+        if (! producesContentType.isPresent() || (! acceptContentTypes.isEmpty() && acceptContentTypes.contains(producesContentType.get())))
+        {
+            final MediaType pct = producesContentType.get();
+            boolean found = false;
+            for (final MediaType act : acceptContentTypes)
+            {
+                if (pct.toString().split(";")[0].equalsIgnoreCase(act.toString().split(";")[0]))
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (! found)
+            {
+                return Response.status(Status.NOT_ACCEPTABLE).build();
             }
         }
         
@@ -568,7 +580,7 @@ public class Resource
             return Response
                     .status(Status.OK)
                     .entity(stringRep.get())
-                    .type(producesContentType.isPresent() ? producesContentType.get().getMimeType() : MediaType.TEXT_PLAIN)
+                    .type(producesContentType.isPresent() ? producesContentType.get().toString() : MediaType.TEXT_PLAIN)
                     .build();
         }
         else

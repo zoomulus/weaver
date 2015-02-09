@@ -1004,4 +1004,26 @@ public class RestServerTestResource
     {
         return new CustomWithStringCtorChild("custom");
     }
+    
+    
+    @GET
+    @Path("/get/accept/response/singlect")
+    public Response getAcceptMatchResponseCT()
+    {
+        return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).type(MediaType.APPLICATION_JSON).build();
+    }
+    
+    @GET
+    @Path("/get/accept/response/jsonstring")
+    public Response getAcceptResponseStringJson()
+    {
+        return Response.status(Status.OK).entity("text").type(MediaType.APPLICATION_JSON).build();
+    }
+    
+    @GET
+    @Path("/get/accept/string/text")
+    public String getAcceptStringText()
+    {
+        return "text";
+    }
 }

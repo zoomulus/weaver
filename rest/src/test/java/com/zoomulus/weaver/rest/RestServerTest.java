@@ -199,6 +199,13 @@ public class RestServerTest
         }
     }
     
+    private Map<String, String> getAcceptHeader(final String ct)
+    {
+        final Map<String, String> headers = Maps.newHashMap();
+        headers.put("Accept", ct);
+        return headers;
+    }
+    
     
     
     // HTTP Method Tests
@@ -651,9 +658,7 @@ public class RestServerTest
     @Test
     public void testGetWithNonmatchingAcceptSends406() throws ClientProtocolException, IOException
     {
-        final Map<String, String> headers = Maps.newHashMap();
-        headers.put("Accept", MediaType.APPLICATION_JSON);
-        final RequestResult result = new GetRequestResult("get/return/applicationxml", headers);
+        final RequestResult result = new GetRequestResult("get/return/applicationxml", getAcceptHeader(MediaType.APPLICATION_JSON));
         verifyNotAcceptableResult(result);
     }
     
@@ -684,6 +689,7 @@ public class RestServerTest
     @Test
     public void testEndpointCanReturnAnyValidHttpStatus() throws ClientProtocolException, IOException
     {
+        // No 100-level requests here, those have to do with continuation
         RequestResult result = new GetRequestResult("get/return/custom?status=205");
         assertEquals(205, result.status());
         result = new GetRequestResult("get/return/custom?status=302");
@@ -696,9 +702,6 @@ public class RestServerTest
         assertEquals(600, result.status());
     }
 
-    // TODO: Custom status
-    
-    
     
     // QueryParam Tests
     
@@ -1352,16 +1355,124 @@ public class RestServerTest
         verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
+    
+    // Accept/@Produces matching and type conversion
+    
+    @Test
+    public void testAcceptWithResponseMatchingContentType() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/accept/response/singlect", getAcceptHeader(MediaType.APPLICATION_JSON));
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithResponseSpecifyingOtherContentTypeFails() throws ClientProtocolException, IOException
+    {
+        // Even if the response entity could be text/plain.
+        final RequestResult result = new GetRequestResult("/get/accept/response/jsonstring", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyNotAcceptableResult(result);
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithStringReturnsTextPlain() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyOkResult(result, "text");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+    }
+    
+    @Test
+    public void testAcceptJsonWithStringReturnsJsonString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptXmlWithStringReturnsXmlString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithStringAndProducesOtherFails()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithStringAndProducesMultipleSelectsTextPlain()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithObjectReturnsToString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptJsonWithObjectReturnsJsonString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptXmlWithObjectReturnsXmlString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithObjectAndProducesOtherFails()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithObjectAndProducesMultipleSelectsTextPlain()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithNativeReturnsToString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptJsonWithNativeReturnsJsonString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptXmlWithNativeReturnsXmlString()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithNativeAndProducesOtherFails()
+    {
+        
+    }
+    
+    @Test
+    public void testAcceptTextPlainWithNativeAndProducesMultipleSelectsTextPlain()
+    {
+        
+    }
+    
     // TODO: Use Accept header to guide automatic conversion (for String, toString, and JSON conversions)
     
-    // TODO: Handle resources returning a stream.
-    // TODO: If the return type is a byte[], set the return Content-Type to
-    //     application/octet-stream if @Produces wasn't set
-
     // TODO:
     // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
-    // Test return 405 - Method Not Allowed - when calling an endpoint that exists but has nonmatching HTTP method
+    
+    // TODO: Consolidate content-type types
     
 
     private static RestServer server;
