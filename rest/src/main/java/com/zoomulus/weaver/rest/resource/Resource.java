@@ -414,6 +414,7 @@ public class Resource
             final Optional<HttpHeaders> headers,
             final Map<String, List<String>> queryParams)
     {
+        // TODO:  This method - probably the whole class - needs a complete refactor.
         Object response = null;
         try
         {
@@ -477,6 +478,10 @@ public class Resource
                         Optional.ofNullable(getAgreedContentType(acceptContentTypes, producesContentTypes));
                                 
         Optional<String> stringRep = Optional.empty();
+        boolean wantsJson = acceptContentTypes.size() == 1 &&
+                acceptContentTypes.get(0).toString().equalsIgnoreCase(MediaType.APPLICATION_JSON);
+        boolean wantsXml = acceptContentTypes.size() == 1 &&
+                acceptContentTypes.get(0).toString().equalsIgnoreCase(MediaType.APPLICATION_XML);
         boolean triedJsonConversion = false;
         
         // It is sub-optimal to do this check here - we could have done this before calling the endpoint
@@ -516,7 +521,7 @@ public class Resource
         
         if (! stringRep.isPresent())
         {
-            if (response instanceof String)
+            if (response instanceof String && ! wantsJson && ! wantsXml)
             {
                 if (! producesContentType.isPresent())
                 {
@@ -524,7 +529,7 @@ public class Resource
                 }
                 stringRep = Optional.of((String) response);
             }
-            else if (hasDeclaredToString(response.getClass()))
+            else if (hasDeclaredToString(response.getClass()) && ! wantsJson && ! wantsXml)
             {
                 if (! producesContentType.isPresent())
                 {
@@ -537,10 +542,21 @@ public class Resource
             {
                 try
                 {
-                    stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
-                    if (! producesContentType.isPresent())
+                    if (wantsXml)
                     {
-                        producesContentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                        stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
+                        if (! producesContentType.isPresent())
+                        {
+                            producesContentType = Optional.of(MediaType.APPLICATION_XML_TYPE);
+                        }
+                    }
+                    else
+                    {
+                        stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
+                        if (! producesContentType.isPresent())
+                        {
+                            producesContentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                        }
                     }
                 }
                 catch (JsonProcessingException e) { }
@@ -557,7 +573,7 @@ public class Resource
             }
         }
         
-        if (! producesContentType.isPresent() || (! acceptContentTypes.isEmpty() && acceptContentTypes.contains(producesContentType.get())))
+        if (! producesContentType.isPresent() || (! acceptContentTypes.isEmpty()))
         {
             final MediaType pct = producesContentType.get();
             boolean found = false;

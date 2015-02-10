@@ -1383,21 +1383,26 @@ public class RestServerTest
     }
     
     @Test
-    public void testAcceptJsonWithStringReturnsJsonString()
+    public void testAcceptJsonWithStringReturnsJsonString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.APPLICATION_JSON));
+        verifyOkResult(result, "\"text\"");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testAcceptXmlWithStringReturnsXmlString()
+    public void testAcceptXmlWithStringReturnsXmlString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.APPLICATION_XML));
+        verifyOkResult(result, "<String xmlns=\"\">text</String>");
+        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
     @Test
-    public void testAcceptTextPlainWithStringAndProducesOtherFails()
+    public void testAcceptTextPlainWithStringAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.TEXT_HTML));
+        verifyNotAcceptableResult(result);
     }
     
     @Test
