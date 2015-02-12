@@ -1399,79 +1399,104 @@ public class RestServerTest
     }
     
     @Test
-    public void testAcceptTextPlainWithStringAndProducesOtherFails() throws ClientProtocolException, IOException
+    public void testAcceptTextHtmlWithStringAndNoProducesFails() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.TEXT_HTML));
         verifyNotAcceptableResult(result);
     }
     
     @Test
-    public void testAcceptTextPlainWithStringAndProducesMultipleSelectsTextPlain()
+    public void testAcceptTextPlainWithStringAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/string/text/html", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyNotAcceptableResult(result);
     }
     
     @Test
-    public void testAcceptTextPlainWithObjectReturnsToString()
+    public void testAcceptTextPlainWithStringAndProducesMultipleSelectsTextPlain() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/string/text/multipleproduces", getAcceptHeader(MediaType.TEXT_HTML));
+        verifyOkResult(result, "text");
+        verifyContentType(result, MediaType.TEXT_HTML_TYPE);
     }
     
     @Test
-    public void testAcceptJsonWithObjectReturnsJsonString()
+    public void testAcceptTextPlainWithObjectReturnsToString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testAcceptXmlWithObjectReturnsXmlString()
+    public void testAcceptJsonWithObjectReturnsJsonString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.APPLICATION_JSON));
+        verifyOkResult(result, "{\"s\":\"custom\"}");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testAcceptTextPlainWithObjectAndProducesOtherFails()
+    public void testAcceptXmlWithObjectReturnsXmlString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.APPLICATION_XML));
+        verifyOkResult(result, "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>");
+        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
     @Test
-    public void testAcceptTextPlainWithObjectAndProducesMultipleSelectsTextPlain()
+    public void testAcceptTextPlainWithObjectAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/object/text/html", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyNotAcceptableResult(result);
     }
     
     @Test
-    public void testAcceptTextPlainWithNativeReturnsToString()
+    public void testAcceptTextPlainWithObjectAndProducesMultipleSelectsTextPlain() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/object/text/multipleproduces", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyOkResult(result, "custom");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testAcceptJsonWithNativeReturnsJsonString()
+    public void testAcceptTextPlainWithNativeReturnsToString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyOkResult(result, "111");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
     @Test
-    public void testAcceptXmlWithNativeReturnsXmlString()
+    public void testAcceptJsonWithNativeReturnsJsonString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.APPLICATION_JSON));
+        verifyOkResult(result, "111");
+        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testAcceptTextPlainWithNativeAndProducesOtherFails()
+    public void testAcceptXmlWithNativeReturnsXmlString() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.APPLICATION_XML));
+        verifyOkResult(result, "<Integer xmlns=\"\">111</Integer>");
+        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
     @Test
-    public void testAcceptTextPlainWithNativeAndProducesMultipleSelectsTextPlain()
+    public void testAcceptTextPlainWithNativeAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new GetRequestResult("/get/accept/native/text/html", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyNotAcceptableResult(result);
     }
     
-    // TODO: Use Accept header to guide automatic conversion (for String, toString, and JSON conversions)
+    @Test
+    public void testAcceptTextPlainWithNativeAndProducesMultipleSelectsTextPlain() throws ClientProtocolException, IOException
+    {
+        final RequestResult result = new GetRequestResult("/get/accept/native/text/multipleproduces", getAcceptHeader(MediaType.TEXT_PLAIN));
+        verifyOkResult(result, "111");
+        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+    }
     
     // TODO:
     // Test PUT retrieves payload

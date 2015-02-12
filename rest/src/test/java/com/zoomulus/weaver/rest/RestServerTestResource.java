@@ -1026,4 +1026,66 @@ public class RestServerTestResource
     {
         return "text";
     }
+    
+    @GET
+    @Path("/get/accept/string/text/html")
+    @Produces(MediaType.TEXT_HTML)
+    public String getAcceptStringTextHtml()
+    {
+        return "text";
+    }
+    
+    @GET
+    @Path("/get/accept/string/text/multipleproduces")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML})
+    public String getAcceptStringTextProducesMultiple()
+    {
+        return "text";
+    }
+    
+    @GET
+    @Path("/get/accept/object/text")
+    public CustomWithStringCtor getAcceptObjectText()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/accept/object/text/html")
+    @Produces(MediaType.TEXT_HTML)
+    public CustomWithStringCtor getAcceptObjectTextHtml()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/accept/object/text/multipleproduces")
+    @Produces({MediaType.TEXT_HTML, MediaType.TEXT_PLAIN})
+    public CustomWithStringCtor getAcceptObjectTextProducesMultiple()
+    {
+        return new CustomWithStringCtor("custom");
+    }
+    
+    @GET
+    @Path("/get/accept/native/text")
+    public int getAcceptNativeText()
+    {
+        return 111;
+    }
+    
+    @GET
+    @Path("/get/accept/native/text/html")
+    @Produces(MediaType.TEXT_HTML)
+    public int getAcceptNativeTextHtml()
+    {
+        return 111;
+    }
+    
+    @GET
+    @Path("/get/accept/native/text/multipleproduces")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
+    public int getAcceptNativeTextProducesMultiple()
+    {
+        return 111;
+    }
 }

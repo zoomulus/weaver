@@ -518,6 +518,10 @@ public class Resource
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
         }
+        else if (! acceptContentTypes.isEmpty() && ! producesContentTypes.isEmpty())
+        {
+            return Response.status(Status.NOT_ACCEPTABLE).build();
+        }
         
         if (! stringRep.isPresent())
         {
