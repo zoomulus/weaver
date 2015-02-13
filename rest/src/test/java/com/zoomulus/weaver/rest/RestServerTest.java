@@ -1498,8 +1498,200 @@ public class RestServerTest
         verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
     }
     
+    
+    // POST/PUT tests - retrieving non-standard payloads and converting to types
+    @Test
+    public void testPostTextPlainToStringPayloadProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationJsonToStringPayloadProvidesJsonData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationXmlToStringPayloadProvidesXmlData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostOtherContentTypeToStringPayloadProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostToStringPayloadWithoutContentTypeAssumesTextPlain()
+    {
+        
+    }
+    
+    @Test
+    public void testPostToStringPayloadWithConsumesTextPlainProvidesText()
+    {
+        
+    }
+    
+    @Test
+    public void testPostToStringPayloadWithConsumesApplicationJsonProvidesJson()
+    {
+        
+    }
+    
+    @Test
+    public void testPostNonJsonStringPayloadWithConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostToStringPayloadWithConsumesApplicationXmlProvidesXml()
+    {
+        
+    }
+    
+    @Test
+    public void testPostNonXmlStringPayloadWithConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostToStringPayloadWithConsumesOtherProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationJsonToObjectPayloadProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationXmlToObjectPayloadProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextPlainToObjectCallsStringConstructor()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextPlainToObjectCallsValueOf()
+    {
+        
+    }
+    
+    @Test
+    public void testPostOtherContentTypeToObjectFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostJsonStringToObjectPayloadWithConsumesApplicationJsonProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPostNonJsonStringToObjectPayloadWithConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostXmlStringToObjectPayloadWithConsumesApplicationJsonProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPostNonXmlStringToObjectPayloadWithConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextStringToObjectPayloadWithConsumesTextPlainCallsStringCtor()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextStringToObjectPayloadWithConsumesTextPlainCallsValueOf()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationJsonToNativePayloadProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationXmlToNativePayloadProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextPlainToNativeProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPostOtherContentTypeToNativeFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostJsonStringToNativePayloadWithConsumesApplicationJsonProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPostNonJsonStringToNativePayloadWithConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostXmlStringToNativePayloadWithConsumesApplicationXmlProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPostNonXmlStringToNativePayloadWithConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextStringToNativePayloadWithConsumesTextPlainProvidesNative()
+    {
+        
+    }
+    
+    // TODO: Repeat test scenarios above for byte[]
+    // TODO: Repeat test scenarios above for PUT instead of POST
+    // TODO: Ensure that Content-Type and @Consumes match
+
+    
     // TODO:
-    // Test PUT retrieves payload
     // Test proper ordering of resource selection (best match wins)
     
     // TODO: Consolidate content-type types
