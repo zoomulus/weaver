@@ -1500,6 +1500,7 @@ public class RestServerTest
     
     
     // POST/PUT tests - retrieving non-standard payloads and converting to types
+    
     @Test
     public void testPostTextPlainToStringPayloadProvidesRawData()
     {
@@ -1562,6 +1563,12 @@ public class RestServerTest
     
     @Test
     public void testPostToStringPayloadWithConsumesOtherProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTestHtmlStringWithConsumesTextPlainFails()
     {
         
     }
@@ -1633,6 +1640,12 @@ public class RestServerTest
     }
     
     @Test
+    public void testPostTextHtmlToObjectConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
     public void testPostApplicationJsonToNativePayloadProvidesNative()
     {
         
@@ -1657,7 +1670,7 @@ public class RestServerTest
     }
     
     @Test
-    public void testPostJsonStringToNativePayloadWithConsumesApplicationJsonProvidesObject()
+    public void testPostJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative()
     {
         
     }
@@ -1686,10 +1699,312 @@ public class RestServerTest
         
     }
     
-    // TODO: Repeat test scenarios above for byte[]
-    // TODO: Repeat test scenarios above for PUT instead of POST
-    // TODO: Ensure that Content-Type and @Consumes match
-
+    @Test
+    public void testPostTextHtmlToNativeConsumesTextPlainFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationJsonToByteArrayPayloadProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPostApplicationXmlToByteArrayPayloadProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextPlainToByteArrayProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPostAnyContentTypeToByteArrayProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPostJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPostXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPostTextHtmlToByteArrayConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextPlainToStringPayloadProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationJsonToStringPayloadProvidesJsonData()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationXmlToStringPayloadProvidesXmlData()
+    {
+        
+    }
+    
+    @Test
+    public void testPutOtherContentTypeToStringPayloadProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPutToStringPayloadWithoutContentTypeAssumesTextPlain()
+    {
+        
+    }
+    
+    @Test
+    public void testPutToStringPayloadWithConsumesTextPlainProvidesText()
+    {
+        
+    }
+    
+    @Test
+    public void testPutToStringPayloadWithConsumesApplicationJsonProvidesJson()
+    {
+        
+    }
+    
+    @Test
+    public void testPutNonJsonStringPayloadWithConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutToStringPayloadWithConsumesApplicationXmlProvidesXml()
+    {
+        
+    }
+    
+    @Test
+    public void testPutNonXmlStringPayloadWithConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutToStringPayloadWithConsumesOtherProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextHtmlToStringConsumesTextPlainFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationJsonToObjectPayloadProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationXmlToObjectPayloadProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextPlainToObjectCallsStringConstructor()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextPlainToObjectCallsValueOf()
+    {
+        
+    }
+    
+    @Test
+    public void testPutOtherContentTypeToObjectFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutJsonStringToObjectPayloadWithConsumesApplicationJsonProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPutNonJsonStringToObjectPayloadWithConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutXmlStringToObjectPayloadWithConsumesApplicationJsonProvidesObject()
+    {
+        
+    }
+    
+    @Test
+    public void testPutNonXmlStringToObjectPayloadWithConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsStringCtor()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsValueOf()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextHtmlToObjectConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationJsonToNativePayloadProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationXmlToNativePayloadProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextPlainToNativeProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPutOtherContentTypeToNativeFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPutNonJsonStringToNativePayloadWithConsumesApplicationJsonFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutXmlStringToNativePayloadWithConsumesApplicationXmlProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPutNonXmlStringToNativePayloadWithConsumesApplicationXmlFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextStringToNativePayloadWithConsumesTextPlainProvidesNative()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextHtmlToNativeConsumesTextPlainFails()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationJsonToByteArrayPayloadProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPutApplicationXmlToByteArrayPayloadProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextPlainToByteArrayProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPutAnyContentTypeToByteArrayProvidesRawData()
+    {
+        
+    }
+    
+    @Test
+    public void testPutJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPutXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray()
+    {
+        
+    }
+    
+    @Test
+    public void testPutTextHtmlToByteArrayConsumesApplicationXmlFails()
+    {
+        
+    }
+    
     
     // TODO:
     // Test proper ordering of resource selection (best match wins)
