@@ -1088,4 +1088,14 @@ public class RestServerTestResource
     {
         return 111;
     }
+    
+    
+    // Post/Put
+    
+    @POST
+    @Path("/post/textplain/string")
+    public String postTextString(final String payload)
+    {
+        return payload;
+    }
 }

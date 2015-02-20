@@ -11,8 +11,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,9 +30,6 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Value;
 import lombok.experimental.Builder;
 
-import org.apache.http.ParseException;
-import org.apache.http.entity.ContentType;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -42,6 +37,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
 import com.zoomulus.weaver.rest.annotations.StrictParams;
+import com.zoomulus.weaver.rest.contenttype.ContentTypeResolverStrategy;
+import com.zoomulus.weaver.rest.contenttype.IntelligentContentTypeResolverStrategy;
 
 @Value
 @Builder
@@ -58,6 +55,9 @@ public class Resource
     
     static ObjectMapper jsonMapper = new ObjectMapper();
     static XmlMapper xmlMapper = new XmlMapper();
+    
+    ContentTypeResolverStrategy inboundContentTypeResolverStrategy =
+            new IntelligentContentTypeResolverStrategy();
     
     // TODO:
     // @Consumes / @Produces
@@ -204,7 +204,7 @@ public class Resource
         return contentTypes;
     }
         
-    private String getDecodedBody(final String messageBody, final MediaType contentType)
+    private String getDecodedBody(final String messageBody) // , final MediaType contentType)
     {
         try
         {
@@ -215,13 +215,13 @@ public class Resource
         return messageBody;
     }
     
-    private Map<String, List<String>> parseFormData(final String body, final MediaType contentType)
+    private Map<String, List<String>> parseFormData(final String body, final Optional<MediaType> contentType)
     {
         Map<String, List<String>> formParams = Maps.newHashMap();
         
-        if (null == body || null == contentType) return formParams;
+        if (null == body || ! contentType.isPresent()) return formParams;
         
-        if (! contentType.toString().split(";")[0].equalsIgnoreCase(MediaType.APPLICATION_FORM_URLENCODED))
+        if (! contentType.get().toString().split(";")[0].equalsIgnoreCase(MediaType.APPLICATION_FORM_URLENCODED))
             return formParams;
         
         if (HttpMethod.POST == httpMethod ||
@@ -418,9 +418,9 @@ public class Resource
         Object response = null;
         try
         {
-            final List<MediaType> acceptedContentTypes = getAcceptedContentTypes();
+            final List<MediaType> acceptedInboundContentTypes = getAcceptedContentTypes();
             
-            if (acceptedContentTypes.size() > 0 &&
+            if (acceptedInboundContentTypes.size() > 0 &&
                     (HttpMethod.GET == httpMethod ||
                     HttpMethod.HEAD == httpMethod ||
                     HttpMethod.OPTIONS == httpMethod))
@@ -428,22 +428,29 @@ public class Resource
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
             
-            if (acceptedContentTypes.size() == 0 && expectsMessageBody())
+            if (acceptedInboundContentTypes.size() == 0 && expectsMessageBody())
             {
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
             
             final List<MediaType> requestContentTypes = getRequestContentTypes(headers);
-            final MediaType contentType = getAgreedContentType(requestContentTypes, acceptedContentTypes);
             
-            if (null == contentType && ! acceptedContentTypes.isEmpty())
+            String decodedBody = getDecodedBody(messageBody); // , inboundContentType);
+            
+            
+            // TODO
+            final Optional<MediaType> inboundContentType =
+                    inboundContentTypeResolverStrategy.resolve(requestContentTypes, acceptedInboundContentTypes, decodedBody);
+            
+//            final MediaType contentType = getAgreedContentType(requestContentTypes, acceptedInboundContentTypes);
+            
+            
+            if (! inboundContentType.isPresent() && ! acceptedInboundContentTypes.isEmpty())
             {
                 return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
             }
             
-            String decodedBody = getDecodedBody(messageBody, contentType);
-            
-            Map<String, List<String>> formParams = parseFormData(decodedBody, contentType);
+            Map<String, List<String>> formParams = parseFormData(decodedBody, inboundContentType);
             
             Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams);
             if (referencedMethod.getParameters().length != args.length)
@@ -483,12 +490,6 @@ public class Resource
         boolean wantsXml = acceptContentTypes.size() == 1 &&
                 acceptContentTypes.get(0).toString().equalsIgnoreCase(MediaType.APPLICATION_XML);
         boolean triedJsonConversion = false;
-        
-        // It is sub-optimal to do this check here - we could have done this before calling the endpoint
-//        if (headers.isPresent() && headers.get().contains(HttpHeaders.Names.ACCEPT) && ! producesContentType.isPresent())
-//        {
-//            return Response.status(Status.NOT_ACCEPTABLE).build();
-//        }
         
         if (response instanceof Response)
         {

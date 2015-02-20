@@ -1502,9 +1502,10 @@ public class RestServerTest
     // POST/PUT tests - retrieving non-standard payloads and converting to types
     
     @Test
-    public void testPostTextPlainToStringPayloadProvidesRawData()
+    public void testPostTextPlainToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        
+//        final RequestResult result = new PostRequestResult("/post/textplain/string", "text", ContentType.TEXT_PLAIN);
+//        verifyOkResult(result, "text");
     }
     
     @Test
