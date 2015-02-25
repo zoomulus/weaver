@@ -5,6 +5,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.CharsetUtil;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -30,7 +31,9 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Value;
 import lombok.experimental.Builder;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.collect.Lists;
@@ -300,8 +303,9 @@ public class Resource
     private Object[] populateArgs(final String messageBody,
             final ResourcePath resourcePath,
             final Map<String, List<String>> queryParams,
-            final Map<String, List<String>> formParams)
-            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
+            final Map<String, List<String>> formParams,
+            final Optional<MediaType> inboundContentType)
+            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, JsonParseException, JsonMappingException, IOException
     {
         final List<Object> args = Lists.newArrayList();
         
@@ -312,7 +316,43 @@ public class Resource
         {
             if (0 == paramAnnotations.length)
             {
-                args.add(messageBody);
+                boolean added = false;
+                if (inboundContentType.isPresent() && parameterTypes[idx] != String.class)
+                {
+                    if (inboundContentType.get().toString().split(";")[0].equals(MediaType.APPLICATION_JSON))
+                    {
+                        args.add(jsonMapper.readValue(messageBody, parameterTypes[idx]));
+                        added = true;
+                    }
+                    else if (inboundContentType.get().toString().split(";")[0].equals(MediaType.APPLICATION_XML))
+                    {
+                        args.add(xmlMapper.readValue(messageBody, parameterTypes[idx]));
+                        added = true;
+                    }
+                    else if (inboundContentType.get().toString().split(";")[0].equals(MediaType.TEXT_PLAIN))
+                    {
+                        Optional<Constructor<?>> ctor = getStringConstructor(parameterTypes[idx]);
+                        if (ctor.isPresent())
+                        {
+                            args.add(ctor.get().newInstance(messageBody));
+                            added = true;
+                        }
+                        else
+                        {
+                            Optional<Method> valueOf = getValueOfStringMethod(parameterTypes[idx]);
+                            if (valueOf.isPresent())
+                            {
+                                args.add(valueOf.get().invoke(null, messageBody));
+                                added = true;
+                            }
+                        }
+                    }
+                }
+                
+                if (! added)
+                {
+                    args.add(messageBody);
+                }
             }
             else
             {
@@ -428,10 +468,10 @@ public class Resource
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
             
-            if (acceptedInboundContentTypes.size() == 0 && expectsMessageBody())
-            {
-                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-            }
+//            if (acceptedInboundContentTypes.size() == 0 && expectsMessageBody())
+//            {
+//                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+//            }
             
             final List<MediaType> requestContentTypes = getRequestContentTypes(headers);
             
@@ -452,7 +492,7 @@ public class Resource
             
             Map<String, List<String>> formParams = parseFormData(decodedBody, inboundContentType);
             
-            Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams);
+            Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams, inboundContentType);
             if (referencedMethod.getParameters().length != args.length)
             {
                 return Response.status(Status.BAD_REQUEST).build();
@@ -463,6 +503,11 @@ public class Resource
             }
             Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
             response = referencedMethod.invoke(resourceObj, args);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
         }
         catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e)
         {

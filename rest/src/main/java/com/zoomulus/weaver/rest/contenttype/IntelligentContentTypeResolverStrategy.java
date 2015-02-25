@@ -12,7 +12,54 @@ public class IntelligentContentTypeResolverStrategy implements
     public Optional<MediaType> resolve(final List<MediaType> providedContentTypes,
             final List<MediaType> expectedContentTypes, final String message)
     {
-        return getAgreedContentType(providedContentTypes, expectedContentTypes);
+        Optional<MediaType> contentType = getAgreedContentType(providedContentTypes, expectedContentTypes);
+        
+        if (! contentType.isPresent())
+        {
+            if (! providedContentTypes.isEmpty() && expectedContentTypes.isEmpty())
+            {
+                contentType = Optional.of(providedContentTypes.get(0));
+            }
+            else
+            {
+                boolean pctIsText = false;
+                for (final MediaType pct : providedContentTypes)
+                {
+                    if (pct.toString().split(";")[0].equals(MediaType.TEXT_PLAIN))
+                    {
+                        pctIsText = true;
+                        break;
+                    }
+                }
+                if (pctIsText)
+                {
+                    boolean hasJson = false;
+                    boolean hasXml = false;
+                    for (final MediaType mt : expectedContentTypes)
+                    {
+                        if (mt.toString().split(";")[0].equals(MediaType.APPLICATION_JSON))
+                        {
+                            hasJson = true;
+                            break;
+                        }
+                        else if (mt.toString().split(";")[0].equals(MediaType.APPLICATION_XML))
+                        {
+                            hasXml = true; // don't break; we prefer json
+                        }
+                    }
+                    if (hasJson)
+                    {
+                        contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                    }
+                    else if (hasXml)
+                    {
+                        contentType = Optional.of(MediaType.APPLICATION_XML_TYPE);
+                    }
+                }
+            }
+        }
+        
+        return contentType;
     }
     
     private Optional<MediaType> getAgreedContentType(final List<MediaType> requestContentTypes, final List<MediaType> acceptedContentTypes)

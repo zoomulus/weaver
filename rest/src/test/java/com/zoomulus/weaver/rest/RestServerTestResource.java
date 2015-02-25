@@ -1093,9 +1093,93 @@ public class RestServerTestResource
     // Post/Put
     
     @POST
-    @Path("/post/textplain/string")
+    @Path("/post/string")
     public String postTextString(final String payload)
     {
         return payload;
+    }
+    
+    @POST
+    @Path("/post/string/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String postToText(final String payload)
+    {
+        return payload;
+    }
+    
+    @POST
+    @Path("/post/string/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String postToJson(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/json/noconsumes")
+    public String postToJsonNoConsumes(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String postToXml(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/xml/noconsumes")
+    public String postToXmlNoConsumes(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/object/text/noconsumes/stringctor")
+    public String postToTextNoConsumesStringCtor(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/object/text/noconsumes/valueof")
+    public String postToTextNoConsumesValueOf(final CustomValueOfString custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/object/consumes/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String postStringToObjectConsumesJson(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/object/consumes/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String postStringToObjectConsumesXml(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/object/consumes/text/stringctor")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String postStringToObjectConsumesTextStringCtor(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @POST
+    @Path("/post/string/object/consumes/text/valueof")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String postStringToObjectConsumesTextValueOf(final CustomValueOfString custom)
+    {
+        return custom.toString();
     }
 }

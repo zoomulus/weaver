@@ -71,4 +71,13 @@ public class IntelligentContentTypeResolverStrategyTest
         assertTrue(ct.isPresent());
         assertEquals(MediaType.TEXT_PLAIN_TYPE, ct.get());
     }
+    
+    @Test
+    public void testNoExpectedCTReturnsFirstProvidedCT()
+    {
+        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(MediaType.TEXT_PLAIN_TYPE),
+                Lists.newArrayList(), null);
+        assertTrue(ct.isPresent());
+        assertEquals(MediaType.TEXT_PLAIN_TYPE, ct.get());
+    }
 }
