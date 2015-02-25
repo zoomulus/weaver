@@ -331,19 +331,33 @@ public class Resource
                     }
                     else if (inboundContentType.get().toString().split(";")[0].equals(MediaType.TEXT_PLAIN))
                     {
-                        Optional<Constructor<?>> ctor = getStringConstructor(parameterTypes[idx]);
-                        if (ctor.isPresent())
+                        if (parameterTypes[idx].isPrimitive())
                         {
-                            args.add(ctor.get().newInstance(messageBody));
-                            added = true;
+                            final Class<?> parameterType = parameterTypes[idx]; 
+                            if (parameterType == boolean.class) { args.add(Boolean.valueOf(messageBody)); added=true; }
+                            else if (parameterType == byte.class) { args.add(Byte.valueOf(messageBody)); added=true; }
+                            else if (parameterType == short.class) { args.add(Short.valueOf(messageBody)); added=true; }
+                            else if (parameterType == int.class) { args.add(Integer.valueOf(messageBody)); added=true; }
+                            else if (parameterType == long.class) { args.add(Long.valueOf(messageBody)); added=true; }
+                            else if (parameterType == float.class) { args.add(Float.valueOf(messageBody)); added=true; }
+                            else if (parameterType == double.class) { args.add(Double.valueOf(messageBody)); added=true; }                            
                         }
                         else
                         {
-                            Optional<Method> valueOf = getValueOfStringMethod(parameterTypes[idx]);
-                            if (valueOf.isPresent())
+                            Optional<Constructor<?>> ctor = getStringConstructor(parameterTypes[idx]);
+                            if (ctor.isPresent())
                             {
-                                args.add(valueOf.get().invoke(null, messageBody));
+                                args.add(ctor.get().newInstance(messageBody));
                                 added = true;
+                            }
+                            else
+                            {
+                                Optional<Method> valueOf = getValueOfStringMethod(parameterTypes[idx]);
+                                if (valueOf.isPresent())
+                                {
+                                    args.add(valueOf.get().invoke(null, messageBody));
+                                    added = true;
+                                }
                             }
                         }
                     }

@@ -1182,4 +1182,11 @@ public class RestServerTestResource
     {
         return custom.toString();
     }
+    
+    @POST
+    @Path("/post/native")
+    public String postNative(final int v)
+    {
+        return Integer.toString(v);
+    }
 }

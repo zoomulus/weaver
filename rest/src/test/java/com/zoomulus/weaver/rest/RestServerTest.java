@@ -30,6 +30,9 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.connector.ServerConnector;
@@ -1178,7 +1181,7 @@ public class RestServerTest
     public void testGetStringWithProducesXmlReturnsXmlizedString() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("get/produces/string/xml");
-        verifyOkResult(result, "<String xmlns=\"\">text</String>");
+        verifyOkResult(result, "<String>text</String>");
         verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
@@ -1186,7 +1189,7 @@ public class RestServerTest
     public void testGetObjectWithProducesXmlReturnsXmlizedObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("get/produces/object/xml");
-        verifyOkResult(result, "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>");
+        verifyOkResult(result, "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>");
         verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
@@ -1194,7 +1197,7 @@ public class RestServerTest
     public void testGetNativeTypeWithProducesXmlReturnsXmlizedValue() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("get/produces/native/xml");
-        verifyOkResult(result, "<Integer xmlns=\"\">111</Integer>");
+        verifyOkResult(result, "<Integer>111</Integer>");
         verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
@@ -1396,7 +1399,7 @@ public class RestServerTest
     public void testAcceptXmlWithStringReturnsXmlString() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.APPLICATION_XML));
-        verifyOkResult(result, "<String xmlns=\"\">text</String>");
+        verifyOkResult(result, "<String>text</String>");
         verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
@@ -1442,7 +1445,7 @@ public class RestServerTest
     public void testAcceptXmlWithObjectReturnsXmlString() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.APPLICATION_XML));
-        verifyOkResult(result, "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>");
+        verifyOkResult(result, "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>");
         verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
@@ -1481,7 +1484,7 @@ public class RestServerTest
     public void testAcceptXmlWithNativeReturnsXmlString() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.APPLICATION_XML));
-        verifyOkResult(result, "<Integer xmlns=\"\">111</Integer>");
+        verifyOkResult(result, "<Integer>111</Integer>");
         verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
     }
     
@@ -1520,8 +1523,8 @@ public class RestServerTest
     @Test
     public void testPostApplicationXmlToStringPayloadProvidesXmlData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string", "<String xmlns=\"\">text</String>", ContentType.APPLICATION_XML);
-        verifyOkResult(result, "<String xmlns=\"\">text</String>");
+        final RequestResult result = new PostRequestResult("/post/string", "<String>text</String>", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "<String>text</String>");
     }
     
     @Test
@@ -1556,7 +1559,7 @@ public class RestServerTest
     public void testPostToStringPayloadWithConsumesApplicationXmlProvidesXml() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("/post/string/xml",
-                "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
         verifyOkResult(result, "custom");
     }
     
@@ -1585,7 +1588,7 @@ public class RestServerTest
     public void testPostApplicationXmlToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("/post/string/xml/noconsumes",
-                "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
         verifyOkResult(result, "custom");
     }
     
@@ -1628,7 +1631,7 @@ public class RestServerTest
     public void testPostXmlStringToObjectPayloadWithConsumesApplicationXmlProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("/post/string/object/consumes/xml",
-                "<CustomWithStringCtor xmlns=\"\"><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN);
         verifyOkResult(result, "custom");
     }
     
@@ -1661,21 +1664,40 @@ public class RestServerTest
     }
     
     @Test
-    public void testPostApplicationJsonToNativePayloadProvidesNative()
+    public void testPostApplicationJsonToNativePayloadProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "111");
+    }
+    
+    @Ignore
+    @Test
+    public void testPostApplicationXmlToNativePayloadProvidesNative() throws ClientProtocolException, IOException
+    {
+//        final RequestResult result = new PostRequestResult("/post/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+//        verifyOkResult(result, "111");
+        // TODO
+        // Huh.  Jackson's XML deserializer seems broken.
+        // Issue https://github.com/FasterXML/jackson-dataformat-xml/issues/139 has been submitted on this.
+        // The unit test that reproduces the behavior is @Ignored below.
+    }
+    
+    @Ignore
+    @Test
+    public void testXmlDeserializeInt() throws IOException
+    {
+        int i = 111;
+        ObjectMapper mapper = new XmlMapper();
+        String s = mapper.writeValueAsString(i);
+        int i2 = mapper.readValue(s, int.class);
+        assertEquals(i, i2);
     }
     
     @Test
-    public void testPostApplicationXmlToNativePayloadProvidesNative()
+    public void testPostTextPlainToNativeProvidesNative() throws ClientProtocolException, IOException
     {
-        
-    }
-    
-    @Test
-    public void testPostTextPlainToNativeProvidesNative()
-    {
-        
+        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "111");
     }
     
     @Test
