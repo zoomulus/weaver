@@ -8,6 +8,7 @@ import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -317,7 +318,7 @@ public class Resource
             if (0 == paramAnnotations.length)
             {
                 boolean added = false;
-                if (inboundContentType.isPresent() && parameterTypes[idx] != String.class)
+                if (inboundContentType.isPresent() && parameterTypes[idx] != String.class && ! parameterTypes[idx].getName().equals("[B"))
                 {
                     if (inboundContentType.get().toString().split(";")[0].equals(MediaType.APPLICATION_JSON))
                     {
@@ -365,7 +366,14 @@ public class Resource
                 
                 if (! added)
                 {
-                    args.add(messageBody);
+                    if (parameterTypes[idx].getName().equals("[B"))
+                    {
+                        args.add(messageBody.getBytes());
+                    }
+                    else
+                    {
+                        args.add(messageBody);
+                    }
                 }
             }
             else

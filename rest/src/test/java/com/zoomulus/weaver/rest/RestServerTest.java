@@ -1701,93 +1701,108 @@ public class RestServerTest
     }
     
     @Test
-    public void testPostOtherContentTypeToNativeFails()
+    public void testPostOtherContentTypeToNativeFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.TEXT_HTML);
+        verifyInternalServerErrorResult(result);
     }
     
     @Test
-    public void testPostJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative()
+    public void testPostJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/native/consumes/json", "111", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "111");
     }
     
     @Test
-    public void testPostNonJsonStringToNativePayloadWithConsumesApplicationJsonFails()
+    public void testPostNonJsonStringToNativePayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/native/consumes/json", "not json", ContentType.APPLICATION_JSON);
+        verifyUnsupportedMediaTypeResult(result);
     }
-    
+
+    @Ignore
     @Test
     public void testPostXmlStringToNativePayloadWithConsumesApplicationXmlProvidesNative()
     {
-        
+        // TODO - when supported
     }
     
+    @Ignore
     @Test
     public void testPostNonXmlStringToNativePayloadWithConsumesApplicationXmlFails()
     {
-        
+        // TODO
     }
     
     @Test
-    public void testPostTextStringToNativePayloadWithConsumesTextPlainProvidesNative()
+    public void testPostTextStringToNativePayloadWithConsumesTextPlainProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/native/consumes/text", "111", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "111");
     }
     
     @Test
-    public void testPostTextHtmlToNativeConsumesTextPlainFails()
+    public void testPostTextHtmlToNativeConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/native/consumes/text", "111", ContentType.TEXT_HTML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPostApplicationJsonToByteArrayPayloadProvidesByteArray()
+    public void testPostApplicationJsonToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostApplicationXmlToByteArrayPayloadProvidesByteArray()
+    public void testPostApplicationXmlToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostTextPlainToByteArrayProvidesByteArray()
+    public void testPostTextPlainToByteArrayProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostAnyContentTypeToByteArrayProvidesRawData()
+    public void testPostAnyContentTypeToByteArrayProvidesRawData() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.TEXT_HTML);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray()
+    public void testPostJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/json", "bytes", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray()
+    public void testPostXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/xml", "bytes", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray()
+    public void testPostTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/text", "bytes", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPostTextHtmlToByteArrayConsumesApplicationXmlFails()
+    public void testPostTextHtmlToByteArrayConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/json", "bytes", ContentType.TEXT_HTML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test

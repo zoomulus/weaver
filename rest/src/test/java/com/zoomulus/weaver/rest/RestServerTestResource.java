@@ -1189,4 +1189,59 @@ public class RestServerTestResource
     {
         return Integer.toString(v);
     }
+    
+    @POST
+    @Path("/post/native/consumes/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String postNativeConsumesJson(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @POST
+    @Path("/post/native/consumes/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String postNativeConsumesXml(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @POST
+    @Path("/post/native/consumes/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String postNativeConsumesText(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @POST
+    @Path("/post/bytearray")
+    public String postBytes(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
+    
+    @POST
+    @Path("/post/bytearray/consumes/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String postBytesConsumesJson(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
+    
+    @POST
+    @Path("/post/bytearray/consumes/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String postBytesConsumesXml(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
+    
+    @POST
+    @Path("/post/bytearray/consumes/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String postBytesConsumesText(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
 }
