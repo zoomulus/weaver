@@ -157,6 +157,11 @@ public class RestServerTest
             super(uri);
         }
         
+        public PutRequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
+        {
+            super(uri, body, contentType);
+        }
+        
         protected Request getRequest(final String uri)
         {
             return Request.Put(host + uri);
@@ -1570,6 +1575,7 @@ public class RestServerTest
         verifyUnsupportedMediaTypeResult(result);
     }
     
+    // TODO Marker
     @Test
     public void testPostTextHtmlStringWithConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
@@ -1806,63 +1812,67 @@ public class RestServerTest
     }
     
     @Test
-    public void testPutTextPlainToStringPayloadProvidesRawData()
+    public void testPutTextPlainToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string", "text", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "text");
     }
     
     @Test
-    public void testPutApplicationJsonToStringPayloadProvidesJsonData()
+    public void testPutApplicationJsonToStringPayloadProvidesJsonData() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result =  new PutRequestResult("/put/string", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "{\"s\":\"custom\"}");        
     }
     
     @Test
-    public void testPutApplicationXmlToStringPayloadProvidesXmlData()
+    public void testPutApplicationXmlToStringPayloadProvidesXmlData() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string", "<String>text</String>", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "<String>text</String>");        
     }
     
     @Test
-    public void testPutOtherContentTypeToStringPayloadProvidesRawData()
+    public void testPutOtherContentTypeToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string", "<html>hi</html>", ContentType.TEXT_HTML);
+        verifyOkResult(result, "<html>hi</html>");        
     }
     
     @Test
-    public void testPutToStringPayloadWithoutContentTypeAssumesTextPlain()
+    public void testPutToStringPayloadWithConsumesTextPlainProvidesText() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/text", "text", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "text");        
     }
     
     @Test
-    public void testPutToStringPayloadWithConsumesTextPlainProvidesText()
+    public void testPutToStringPayloadWithConsumesApplicationJsonProvidesJson() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/json", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "custom");        
     }
     
     @Test
-    public void testPutToStringPayloadWithConsumesApplicationJsonProvidesJson()
+    public void testPutNonJsonStringPayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/json", "not json", ContentType.TEXT_PLAIN);
+        verifyUnsupportedMediaTypeResult(result);        
     }
     
     @Test
-    public void testPutNonJsonStringPayloadWithConsumesApplicationJsonFails()
+    public void testPutToStringPayloadWithConsumesApplicationXmlProvidesXml() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/xml",
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "custom");        
     }
     
     @Test
-    public void testPutToStringPayloadWithConsumesApplicationXmlProvidesXml()
+    public void testPutNonXmlStringPayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        
-    }
-    
-    @Test
-    public void testPutNonXmlStringPayloadWithConsumesApplicationXmlFails()
-    {
-        
+        final RequestResult result =  new PutRequestResult("/put/string/xml", "not xml", ContentType.TEXT_PLAIN);
+        verifyUnsupportedMediaTypeResult(result);        
     }
     
     @Test

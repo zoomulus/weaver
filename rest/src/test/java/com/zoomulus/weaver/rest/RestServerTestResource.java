@@ -1244,4 +1244,35 @@ public class RestServerTestResource
     {
         return new String(bytes);
     }
+    
+    @PUT
+    @Path("/put/string")
+    public String putTextString(final String payload)
+    {
+        return payload;
+    }
+
+    @PUT
+    @Path("/put/string/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String putToText(final String payload)
+    {
+        return payload;
+    }
+    
+    @PUT
+    @Path("/put/string/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String putToJson(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/string/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String putToXml(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
 }
