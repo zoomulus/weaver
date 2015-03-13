@@ -1,4 +1,5 @@
 [![Stories in Ready](https://badge.waffle.io/zoomulus/weaver.png?label=ready&title=Ready)](https://waffle.io/zoomulus/weaver)
+[![Stories in In Progress](https://badge.waffle.io/zoomulus/weaver.png?label=in%20progress&title=In%20Progress)](https://waffle.io/zoomulus/weaver)
 #Weaver
 
 Weaver is a collection of embeddable, Netty-based web servers that can be used to quickly create web services.  Weaver allows you to build functioning embedded web servers in only a few lines of code so you can quickly focus on your business logic.
