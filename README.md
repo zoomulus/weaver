@@ -6,9 +6,9 @@ Weaver is a collection of embeddable, Netty-based web servers that can be used t
 
 Weaver includes:
 
+* Weaver-HTTP - A basic HTTP 1.1 web server optimized for web services
 * Weaver-REST - A basic REST web server with JAX-RS 2.0 support
-* Weaver-SIP - A basic SIP server, using the same metaphor as Weaver-REST, with custom annotations specific to SIP
-* Weaver-XMPP - A basic XMPP server, using the same metaphor as Weaver-REST, with custom annotations specific to XMPP
+* Weaver-??? - Who knows?
 
 Weaver is a work in progress and is not yet ready for use in anything real.
 
