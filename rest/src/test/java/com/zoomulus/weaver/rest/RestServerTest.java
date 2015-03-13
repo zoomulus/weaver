@@ -1575,7 +1575,6 @@ public class RestServerTest
         verifyUnsupportedMediaTypeResult(result);
     }
     
-    // TODO Marker
     @Test
     public void testPostTextHtmlStringWithConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
@@ -1676,27 +1675,29 @@ public class RestServerTest
         verifyOkResult(result, "111");
     }
     
-    @Ignore
     @Test
-    public void testPostApplicationXmlToNativePayloadProvidesNative() throws ClientProtocolException, IOException
+    public void testPostApplicationXmlToNativePayloadFails() throws ClientProtocolException, IOException
     {
-//        final RequestResult result = new PostRequestResult("/post/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
-//        verifyOkResult(result, "111");
-        // TODO
-        // Huh.  Jackson's XML deserializer seems broken.
-        // Issue https://github.com/FasterXML/jackson-dataformat-xml/issues/139 has been submitted on this.
-        // The unit test that reproduces the behavior is @Ignored below.
-    }
-    
-    @Ignore
-    @Test
-    public void testXmlDeserializeInt() throws IOException
-    {
-        int i = 111;
-        ObjectMapper mapper = new XmlMapper();
-        String s = mapper.writeValueAsString(i);
-        int i2 = mapper.readValue(s, int.class);
-        assertEquals(i, i2);
+        final RequestResult result = new PostRequestResult("/post/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        verifyUnsupportedMediaTypeResult(result);
+        
+        // This appears at first glance to be broken, but actually it is more true that deserialization
+        // of scalar type representations to scalar types is generally unsupported by the spec implemented
+        // by Jackson, and only by luck does it work for JSON at all.  This is primarily due to the fact that when
+        // a scalar is serialized into JSON, there is no "object" wrapper around the value, which there
+        // is in XML.  It is this START_OBJECT token at the start of the XML stream that is throwing
+        // the Jackson parser off and making it so this deserialization does not work as you might expect.
+        //
+        // Issue https://github.com/FasterXML/jackson-dataformat-xml/issues/139 was submitted for this issue.
+        // I tried to write a patch but the way jackson-dataformat-xml is implemented makes it
+        // extremely difficult to support this functionality without a significant redesign.
+        // I came up with a hacky patch (https://github.com/FasterXML/jackson-dataformat-xml/issues/140)
+        // but they had concerns which, once explained to me, I share.
+        //
+        // So the result is that deserialization of XML to native types is not supported.
+        // JSON works though.
+        //
+        // -MR
     }
     
     @Test
@@ -1727,18 +1728,18 @@ public class RestServerTest
         verifyUnsupportedMediaTypeResult(result);
     }
 
-    @Ignore
     @Test
-    public void testPostXmlStringToNativePayloadWithConsumesApplicationXmlProvidesNative()
+    public void testPostXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        // TODO - when supported
+        final RequestResult result = new PostRequestResult("/post/native/consumes/xml", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
-    @Ignore
     @Test
-    public void testPostNonXmlStringToNativePayloadWithConsumesApplicationXmlFails()
+    public void testPostNonXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        // TODO
+        final RequestResult result = new PostRequestResult("/post/native/consumes/xml", "not xml", ContentType.APPLICATION_XML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
@@ -1876,195 +1877,222 @@ public class RestServerTest
     }
     
     @Test
-    public void testPutToStringPayloadWithConsumesOtherProvidesRawData()
+    public void testPutTextHtmlToStringConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/text", "<html>hi</html>", ContentType.TEXT_HTML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutTextHtmlToStringConsumesTextPlainFails()
+    public void testPutApplicationJsonToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/json/noconsumes", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutApplicationJsonToObjectPayloadProvidesObject()
+    public void testPutApplicationXmlToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/xml/noconsumes",
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutApplicationXmlToObjectPayloadProvidesObject()
+    public void testPutTextPlainToObjectCallsStringConstructor() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/stringctor", "custom", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutTextPlainToObjectCallsStringConstructor()
+    public void testPutTextPlainToObjectCallsValueOf() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/valueof", "custom", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutTextPlainToObjectCallsValueOf()
+    public void testPutOtherContentTypeToObjectFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/valueof", "custom", ContentType.TEXT_HTML);
+        verifyInternalServerErrorResult(result);
     }
     
     @Test
-    public void testPutOtherContentTypeToObjectFails()
+    public void testPutJsonStringToObjectPayloadWithConsumesApplicationJsonProvidesObject() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutJsonStringToObjectPayloadWithConsumesApplicationJsonProvidesObject()
+    public void testPutNonJsonStringToObjectPayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "not json", ContentType.TEXT_PLAIN);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutNonJsonStringToObjectPayloadWithConsumesApplicationJsonFails()
+    public void testPutXmlStringToObjectPayloadWithConsumesApplicationJsonProvidesObject() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/xml",
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutXmlStringToObjectPayloadWithConsumesApplicationJsonProvidesObject()
+    public void testPutNonXmlStringToObjectPayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/xml", "not xml", ContentType.TEXT_PLAIN);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutNonXmlStringToObjectPayloadWithConsumesApplicationXmlFails()
+    public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsStringCtor() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/text/stringctor", "custom", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsStringCtor()
+    public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsValueOf() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/text/valueof", "custom", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "custom");
     }
     
     @Test
-    public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsValueOf()
+    public void testPutTextHtmlToObjectConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_HTML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutTextHtmlToObjectConsumesApplicationJsonFails()
+    public void testPutApplicationJsonToNativePayloadProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "111");
     }
     
     @Test
-    public void testPutApplicationJsonToNativePayloadProvidesNative()
+    public void testPutApplicationXmlToNativePayloadFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutApplicationXmlToNativePayloadProvidesNative()
+    public void testPutTextPlainToNativeProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "111");
     }
     
     @Test
-    public void testPutTextPlainToNativeProvidesNative()
+    public void testPutOtherContentTypeToNativeFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.TEXT_HTML);
+        verifyInternalServerErrorResult(result);
     }
     
     @Test
-    public void testPutOtherContentTypeToNativeFails()
+    public void testPutJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native/consumes/json", "111", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "111");
     }
     
     @Test
-    public void testPutJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative()
+    public void testPutNonJsonStringToNativePayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native/consumes/json", "not json", ContentType.APPLICATION_JSON);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutNonJsonStringToNativePayloadWithConsumesApplicationJsonFails()
+    public void testPutXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native/consumes/xml", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutXmlStringToNativePayloadWithConsumesApplicationXmlProvidesNative()
+    public void testPutNonXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native/consumes/xml", "not xml", ContentType.APPLICATION_XML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutNonXmlStringToNativePayloadWithConsumesApplicationXmlFails()
+    public void testPutTextStringToNativePayloadWithConsumesTextPlainProvidesNative() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("put/native/consumes/text", "111", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "111");
     }
     
     @Test
-    public void testPutTextStringToNativePayloadWithConsumesTextPlainProvidesNative()
+    public void testPutTextHtmlToNativeConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/native/consumes/text", "111", ContentType.TEXT_HTML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
-    public void testPutTextHtmlToNativeConsumesTextPlainFails()
+    public void testPutApplicationJsonToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutApplicationJsonToByteArrayPayloadProvidesByteArray()
+    public void testPutApplicationXmlToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutApplicationXmlToByteArrayPayloadProvidesByteArray()
+    public void testPutTextPlainToByteArrayProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutTextPlainToByteArrayProvidesByteArray()
+    public void testPutAnyContentTypeToByteArrayProvidesRawData() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.TEXT_HTML);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutAnyContentTypeToByteArrayProvidesRawData()
+    public void testPutJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/json", "bytes", ContentType.APPLICATION_JSON);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray()
+    public void testPutXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/xml", "bytes", ContentType.APPLICATION_XML);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray()
+    public void testPutTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray() throws ClientProtocolException, IOException
     {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/text", "bytes", ContentType.TEXT_PLAIN);
+        verifyOkResult(result, "bytes");
     }
     
     @Test
-    public void testPutTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray()
+    public void testPutTextHtmlToByteArrayConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        
-    }
-    
-    @Test
-    public void testPutTextHtmlToByteArrayConsumesApplicationXmlFails()
-    {
-        
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/json", "bytes", ContentType.TEXT_HTML);
+        verifyUnsupportedMediaTypeResult(result);
     }
     
     

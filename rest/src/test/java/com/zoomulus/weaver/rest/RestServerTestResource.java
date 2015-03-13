@@ -1275,4 +1275,126 @@ public class RestServerTestResource
     {
         return custom.toString();
     }
+    
+    @PUT
+    @Path("/put/string/json/noconsumes")
+    public String putToJsonNoConsumes(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/string/xml/noconsumes")
+    public String putToXmlNoConsumes(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/object/text/noconsumes/stringctor")
+    public String putToTextNoConsumesStringCtor(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/object/text/noconsumes/valueof")
+    public String putToTextNoConsumesValueOf(final CustomValueOfString custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/string/object/consumes/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String putStringToObjectConsumesJson(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/string/object/consumes/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String putStringToObjectConsumesXml(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/string/object/consumes/text/stringctor")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String putStringToObjectConsumesTextStringCtor(final CustomWithStringCtor custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/string/object/consumes/text/valueof")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String putStringToObjectConsumesTextValueOf(final CustomValueOfString custom)
+    {
+        return custom.toString();
+    }
+    
+    @PUT
+    @Path("/put/native")
+    public String putNative(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @PUT
+    @Path("/put/native/consumes/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String putNativeConsumesJson(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @PUT
+    @Path("/put/native/consumes/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String putNativeConsumesXml(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @PUT
+    @Path("/put/native/consumes/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String putNativeConsumesText(final int v)
+    {
+        return Integer.toString(v);
+    }
+    
+    @PUT
+    @Path("/put/bytearray")
+    public String putBytes(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
+    
+    @PUT
+    @Path("/put/bytearray/consumes/json")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String putBytesConsumesJson(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
+    
+    @PUT
+    @Path("/put/bytearray/consumes/xml")
+    @Consumes(MediaType.APPLICATION_XML)
+    public String putBytesConsumesXml(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
+    
+    @PUT
+    @Path("/put/bytearray/consumes/text")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public String putBytesConsumesText(final byte[] bytes)
+    {
+        return new String(bytes);
+    }
 }
