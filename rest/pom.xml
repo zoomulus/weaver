@@ -3,11 +3,11 @@
   <parent>
     <groupId>com.zoomulus</groupId>
     <artifactId>weaver-parent</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <groupId>com.zoomulus</groupId>
   <artifactId>weaver-rest</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <name>weaver-rest</name>
   <description>Zoomulus Weaver embedded REST server</description>
   <dependencies>
