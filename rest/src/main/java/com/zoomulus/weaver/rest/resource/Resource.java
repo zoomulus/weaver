@@ -8,7 +8,6 @@ import io.netty.util.CharsetUtil;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -64,20 +63,12 @@ public class Resource
             new IntelligentContentTypeResolverStrategy();
     
     // TODO:
-    // @Consumes / @Produces
-    // Single unnamed parameter - body (input stream, byte array, or String - depending on content type?)
-    // Support List<PathSegment> (maybe)
     // Handle javax.ws.rs.WebApplicationException (chap 7)
-    // Support providing annotations on an interface, not implementation
-    // Should work on subclasses also, but subclass must still have @Path annotation
     // Support all injected parameter types:
-    //  - QueryParam
-    //  - FormParam
     //  - HeaderParam
     //  - CookieParam
     //  - BeanParam
     //  - Context
-    //  - DefaultValue
     //  - Encoded
     // Support ParamConverter<T>
     // Ensure most optimal match works
@@ -500,7 +491,6 @@ public class Resource
             String decodedBody = getDecodedBody(messageBody); // , inboundContentType);
             
             
-            // TODO
             final Optional<MediaType> inboundContentType =
                     inboundContentTypeResolverStrategy.resolve(requestContentTypes, acceptedInboundContentTypes, decodedBody);
             

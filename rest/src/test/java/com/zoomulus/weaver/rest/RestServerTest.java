@@ -30,9 +30,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.connector.ServerConnector;
@@ -979,38 +976,7 @@ public class RestServerTest
     {
         verifyInternalServerErrorResult(new OptionsRequestResult("/options/consumes"));
     }
-    
-    // I'm not sure about this one but I think I want to try it out.
-    // What we are basically saying here is we should never do a
-    // POST, PUT, or DELETE we expect a message body but
-    // the Consumes content-type is not defined.  This should
-    // cover the bulk of the proactive error-checking cases.
-    //
-    // Note that this has nothing to do with whether the requester
-    // sends data in the payload - it has to do with whether
-    // the resource claims to expect a message body but doesn't
-    // say what content-type it thinks it is.  This would usually
-    // be a coding error so we are trying to surface it.
-    //
-    // TODO: Reconsider in light of the intellegent content type determination thingy.
-//    @Test
-//    public void testPostMessageBodyWithoutConsumesReturns500() throws ClientProtocolException, IOException
-//    {
-//        verifyInternalServerErrorResult(new PostRequestResult("/post/bodywithnoconsumes", "body", ContentType.TEXT_PLAIN));
-//    }
-//    
-//    @Test
-//    public void testPutMessageBodyWithoutConsumesReturns500() throws ClientProtocolException, IOException
-//    {
-//        verifyInternalServerErrorResult(new PutRequestResult("/put/bodywithnoconsumes"));
-//    }
-//    
-//    @Test
-//    public void testDeleteMessageBodyWithoutConsumesReturns500() throws ClientProtocolException, IOException
-//    {
-//        verifyInternalServerErrorResult(new DeleteRequestResult("/delete/bodywithnoconsumes"));
-//    }
-    
+        
     
     // We are not going to support this for now.
     // The spec allows for an endpoint to accept and deliver multiple content types, but
@@ -2096,12 +2062,6 @@ public class RestServerTest
     }
     
     
-    // TODO:
-    // Test proper ordering of resource selection (best match wins)
-    
-    // TODO: Consolidate content-type types
-    
-
     private static RestServer server;
     private final String json = "{ \"property\" : \"value\", \"array\" : [1, 2, 3], \"embedded\" : { \"ep\" : \"ev\" } }";
     private final String xml = "<xml><mynode myattr=\"myval\">text</mynode></xml>";
