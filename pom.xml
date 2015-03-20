@@ -116,6 +116,7 @@
 	<modules>
 		<module>core</module>
 		<module>rest</module>
+		<module>http</module>
 	</modules>
 	<dependencies>
 		<dependency>
