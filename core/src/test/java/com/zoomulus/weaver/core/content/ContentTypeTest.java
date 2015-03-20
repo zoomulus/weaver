@@ -1,6 +1,9 @@
 package com.zoomulus.weaver.core.content;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.netty.util.CharsetUtil;
 
@@ -10,7 +13,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.junit.Test;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class ContentTypeTest
@@ -18,32 +20,16 @@ public class ContentTypeTest
     @Test
     public void testConstruct()
     {
-        final ContentType ct = new ContentType(MediaType.APPLICATION_JSON_TYPE, CharsetUtil.UTF_16.name());
-        assertEquals(MediaType.APPLICATION_JSON_TYPE, ct.getMediaType());
+        final ContentType ct = new ContentType(MediaType.APPLICATION_JSON, CharsetUtil.UTF_16.name());
+        assertEquals(ContentType.APPLICATION_JSON, ct.getMediaType());
         assertEquals(CharsetUtil.UTF_16.name(), ct.getEncoding());
     }
     
     @Test
     public void testConstructWithoutEncoding()
     {
-        final ContentType ct = new ContentType(MediaType.APPLICATION_JSON_TYPE);
-        assertEquals(MediaType.APPLICATION_JSON_TYPE, ct.getMediaType());
-        assertEquals(CharsetUtil.UTF_8.name(), ct.getEncoding());
-    }
-    
-    @Test
-    public void testConstructWithString()
-    {
         final ContentType ct = new ContentType(MediaType.APPLICATION_JSON);
-        assertEquals(MediaType.APPLICATION_JSON_TYPE, ct.getMediaType());
-        assertEquals(CharsetUtil.UTF_8.name(), ct.getEncoding());
-    }
-    
-    @Test
-    public void testConstructWithStringAndEncoding()
-    {
-        final ContentType ct = new ContentType(MediaType.APPLICATION_JSON, CharsetUtil.UTF_8.name());
-        assertEquals(MediaType.APPLICATION_JSON_TYPE, ct.getMediaType());
+        assertEquals(ContentType.APPLICATION_JSON, ct.getMediaType());
         assertEquals(CharsetUtil.UTF_8.name(), ct.getEncoding());
     }
     
@@ -52,7 +38,7 @@ public class ContentTypeTest
     {
         try
         {
-            new ContentType((String)null);
+            new ContentType(null);
             fail();
         }
         catch (NullPointerException e) { }
@@ -73,28 +59,15 @@ public class ContentTypeTest
     public void testConstructWithThreePartMediaType()
     {
         final ContentType ct = new ContentType("a/b/c");
-        assertEquals("a", ct.getMediaType().getType());
-        assertEquals("b/c", ct.getMediaType().getSubtype());
+        assertEquals("a/b/c", ct.getMediaType());
     }
     
     @Test
     public void testConstructCustom()
     {
-        final MediaType fakeMediaType = new MediaType("application", "fake");
-        final ContentType ct = new ContentType(fakeMediaType);
-        assertEquals(fakeMediaType, ct.getMediaType());
+        final ContentType ct = new ContentType("application/fake");
+        assertEquals("application/fake", ct.getMediaType());
         assertEquals(CharsetUtil.UTF_8.name(), ct.getEncoding());
-    }
-    
-    @Test
-    public void testConstructNullMediaTypeThrowsException()
-    {
-        try
-        {
-            new ContentType((MediaType)null);
-            fail();
-        }
-        catch (NullPointerException e) { }
     }
     
     @Test
@@ -102,10 +75,16 @@ public class ContentTypeTest
     {
         try
         {
-            new ContentType(MediaType.APPLICATION_JSON_TYPE, null);
+            new ContentType(MediaType.APPLICATION_JSON, null);
             fail();
         }
         catch (NullPointerException e) { }
+    }
+    
+    @Test
+    public void testToString()
+    {
+        assertEquals("application/json;UTF-8", ContentType.APPLICATION_JSON_TYPE.toString());
     }
     
     @Test
@@ -130,19 +109,19 @@ public class ContentTypeTest
             assertEquals(ct, ContentType.valueOf(m.get(ct)));
         }
         
-        final Map<ContentType, MediaType> m2 = Maps.newHashMap();
-        m2.put(ContentType.APPLICATION_ATOM_XML_TYPE, MediaType.APPLICATION_ATOM_XML_TYPE);
-        m2.put(ContentType.APPLICATION_FORM_URLENCODED_TYPE, MediaType.APPLICATION_FORM_URLENCODED_TYPE);
-        m2.put(ContentType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON_TYPE);
-        m2.put(ContentType.APPLICATION_OCTET_STREAM_TYPE, MediaType.APPLICATION_OCTET_STREAM_TYPE);
-        m2.put(ContentType.APPLICATION_SVG_XML_TYPE, MediaType.APPLICATION_SVG_XML_TYPE);
-        m2.put(ContentType.APPLICATION_XHTML_XML_TYPE, MediaType.APPLICATION_XHTML_XML_TYPE);
-        m2.put(ContentType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
-        m2.put(ContentType.MULTIPART_FORM_DATA_TYPE, MediaType.MULTIPART_FORM_DATA_TYPE);
-        m2.put(ContentType.TEXT_HTML_TYPE, MediaType.TEXT_HTML_TYPE);
-        m2.put(ContentType.TEXT_PLAIN_TYPE, MediaType.TEXT_PLAIN_TYPE);
-        m2.put(ContentType.TEXT_XML_TYPE, MediaType.TEXT_XML_TYPE);
-        m2.put(ContentType.WILDCARD_TYPE, MediaType.WILDCARD_TYPE);
+        final Map<ContentType, String> m2 = Maps.newHashMap();
+        m2.put(ContentType.APPLICATION_ATOM_XML_TYPE, MediaType.APPLICATION_ATOM_XML);
+        m2.put(ContentType.APPLICATION_FORM_URLENCODED_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+        m2.put(ContentType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON);
+        m2.put(ContentType.APPLICATION_OCTET_STREAM_TYPE, MediaType.APPLICATION_OCTET_STREAM);
+        m2.put(ContentType.APPLICATION_SVG_XML_TYPE, MediaType.APPLICATION_SVG_XML);
+        m2.put(ContentType.APPLICATION_XHTML_XML_TYPE, MediaType.APPLICATION_XHTML_XML);
+        m2.put(ContentType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML);
+        m2.put(ContentType.MULTIPART_FORM_DATA_TYPE, MediaType.MULTIPART_FORM_DATA);
+        m2.put(ContentType.TEXT_HTML_TYPE, MediaType.TEXT_HTML);
+        m2.put(ContentType.TEXT_PLAIN_TYPE, MediaType.TEXT_PLAIN);
+        m2.put(ContentType.TEXT_XML_TYPE, MediaType.TEXT_XML);
+        m2.put(ContentType.WILDCARD_TYPE, MediaType.WILDCARD);
         
         for (final ContentType ct : m2.keySet())
         {
@@ -151,10 +130,48 @@ public class ContentTypeTest
     }
     
     @Test
-    public void testApplicationJsonType()
+    public void testEquals()
     {
-        final ContentType ct = ContentType.APPLICATION_JSON_TYPE;
-        assertEquals(MediaType.APPLICATION_JSON_TYPE, ct.getMediaType());
-        assertEquals(CharsetUtil.UTF_8.name(), ct.getEncoding());
+        assertEquals(ContentType.APPLICATION_JSON_TYPE, ContentType.APPLICATION_JSON_TYPE);
+        
+        final ContentType ct1 = new ContentType(ContentType.APPLICATION_JSON);
+        final ContentType ct2 = new ContentType(ContentType.APPLICATION_JSON);
+        assertEquals(ct1, ct2);
+        assertEquals(ContentType.APPLICATION_JSON_TYPE, ct1);
+        
+        final ContentType ct3 = new ContentType(ContentType.APPLICATION_ATOM_XML);
+        assertNotEquals(ct2, ct3);
+        final ContentType ct4 = new ContentType(ContentType.APPLICATION_ATOM_XML, CharsetUtil.UTF_16.name());
+        assertNotEquals(ct3, ct4);
+        final ContentType ct5 = new ContentType(ContentType.APPLICATION_ATOM_XML, CharsetUtil.UTF_16.name());
+        assertEquals(ct4, ct5);
+        
+        final ContentType ct6 = new ContentType(ContentType.APPLICATION_JSON, CharsetUtil.UTF_16.name());
+        assertNotEquals(ct5, ct6);
+    }
+    
+    @Test
+    public void testIsCompatible()
+    {
+        assertTrue(ContentType.APPLICATION_JSON_TYPE.isCompatibleWith(ContentType.APPLICATION_JSON_TYPE));
+        assertFalse(ContentType.APPLICATION_JSON_TYPE.isCompatibleWith(ContentType.APPLICATION_XML_TYPE));
+        
+        final ContentType ct1 = new ContentType(ContentType.APPLICATION_JSON);
+        assertTrue(ct1.isCompatibleWith(ContentType.APPLICATION_JSON_TYPE));
+        assertTrue(ContentType.APPLICATION_JSON_TYPE.isCompatibleWith(ct1));
+        assertFalse(ct1.isCompatibleWith(ContentType.APPLICATION_ATOM_XML_TYPE));
+        assertFalse(ContentType.APPLICATION_ATOM_XML_TYPE.isCompatibleWith(ct1));
+        
+        final ContentType ct2 = new ContentType(ContentType.APPLICATION_JSON);
+        assertTrue(ct1.isCompatibleWith(ct2));
+        assertTrue(ct2.isCompatibleWith(ct1));
+        
+        final ContentType ct3 = new ContentType(ContentType.APPLICATION_ATOM_XML);
+        assertFalse(ct1.isCompatibleWith(ct3));
+        assertFalse(ct3.isCompatibleWith(ct1));
+        
+        final ContentType ct4 = new ContentType(ContentType.APPLICATION_JSON, CharsetUtil.UTF_16.name());
+        assertTrue(ct1.isCompatibleWith(ct4));
+        assertTrue(ct4.isCompatibleWith(ct1));
     }
 }
