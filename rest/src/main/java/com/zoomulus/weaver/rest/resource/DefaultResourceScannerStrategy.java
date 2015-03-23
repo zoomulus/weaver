@@ -18,10 +18,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.core.util.PathJoiner;
 
 public class DefaultResourceScannerStrategy implements ResourceScannerStrategy
@@ -94,7 +94,7 @@ public class DefaultResourceScannerStrategy implements ResourceScannerStrategy
             }
             
             if (contentTypes.isEmpty())
-                return Lists.newArrayList(MediaType.TEXT_PLAIN);
+                return Lists.newArrayList(ContentType.TEXT_PLAIN);
         }
         return contentTypes;
     }
@@ -112,6 +112,6 @@ public class DefaultResourceScannerStrategy implements ResourceScannerStrategy
         {
             contentTypes.addAll(Lists.newArrayList(((Produces)producesAnnotation).value()));
         }
-        return contentTypes.isEmpty() ? Lists.newArrayList(MediaType.TEXT_PLAIN) : contentTypes;
+        return contentTypes.isEmpty() ? Lists.newArrayList(ContentType.TEXT_PLAIN) : contentTypes;
     }    
 }

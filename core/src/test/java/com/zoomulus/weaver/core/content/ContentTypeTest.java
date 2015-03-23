@@ -52,7 +52,7 @@ public class ContentTypeTest
             new ContentType("invalid");
             fail();
         }
-        catch (RuntimeException e) { }
+        catch (IllegalArgumentException e) { }
     }
     
     @Test
@@ -84,7 +84,15 @@ public class ContentTypeTest
     @Test
     public void testToString()
     {
-        assertEquals("application/json;UTF-8", ContentType.APPLICATION_JSON_TYPE.toString());
+        assertEquals("application/json; UTF-8", ContentType.APPLICATION_JSON_TYPE.toString());
+    }
+    
+    @Test
+    public void testValueOf()
+    {
+        assertEquals(ContentType.TEXT_PLAIN_TYPE, ContentType.valueOf(ContentType.TEXT_PLAIN));
+        assertEquals(ContentType.TEXT_PLAIN_TYPE, ContentType.valueOf(ContentType.TEXT_PLAIN_TYPE.getMediaType()));
+        assertEquals(ContentType.TEXT_PLAIN_TYPE, ContentType.valueOf(ContentType.TEXT_PLAIN_TYPE.toString()));
     }
     
     @Test
@@ -148,6 +156,9 @@ public class ContentTypeTest
         
         final ContentType ct6 = new ContentType(ContentType.APPLICATION_JSON, CharsetUtil.UTF_16.name());
         assertNotEquals(ct5, ct6);
+        
+        final ContentType ct7 = new ContentType(new String("application/json"));
+        assertEquals(ct1, ct7);
     }
     
     @Test

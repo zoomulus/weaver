@@ -22,7 +22,7 @@ public class ContentType
     {
         if (! mediaType.contains("/"))
         {
-            throw new RuntimeException("Invalid media type " + mediaType);
+            throw new IllegalArgumentException("Invalid media type " + mediaType);
         }
         this.mediaType = mediaType;
         this.encoding = encoding;
@@ -35,17 +35,23 @@ public class ContentType
     
     public String toString()
     {
-        return mediaType + ";" + encoding;
+        return mediaType + "; " + encoding;
     }
     
     public boolean isCompatibleWith(final ContentType rhs)
     {
-        return mediaType == rhs.mediaType;
+        return mediaType.equals(rhs.mediaType);
     }
     
     public static ContentType valueOf(@NonNull final String cts)
     {
-        return valueMap.containsKey(cts) ? valueMap.get(cts) : null;
+        final String key = cts.split(";")[0];
+        if (! valueMap.containsKey(key))
+        {
+            throw new IllegalArgumentException(cts);
+        }
+        final ContentType ct = valueMap.get(key);
+        return ct;
     }
     
     public static final String APPLICATION_ATOM_XML = "application/atom+xml";

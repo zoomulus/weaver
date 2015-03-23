@@ -11,7 +11,6 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Getter;
@@ -22,7 +21,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
-import org.apache.http.entity.ContentType;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,6 +31,7 @@ import org.junit.Test;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.connector.ServerConnector;
+import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.rest.connector.RestServerConnector;
 
 public class RestServerTest
@@ -44,14 +43,14 @@ public class RestServerTest
         private final int status;
         private final String reason;
         private final String content;
-        private MediaType contentType;
-        private String sContentType;
+        private ContentType contentType;
+        //private String sContentType;
         
         protected static final String host = "http://localhost:22002/";
         
         public RequestResult(final String uri) throws ClientProtocolException, IOException
         {
-            this(uri, null, ContentType.TEXT_PLAIN, Maps.newHashMap());
+            this(uri, null, ContentType.TEXT_PLAIN_TYPE, Maps.newHashMap());
         }
         
         public RequestResult(final String uri, final String body, final ContentType contentType) throws ClientProtocolException, IOException
@@ -71,7 +70,8 @@ public class RestServerTest
             }
             if (null != body)
             {
-                req.bodyString(body, contentType);
+                org.apache.http.entity.ContentType ct = org.apache.http.entity.ContentType.parse(contentType.toString());
+                req.bodyString(body, ct);
             }
             final Response rsp = req.execute();
             final HttpResponse httpRsp = rsp.returnResponse();
@@ -81,21 +81,21 @@ public class RestServerTest
             if (null == entity)
             {
                 this.contentType = null;
-                this.sContentType = null;
+                //this.sContentType = null;
                 content = null;
             }
             else
             {
-                ContentType ct = ContentType.get(entity);
+                org.apache.http.entity.ContentType ct = org.apache.http.entity.ContentType.get(entity);
                 try
                 {
-                    this.contentType = MediaType.valueOf(ct.getMimeType());
-                    this.sContentType = ct.getMimeType();
+                    this.contentType = ContentType.valueOf(ct.getMimeType());
+                    //this.sContentType = ct.getMimeType();
                 }
                 catch (IllegalArgumentException e)
                 {
-                    this.contentType = null;
-                    this.sContentType = ct.getMimeType();
+                    this.contentType = new ContentType(ct.getMimeType());
+                    //this.sContentType = ct.getMimeType();
                 }
                 InputStream is = httpRsp.getEntity().getContent();
                 ByteBuffer buf = ByteBuffer.allocate(is.available());
@@ -120,7 +120,7 @@ public class RestServerTest
         
         public GetRequestResult(final String uri, final Map<String, String> headers) throws ClientProtocolException, IOException
         {
-            super(uri, null, ContentType.TEXT_PLAIN, headers);
+            super(uri, null, ContentType.TEXT_PLAIN_TYPE, headers);
         }
         
         protected Request getRequest(final String uri)
@@ -663,7 +663,7 @@ public class RestServerTest
     @Test
     public void testGetWithNonmatchingAcceptSends406() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("get/return/applicationxml", getAcceptHeader(MediaType.APPLICATION_JSON));
+        final RequestResult result = new GetRequestResult("get/return/applicationxml", getAcceptHeader(ContentType.APPLICATION_JSON));
         verifyNotAcceptableResult(result);
     }
     
@@ -671,7 +671,7 @@ public class RestServerTest
     public void testPostWithNonmatchingContentTypeSends415() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("post/formparam/single",
-                "{\"type\":\"json\"}", ContentType.APPLICATION_JSON);
+                "{\"type\":\"json\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
@@ -765,14 +765,14 @@ public class RestServerTest
     public void testSingleFormParam() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "v1");
     }
     
     @Test
     public void testMultipleFormParam() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p3=v3&p2=v2&p1=v1", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1,v2,v3");
+        verifyOkResult(new PostRequestResult("post/formparam/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "v1,v2,v3");
     }
     
     @Test
@@ -781,7 +781,7 @@ public class RestServerTest
         final String formdata = URLEncoder.encode("fp2=fv2&fp3=fv3&fp1=fv1", CharsetUtil.UTF_8.name());
         verifyOkResult(new PostRequestResult("post/queryandform?qp1=qv1&qp3=qv3&qp2=qv2",
                 formdata,
-                ContentType.APPLICATION_FORM_URLENCODED),
+                ContentType.APPLICATION_FORM_URLENCODED_TYPE),
             "qp1=qv1,qp2=qv2,qp3=qv3,fp1=fv1,fp2=fv2,fp3=fv3");
     }
     
@@ -789,60 +789,60 @@ public class RestServerTest
     public void testNoObjectFormParamSendsNullValue() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p2=v2", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "null");
+        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "null");
     }
     
     @Test
     public void testObjectFormParamWithRequiredParamWorks() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+        verifyOkResult(new PostRequestResult("post/formparam/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "v1");
     }
 
     @Test
     public void testNoObjectFormParamWithRequiredParamReturns400() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p2=v2", CharsetUtil.UTF_8.name());
-        verify400Result(new PostRequestResult("post/formparam/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED));
+        verify400Result(new PostRequestResult("post/formparam/requiredsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     @Test
     public void testNoNativeFormParamReturns400() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("q=w", CharsetUtil.UTF_8.name());
-        verify400Result(new PostRequestResult("post/formparam/typematch/int", formdata, ContentType.APPLICATION_FORM_URLENCODED));
+        verify400Result(new PostRequestResult("post/formparam/typematch/int", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     @Test
     public void testNonmatchingFormParamIsIgnored() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p1=v1&p2=v2", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "v1");
+        verifyOkResult(new PostRequestResult("post/formparam/single", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "v1");
     }
     
     @Test
     public void testEmptyFormWithObjectParamSendsNull() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new PostRequestResult("post/formparam/single", "", ContentType.APPLICATION_FORM_URLENCODED), "null");
+        verifyOkResult(new PostRequestResult("post/formparam/single", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE), "null");
     }
     
     @Test
     public void testEmptyFormWithRequiredObjectParamReturns400() throws ClientProtocolException, IOException
     {
-        verify400Result(new PostRequestResult("post/formparam/requiredsingle", "", ContentType.APPLICATION_FORM_URLENCODED));
+        verify400Result(new PostRequestResult("post/formparam/requiredsingle", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     @Test
     public void testEmptyFormWithNativeParamReturns400() throws ClientProtocolException, IOException
     {
-        verify400Result(new PostRequestResult("post/formparam/typematch/int", "", ContentType.APPLICATION_FORM_URLENCODED));
+        verify400Result(new PostRequestResult("post/formparam/typematch/int", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     @Test
     public void testFormPostBoolean() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=true", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/boolean", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/boolean", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "true");
     }
     
@@ -850,7 +850,7 @@ public class RestServerTest
     public void testFormPostByte() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=127", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/byte", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/byte", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "127");
     }
     
@@ -858,7 +858,7 @@ public class RestServerTest
     public void testFormPostShort() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=20000", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/short", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/short", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "20000");
     }
     
@@ -866,7 +866,7 @@ public class RestServerTest
     public void testFormPostInt() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=4000000", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/int", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/int", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "4000000");
     }
     
@@ -875,7 +875,7 @@ public class RestServerTest
     {
         final String formdata = URLEncoder.encode("p=123.45", CharsetUtil.UTF_8.name());
         verifyInternalServerErrorResult(new PostRequestResult("post/formparam/typematch/int",
-                formdata, ContentType.APPLICATION_FORM_URLENCODED));
+                formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     @Test
@@ -883,7 +883,7 @@ public class RestServerTest
     {
         float floatVal = 1234567890.1121314151f;
         final String formdata = URLEncoder.encode(String.format("p=%f", floatVal), CharsetUtil.UTF_8.name());
-        final PostRequestResult rr = new PostRequestResult("post/formparam/typematch/float", formdata, ContentType.APPLICATION_FORM_URLENCODED);
+        final PostRequestResult rr = new PostRequestResult("post/formparam/typematch/float", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE);
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Float.valueOf(floatVal), Float.valueOf(rr.content()));
@@ -894,7 +894,7 @@ public class RestServerTest
     {
         double doubleVal = 102030405060708090.019181716151413121;
         final String formdata = URLEncoder.encode(String.format("p=%f", doubleVal), CharsetUtil.UTF_8.name());
-        final PostRequestResult rr = new PostRequestResult("post/formparam/typematch/double", formdata, ContentType.APPLICATION_FORM_URLENCODED);
+        final PostRequestResult rr = new PostRequestResult("post/formparam/typematch/double", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE);
         assertEquals(Status.OK.getStatusCode(), rr.status());
         assertEquals(Status.OK.getReasonPhrase(), rr.reason());
         assertEquals(Double.valueOf(doubleVal), Double.valueOf(rr.content()));
@@ -904,7 +904,7 @@ public class RestServerTest
     public void testFormPostLong() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=8000000000", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/long", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/long", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "8000000000");
     }
     
@@ -912,7 +912,7 @@ public class RestServerTest
     public void testFormPostInteger() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=4000000", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/Integer", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/Integer", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "4000000");
     }
     
@@ -920,7 +920,7 @@ public class RestServerTest
     public void testFormPostCustomWithStringCtor() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=bob", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/customwithstringctor", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/customwithstringctor", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "bob");
     }
     
@@ -928,7 +928,7 @@ public class RestServerTest
     public void testFormPostCustomValueOfString() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p=bill", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/formparam/typematch/customvalueofstring", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/formparam/typematch/customvalueofstring", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "bill");
     }
     
@@ -937,7 +937,7 @@ public class RestServerTest
     {
         final String formdata = URLEncoder.encode("p=ben", CharsetUtil.UTF_8.name());
         verifyInternalServerErrorResult(new PostRequestResult("post/formparam/typematch/custominvalid",
-                formdata, ContentType.APPLICATION_FORM_URLENCODED));
+                formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     
@@ -947,16 +947,16 @@ public class RestServerTest
     public void testFormPostWithClassLevelConsumes() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("p1=v1", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("form/post/single", formdata, ContentType.APPLICATION_FORM_URLENCODED), "p1=v1");
-        verifyUnsupportedMediaTypeResult(new PostRequestResult("form/post/single", "p1=v1", ContentType.TEXT_PLAIN));
+        verifyOkResult(new PostRequestResult("form/post/single", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "p1=v1");
+        verifyUnsupportedMediaTypeResult(new PostRequestResult("form/post/single", "p1=v1", ContentType.TEXT_PLAIN_TYPE));
     }
     
     @Test
     public void testPostDifferentContentTypes() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new PostRequestResult("post/xml", xml, ContentType.APPLICATION_XML), xml);
-        verifyOkResult(new PostRequestResult("post/json", json, ContentType.APPLICATION_JSON), json);
-        verifyOkResult(new PostRequestResult("post/text", text, ContentType.TEXT_PLAIN), text);
+        verifyOkResult(new PostRequestResult("post/xml", xml, ContentType.APPLICATION_XML_TYPE), xml);
+        verifyOkResult(new PostRequestResult("post/json", json, ContentType.APPLICATION_JSON_TYPE), json);
+        verifyOkResult(new PostRequestResult("post/text", text, ContentType.TEXT_PLAIN_TYPE), text);
     }
     
     @Test
@@ -990,9 +990,9 @@ public class RestServerTest
     @Test
     public void testPostDisambiguatesOnContentType() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new PostRequestResult("post/bycontenttype", xml, ContentType.APPLICATION_XML), "xml");
-        verifyOkResult(new PostRequestResult("post/bycontenttype", json, ContentType.APPLICATION_JSON), "json");
-        verifyOkResult(new PostRequestResult("post/bycontenttype", text, ContentType.TEXT_PLAIN), "text");
+        verifyOkResult(new PostRequestResult("post/bycontenttype", xml, ContentType.APPLICATION_XML_TYPE), "xml");
+        verifyOkResult(new PostRequestResult("post/bycontenttype", json, ContentType.APPLICATION_JSON_TYPE), "json");
+        verifyOkResult(new PostRequestResult("post/bycontenttype", text, ContentType.TEXT_PLAIN_TYPE), "text");
     }
     
     
@@ -1038,48 +1038,48 @@ public class RestServerTest
     @Test
     public void testDefaultValueNativeFormParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/int", "", ContentType.APPLICATION_FORM_URLENCODED), "111");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/int", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE), "111");
     }
     
     @Test
     public void testDefaultValueObjectFormParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/string", "", ContentType.APPLICATION_FORM_URLENCODED), "tim");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/string", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE), "tim");
     }
     
     @Test
     public void testDefaultValueMultipleFormParam() throws ClientProtocolException, IOException
     {
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/multiple", "", ContentType.APPLICATION_FORM_URLENCODED), "tim,111");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/multiple", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE), "tim,111");
     }
     
     @Test
     public void testSomeDefaultValuesMultipleFormParam() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("age=222", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED), "tim,222");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/multiple", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "tim,222");
     }
     
     @Test
     public void testProvidedFormParamOverridesDefaultValue() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("name=bob", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/string", formdata, ContentType.APPLICATION_FORM_URLENCODED), "bob");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/string", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "bob");
     }
     
     @Test
     public void testObjectFormParamWithRequiredParamAndDefaultValueWorks() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("name=bob", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/requiredanddefaultsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED), "bob");
-        verifyOkResult(new PostRequestResult("post/defaultvalue/form/requiredanddefaultsingle", "", ContentType.APPLICATION_FORM_URLENCODED), "tim");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/requiredanddefaultsingle", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE), "bob");
+        verifyOkResult(new PostRequestResult("post/defaultvalue/form/requiredanddefaultsingle", "", ContentType.APPLICATION_FORM_URLENCODED_TYPE), "tim");
     }    
     
     @Test
     public void testDefaultValueQueryAndFormParam() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("firstname=tim", CharsetUtil.UTF_8.name());
-        verifyOkResult(new PostRequestResult("post/defaultvalue/queryandform?gender=male", formdata, ContentType.APPLICATION_FORM_URLENCODED),
+        verifyOkResult(new PostRequestResult("post/defaultvalue/queryandform?gender=male", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE),
                 "tim timson,male,111");
     }
     
@@ -1095,7 +1095,7 @@ public class RestServerTest
     public void testNonmatchingFormParamWithStrictParamsFails() throws ClientProtocolException, IOException
     {
         final String formdata = URLEncoder.encode("name=bob&catname=killer", CharsetUtil.UTF_8.name());
-        verify400Result(new PostRequestResult("post/strictparams", formdata, ContentType.APPLICATION_FORM_URLENCODED));
+        verify400Result(new PostRequestResult("post/strictparams", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
     
     
@@ -1106,7 +1106,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/response/string/json");
         verifyOkResult(result, "not actually json");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1114,7 +1114,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/string/json");
         verifyOkResult(result, "\"text\"");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
@@ -1122,7 +1122,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/object/json");
         verifyOkResult(result, "{\"s\":\"custom\"}");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
@@ -1130,7 +1130,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/native/json");
         verifyOkResult(result, "111");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
@@ -1145,7 +1145,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/string/xml");
         verifyOkResult(result, "not actually xml");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1153,7 +1153,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/string/xml");
         verifyOkResult(result, "<String>text</String>");
-        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_XML_TYPE);
     }
     
     @Test
@@ -1161,7 +1161,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/object/xml");
         verifyOkResult(result, "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>");
-        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_XML_TYPE);
     }
     
     @Test
@@ -1169,7 +1169,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("get/produces/native/xml");
         verifyOkResult(result, "<Integer>111</Integer>");
-        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_XML_TYPE);
     }
     
     @Test
@@ -1184,7 +1184,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/string/text");
         verifyOkResult(result, "some text");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1192,7 +1192,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/object/json");
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1200,7 +1200,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/native/json");
         verifyOkResult(result, "5");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1208,7 +1208,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/object/xml");
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1216,7 +1216,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/native/xml");
         verifyOkResult(result, "5");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1224,7 +1224,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/string/noproduces");
         verifyOkResult(result, "text");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1232,7 +1232,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/object/noproduces");
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1240,7 +1240,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/native/noproduces");
         verifyOkResult(result, "111");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1248,7 +1248,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/string/noproduces");
         verifyOkResult(result, "text");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1256,7 +1256,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/object/noproduces");
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1264,7 +1264,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/jsonobject/noproduces");
         verifyOkResult(result, "{\"s\":\"abc\",\"i\":123}");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
@@ -1272,7 +1272,7 @@ public class RestServerTest
     {
         final RequestResult result =  new GetRequestResult("/get/produces/nonjsonobject/noproduces");
         verifyOkResult(result, "text");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1280,7 +1280,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/native/noproduces");
         verifyOkResult(result, "111");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1288,7 +1288,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/response/custom");
         verifyOkResult(result, "custom content");
-        verifyContentType(result, "application/z-nonstandard");
+        verifyContentType(result, new ContentType("application/z-nonstandard"));
     }
     
     @Test
@@ -1296,7 +1296,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/string/custom");
         verifyOkResult(result, "custom content");
-        verifyContentType(result, "application/z-nonstandard");
+        verifyContentType(result, new ContentType("application/z-nonstandard"));
     }
     
     @Test
@@ -1304,7 +1304,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/string/multipleproduces");
         verifyOkResult(result, "text");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1312,7 +1312,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/object/multipleproduces");
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
@@ -1320,7 +1320,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/jsonobject/multipleproduces");
         verifyOkResult(result, "{\"s\":\"abc\",\"i\":123}");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
@@ -1328,7 +1328,7 @@ public class RestServerTest
     {
         final RequestResult result = new GetRequestResult("/get/produces/nonjsonobject/multipleproduces");
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     
@@ -1337,141 +1337,141 @@ public class RestServerTest
     @Test
     public void testAcceptWithResponseMatchingContentType() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/response/singlect", getAcceptHeader(MediaType.APPLICATION_JSON));
+        final RequestResult result = new GetRequestResult("/get/accept/response/singlect", getAcceptHeader(ContentType.APPLICATION_JSON));
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
     public void testAcceptTextPlainWithResponseSpecifyingOtherContentTypeFails() throws ClientProtocolException, IOException
     {
         // Even if the response entity could be text/plain.
-        final RequestResult result = new GetRequestResult("/get/accept/response/jsonstring", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/response/jsonstring", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyNotAcceptableResult(result);
     }
     
     @Test
     public void testAcceptTextPlainWithStringReturnsTextPlain() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyOkResult(result, "text");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
     public void testAcceptJsonWithStringReturnsJsonString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.APPLICATION_JSON));
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(ContentType.APPLICATION_JSON));
         verifyOkResult(result, "\"text\"");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
     public void testAcceptXmlWithStringReturnsXmlString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.APPLICATION_XML));
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(ContentType.APPLICATION_XML));
         verifyOkResult(result, "<String>text</String>");
-        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_XML_TYPE);
     }
     
     @Test
     public void testAcceptTextHtmlWithStringAndNoProducesFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(MediaType.TEXT_HTML));
+        final RequestResult result = new GetRequestResult("/get/accept/string/text", getAcceptHeader(ContentType.TEXT_HTML));
         verifyNotAcceptableResult(result);
     }
     
     @Test
     public void testAcceptTextPlainWithStringAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/string/text/html", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/string/text/html", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyNotAcceptableResult(result);
     }
     
     @Test
     public void testAcceptTextPlainWithStringAndProducesMultipleSelectsTextPlain() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/string/text/multipleproduces", getAcceptHeader(MediaType.TEXT_HTML));
+        final RequestResult result = new GetRequestResult("/get/accept/string/text/multipleproduces", getAcceptHeader(ContentType.TEXT_HTML));
         verifyOkResult(result, "text");
-        verifyContentType(result, MediaType.TEXT_HTML_TYPE);
+        verifyContentType(result, ContentType.TEXT_HTML_TYPE);
     }
     
     @Test
     public void testAcceptTextPlainWithObjectReturnsToString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
     public void testAcceptJsonWithObjectReturnsJsonString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.APPLICATION_JSON));
+        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(ContentType.APPLICATION_JSON));
         verifyOkResult(result, "{\"s\":\"custom\"}");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
     public void testAcceptXmlWithObjectReturnsXmlString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(MediaType.APPLICATION_XML));
+        final RequestResult result = new GetRequestResult("/get/accept/object/text", getAcceptHeader(ContentType.APPLICATION_XML));
         verifyOkResult(result, "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>");
-        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_XML_TYPE);
     }
     
     @Test
     public void testAcceptTextPlainWithObjectAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/object/text/html", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/object/text/html", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyNotAcceptableResult(result);
     }
     
     @Test
     public void testAcceptTextPlainWithObjectAndProducesMultipleSelectsTextPlain() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/object/text/multipleproduces", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/object/text/multipleproduces", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyOkResult(result, "custom");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
     public void testAcceptTextPlainWithNativeReturnsToString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyOkResult(result, "111");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
     public void testAcceptJsonWithNativeReturnsJsonString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.APPLICATION_JSON));
+        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(ContentType.APPLICATION_JSON));
         verifyOkResult(result, "111");
-        verifyContentType(result, MediaType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
     public void testAcceptXmlWithNativeReturnsXmlString() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(MediaType.APPLICATION_XML));
+        final RequestResult result = new GetRequestResult("/get/accept/native/text", getAcceptHeader(ContentType.APPLICATION_XML));
         verifyOkResult(result, "<Integer>111</Integer>");
-        verifyContentType(result, MediaType.APPLICATION_XML_TYPE);
+        verifyContentType(result, ContentType.APPLICATION_XML_TYPE);
     }
     
     @Test
     public void testAcceptTextPlainWithNativeAndProducesOtherFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/native/text/html", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/native/text/html", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyNotAcceptableResult(result);
     }
     
     @Test
     public void testAcceptTextPlainWithNativeAndProducesMultipleSelectsTextPlain() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new GetRequestResult("/get/accept/native/text/multipleproduces", getAcceptHeader(MediaType.TEXT_PLAIN));
+        final RequestResult result = new GetRequestResult("/get/accept/native/text/multipleproduces", getAcceptHeader(ContentType.TEXT_PLAIN));
         verifyOkResult(result, "111");
-        verifyContentType(result, MediaType.TEXT_PLAIN_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     
@@ -1480,49 +1480,49 @@ public class RestServerTest
     @Test
     public void testPostTextPlainToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string", "text", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string", "text", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "text");
     }
     
     @Test
     public void testPostApplicationJsonToStringPayloadProvidesJsonData() throws ClientProtocolException, IOException
     {
-        final RequestResult result =  new PostRequestResult("/post/string", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        final RequestResult result =  new PostRequestResult("/post/string", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "{\"s\":\"custom\"}");
     }
     
     @Test
     public void testPostApplicationXmlToStringPayloadProvidesXmlData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string", "<String>text</String>", ContentType.APPLICATION_XML);
+        final RequestResult result = new PostRequestResult("/post/string", "<String>text</String>", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "<String>text</String>");
     }
     
     @Test
     public void testPostOtherContentTypeToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string", "<html>hi</html>", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/string", "<html>hi</html>", ContentType.TEXT_HTML_TYPE);
         verifyOkResult(result, "<html>hi</html>");
     }
     
     @Test
     public void testPostToStringPayloadWithConsumesTextPlainProvidesText() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/text", "text", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/text", "text", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "text");
     }
     
     @Test
     public void testPostToStringPayloadWithConsumesApplicationJsonProvidesJson() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/json", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/string/json", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostNonJsonStringPayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/json", "not json", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/json", "not json", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
@@ -1530,28 +1530,28 @@ public class RestServerTest
     public void testPostToStringPayloadWithConsumesApplicationXmlProvidesXml() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("/post/string/xml",
-                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostNonXmlStringPayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result =  new PostRequestResult("/post/string/xml", "not xml", ContentType.TEXT_PLAIN);
+        final RequestResult result =  new PostRequestResult("/post/string/xml", "not xml", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostTextHtmlStringWithConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/text", "<html>hi</html>", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/string/text", "<html>hi</html>", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostApplicationJsonToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/json/noconsumes", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/string/json/noconsumes", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "custom");
     }
     
@@ -1559,42 +1559,42 @@ public class RestServerTest
     public void testPostApplicationXmlToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("/post/string/xml/noconsumes",
-                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostTextPlainToObjectCallsStringConstructor() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/object/text/noconsumes/stringctor", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/object/text/noconsumes/stringctor", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostTextPlainToObjectCallsValueOf() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/object/text/noconsumes/valueof", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/object/text/noconsumes/valueof", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostOtherContentTypeToObjectFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/object/text/noconsumes/valueof", "custom", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/object/text/noconsumes/valueof", "custom", ContentType.TEXT_HTML_TYPE);
         verifyInternalServerErrorResult(result);
     }
     
     @Test
     public void testPostJsonStringToObjectPayloadWithConsumesApplicationJsonProvidesObject() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostNonJsonStringToObjectPayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/object/consumes/json", "not json", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/object/consumes/json", "not json", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
@@ -1602,49 +1602,49 @@ public class RestServerTest
     public void testPostXmlStringToObjectPayloadWithConsumesApplicationXmlProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PostRequestResult("/post/string/object/consumes/xml",
-                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostNonXmlStringToObjectPayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/object/consumes/xml", "not xml", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/object/consumes/xml", "not xml", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostTextStringToObjectPayloadWithConsumesTextPlainCallsStringCtor() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/object/consumes/text/stringctor", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/object/consumes/text/stringctor", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostTextStringToObjectPayloadWithConsumesTextPlainCallsValueOf() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/object/consumes/text/valueof", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/string/object/consumes/text/valueof", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPostTextHtmlToObjectConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostApplicationJsonToNativePayloadProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPostApplicationXmlToNativePayloadFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        final RequestResult result = new PostRequestResult("/post/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
         
         // This appears at first glance to be broken, but actually it is more true that deserialization
@@ -1669,161 +1669,161 @@ public class RestServerTest
     @Test
     public void testPostTextPlainToNativeProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPostOtherContentTypeToNativeFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/native", "111", ContentType.TEXT_HTML_TYPE);
         verifyInternalServerErrorResult(result);
     }
     
     @Test
     public void testPostJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native/consumes/json", "111", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/native/consumes/json", "111", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPostNonJsonStringToNativePayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native/consumes/json", "not json", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/native/consumes/json", "not json", ContentType.APPLICATION_JSON_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
 
     @Test
     public void testPostXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native/consumes/xml", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        final RequestResult result = new PostRequestResult("/post/native/consumes/xml", "<Integer>111</Integer>", ContentType.APPLICATION_XML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostNonXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native/consumes/xml", "not xml", ContentType.APPLICATION_XML);
+        final RequestResult result = new PostRequestResult("/post/native/consumes/xml", "not xml", ContentType.APPLICATION_XML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostTextStringToNativePayloadWithConsumesTextPlainProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native/consumes/text", "111", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/native/consumes/text", "111", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPostTextHtmlToNativeConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/native/consumes/text", "111", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/native/consumes/text", "111", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPostApplicationJsonToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostApplicationXmlToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.APPLICATION_XML);
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostTextPlainToByteArrayProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostAnyContentTypeToByteArrayProvidesRawData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/bytearray", "bytes", ContentType.TEXT_HTML_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/json", "bytes", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/json", "bytes", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/xml", "bytes", ContentType.APPLICATION_XML);
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/xml", "bytes", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/text", "bytes", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/text", "bytes", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPostTextHtmlToByteArrayConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/json", "bytes", ContentType.TEXT_HTML);
+        final RequestResult result = new PostRequestResult("/post/bytearray/consumes/json", "bytes", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutTextPlainToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string", "text", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string", "text", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "text");
     }
     
     @Test
     public void testPutApplicationJsonToStringPayloadProvidesJsonData() throws ClientProtocolException, IOException
     {
-        final RequestResult result =  new PutRequestResult("/put/string", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        final RequestResult result =  new PutRequestResult("/put/string", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "{\"s\":\"custom\"}");        
     }
     
     @Test
     public void testPutApplicationXmlToStringPayloadProvidesXmlData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string", "<String>text</String>", ContentType.APPLICATION_XML);
+        final RequestResult result = new PutRequestResult("/put/string", "<String>text</String>", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "<String>text</String>");        
     }
     
     @Test
     public void testPutOtherContentTypeToStringPayloadProvidesRawData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string", "<html>hi</html>", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/string", "<html>hi</html>", ContentType.TEXT_HTML_TYPE);
         verifyOkResult(result, "<html>hi</html>");        
     }
     
     @Test
     public void testPutToStringPayloadWithConsumesTextPlainProvidesText() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/text", "text", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/text", "text", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "text");        
     }
     
     @Test
     public void testPutToStringPayloadWithConsumesApplicationJsonProvidesJson() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/json", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/string/json", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "custom");        
     }
     
     @Test
     public void testPutNonJsonStringPayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/json", "not json", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/json", "not json", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);        
     }
     
@@ -1831,28 +1831,28 @@ public class RestServerTest
     public void testPutToStringPayloadWithConsumesApplicationXmlProvidesXml() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PutRequestResult("/put/string/xml",
-                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "custom");        
     }
     
     @Test
     public void testPutNonXmlStringPayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result =  new PutRequestResult("/put/string/xml", "not xml", ContentType.TEXT_PLAIN);
+        final RequestResult result =  new PutRequestResult("/put/string/xml", "not xml", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);        
     }
     
     @Test
     public void testPutTextHtmlToStringConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/text", "<html>hi</html>", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/string/text", "<html>hi</html>", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutApplicationJsonToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/json/noconsumes", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/string/json/noconsumes", "{\"s\":\"custom\"}", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "custom");
     }
     
@@ -1860,42 +1860,42 @@ public class RestServerTest
     public void testPutApplicationXmlToObjectPayloadProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PutRequestResult("/put/string/xml/noconsumes",
-                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutTextPlainToObjectCallsStringConstructor() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/stringctor", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/stringctor", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutTextPlainToObjectCallsValueOf() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/valueof", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/valueof", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutOtherContentTypeToObjectFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/valueof", "custom", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/object/text/noconsumes/valueof", "custom", ContentType.TEXT_HTML_TYPE);
         verifyInternalServerErrorResult(result);
     }
     
     @Test
     public void testPutJsonStringToObjectPayloadWithConsumesApplicationJsonProvidesObject() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutNonJsonStringToObjectPayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "not json", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "not json", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
@@ -1903,161 +1903,161 @@ public class RestServerTest
     public void testPutXmlStringToObjectPayloadWithConsumesApplicationJsonProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PutRequestResult("/put/string/object/consumes/xml",
-                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN);
+                "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutNonXmlStringToObjectPayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/object/consumes/xml", "not xml", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/xml", "not xml", ContentType.TEXT_PLAIN_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsStringCtor() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/object/consumes/text/stringctor", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/text/stringctor", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutTextStringToObjectPayloadWithConsumesTextPlainCallsValueOf() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/object/consumes/text/valueof", "custom", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/text/valueof", "custom", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "custom");
     }
     
     @Test
     public void testPutTextHtmlToObjectConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/string/object/consumes/json", "{\"s\":\"custom\"}", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutApplicationJsonToNativePayloadProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPutApplicationXmlToNativePayloadFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        final RequestResult result = new PutRequestResult("/put/native", "<Integer>111</Integer>", ContentType.APPLICATION_XML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutTextPlainToNativeProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPutOtherContentTypeToNativeFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/native", "111", ContentType.TEXT_HTML_TYPE);
         verifyInternalServerErrorResult(result);
     }
     
     @Test
     public void testPutJsonStringToNativePayloadWithConsumesApplicationJsonProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native/consumes/json", "111", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/native/consumes/json", "111", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPutNonJsonStringToNativePayloadWithConsumesApplicationJsonFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native/consumes/json", "not json", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/native/consumes/json", "not json", ContentType.APPLICATION_JSON_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native/consumes/xml", "<Integer>111</Integer>", ContentType.APPLICATION_XML);
+        final RequestResult result = new PutRequestResult("/put/native/consumes/xml", "<Integer>111</Integer>", ContentType.APPLICATION_XML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutNonXmlStringToNativePayloadWithConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native/consumes/xml", "not xml", ContentType.APPLICATION_XML);
+        final RequestResult result = new PutRequestResult("/put/native/consumes/xml", "not xml", ContentType.APPLICATION_XML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutTextStringToNativePayloadWithConsumesTextPlainProvidesNative() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("put/native/consumes/text", "111", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("put/native/consumes/text", "111", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "111");
     }
     
     @Test
     public void testPutTextHtmlToNativeConsumesTextPlainFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/native/consumes/text", "111", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/native/consumes/text", "111", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
     @Test
     public void testPutApplicationJsonToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutApplicationXmlToByteArrayPayloadProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.APPLICATION_XML);
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutTextPlainToByteArrayProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutAnyContentTypeToByteArrayProvidesRawData() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/bytearray", "bytes", ContentType.TEXT_HTML_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutJsonStringToByteArrayPayloadWithConsumesApplicationJsonProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/json", "bytes", ContentType.APPLICATION_JSON);
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/json", "bytes", ContentType.APPLICATION_JSON_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutXmlStringToByteArrayPayloadWithConsumesApplicationXmlProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/xml", "bytes", ContentType.APPLICATION_XML);
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/xml", "bytes", ContentType.APPLICATION_XML_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutTextStringToByteArrayPayloadWithConsumesTextPlainProvidesByteArray() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/text", "bytes", ContentType.TEXT_PLAIN);
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/text", "bytes", ContentType.TEXT_PLAIN_TYPE);
         verifyOkResult(result, "bytes");
     }
     
     @Test
     public void testPutTextHtmlToByteArrayConsumesApplicationXmlFails() throws ClientProtocolException, IOException
     {
-        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/json", "bytes", ContentType.TEXT_HTML);
+        final RequestResult result = new PutRequestResult("/put/bytearray/consumes/json", "bytes", ContentType.TEXT_HTML_TYPE);
         verifyUnsupportedMediaTypeResult(result);
     }
     
@@ -2112,15 +2112,16 @@ public class RestServerTest
         assertEquals(Status.INTERNAL_SERVER_ERROR.getReasonPhrase(), rr.reason());
     }
     
-    private void verifyContentType(final RequestResult rr, final MediaType contentType)
+    private void verifyContentType(final RequestResult rr, final ContentType contentType)
     {
-        assertEquals(contentType, rr.contentType());
+        //assertEquals(contentType, rr.contentType());
+        assertTrue(contentType.isCompatibleWith(rr.contentType()));
     }
     
-    private void verifyContentType(final RequestResult rr, final String contentType)
-    {
-        assertEquals(contentType, rr.contentType.toString());
-    }
+//    private void verifyContentType(final RequestResult rr, final String contentType)
+//    {
+//        assertEquals(contentType, rr.contentType.toString());
+//    }
     
 
     @BeforeClass

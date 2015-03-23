@@ -21,10 +21,10 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.common.collect.Maps;
+import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.rest.resource.DefaultResourceScannerStrategy;
 import com.zoomulus.weaver.rest.resource.Resource;
 import com.zoomulus.weaver.rest.resource.ResourceIdentifier;
@@ -194,7 +194,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                             fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                             HttpResponseStatus.valueOf(rsp.getStatus()),
                                             copiedBuffer(entity.getBytes()));
-                            fullRsp.headers().set("Content-Type", (null != rsp.getMediaType() ? rsp.getMediaType().toString() : MediaType.TEXT_PLAIN));
+                            fullRsp.headers().set("Content-Type", (null != rsp.getMediaType() ? rsp.getMediaType().toString() : ContentType.TEXT_PLAIN));
                         }
                         else
                         {
@@ -208,6 +208,7 @@ public class RestHandler extends ChannelInboundHandlerAdapter
                         for (final StackTraceElement ste : e.getStackTrace())
                         {
                             sb.append(ste.toString());
+                            sb.append("\n");
                         }
                         fullRsp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
                                         HttpResponseStatus.INTERNAL_SERVER_ERROR,

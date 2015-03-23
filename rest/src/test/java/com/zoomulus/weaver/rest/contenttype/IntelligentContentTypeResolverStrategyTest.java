@@ -6,13 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Optional;
 
-import javax.ws.rs.core.MediaType;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
+import com.zoomulus.weaver.core.content.ContentType;
 
 public class IntelligentContentTypeResolverStrategyTest
 {
@@ -33,51 +32,51 @@ public class IntelligentContentTypeResolverStrategyTest
     @Test
     public void testChooseSingleContentType()
     {
-        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(MediaType.APPLICATION_JSON_TYPE, MediaType.TEXT_HTML_TYPE),
-                    Lists.newArrayList(MediaType.APPLICATION_JSON_TYPE, MediaType.TEXT_PLAIN_TYPE), null);
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.TEXT_HTML_TYPE),
+                    Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.TEXT_PLAIN_TYPE), null);
         assertTrue(ct.isPresent());
-        assertEquals(MediaType.APPLICATION_JSON_TYPE, ct.get());
+        assertEquals(ContentType.APPLICATION_JSON_TYPE, ct.get());
     }
     
     @Test
     public void testNoMatchingContentType()
     {
-        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE),
-                    Lists.newArrayList(MediaType.TEXT_HTML_TYPE, MediaType.TEXT_PLAIN_TYPE), null);
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.APPLICATION_XML_TYPE),
+                    Lists.newArrayList(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_PLAIN_TYPE), null);
         assertFalse(ct.isPresent());
     }
     
     @Test
     public void testSingleOptionMatches()
     {
-        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(MediaType.TEXT_PLAIN_TYPE),
-                Lists.newArrayList(MediaType.TEXT_PLAIN_TYPE), null);
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE),
+                Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE), null);
         assertTrue(ct.isPresent());
-        assertEquals(MediaType.TEXT_PLAIN_TYPE, ct.get());
+        assertEquals(ContentType.TEXT_PLAIN_TYPE, ct.get());
     }
     
     @Test
     public void testNoOptionsReturnsNoMatch()
     {
-        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(), Lists.newArrayList(), null);
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(), Lists.newArrayList(), null);
         assertFalse(ct.isPresent());
     }
     
     @Test
     public void testMultipleMatchesReturnsFirst()
     {
-        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(MediaType.TEXT_PLAIN_TYPE, MediaType.TEXT_HTML_TYPE),
-                Lists.newArrayList(MediaType.TEXT_HTML_TYPE, MediaType.TEXT_PLAIN_TYPE), null);
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE, ContentType.TEXT_HTML_TYPE),
+                Lists.newArrayList(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_PLAIN_TYPE), null);
         assertTrue(ct.isPresent());
-        assertEquals(MediaType.TEXT_PLAIN_TYPE, ct.get());
+        assertEquals(ContentType.TEXT_PLAIN_TYPE, ct.get());
     }
     
     @Test
     public void testNoExpectedCTReturnsFirstProvidedCT()
     {
-        final Optional<MediaType> ct = sut.resolve(Lists.newArrayList(MediaType.TEXT_PLAIN_TYPE),
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE),
                 Lists.newArrayList(), null);
         assertTrue(ct.isPresent());
-        assertEquals(MediaType.TEXT_PLAIN_TYPE, ct.get());
+        assertEquals(ContentType.TEXT_PLAIN_TYPE, ct.get());
     }
 }

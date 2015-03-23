@@ -3,9 +3,11 @@ package com.zoomulus.weaver.rest.contenttype;
 import java.util.List;
 import java.util.Optional;
 
-import javax.ws.rs.core.MediaType;
+import com.zoomulus.weaver.core.content.ContentType;
 
 public interface ContentTypeResolverStrategy
 {
-    Optional<MediaType> resolve(final List<MediaType> providedContentTypes, final List<MediaType> expectedContentTypes, final String message);
+    Optional<ContentType> resolve(final List<ContentType> providedContentTypes,
+            final List<ContentType> expectedContentTypes,
+            final String message);
 }

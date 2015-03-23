@@ -3,16 +3,16 @@ package com.zoomulus.weaver.rest.contenttype;
 import java.util.List;
 import java.util.Optional;
 
-import javax.ws.rs.core.MediaType;
+import com.zoomulus.weaver.core.content.ContentType;
 
 public class IntelligentContentTypeResolverStrategy implements
         ContentTypeResolverStrategy
 {
     @Override
-    public Optional<MediaType> resolve(final List<MediaType> providedContentTypes,
-            final List<MediaType> expectedContentTypes, final String message)
+    public Optional<ContentType> resolve(final List<ContentType> providedContentTypes,
+            final List<ContentType> expectedContentTypes, final String message)
     {
-        Optional<MediaType> contentType = getAgreedContentType(providedContentTypes, expectedContentTypes);
+        Optional<ContentType> contentType = getAgreedContentType(providedContentTypes, expectedContentTypes);
         
         if (! contentType.isPresent())
         {
@@ -23,9 +23,9 @@ public class IntelligentContentTypeResolverStrategy implements
             else
             {
                 boolean pctIsText = false;
-                for (final MediaType pct : providedContentTypes)
+                for (final ContentType pct : providedContentTypes)
                 {
-                    if (pct.toString().split(";")[0].equals(MediaType.TEXT_PLAIN))
+                    if (pct.isCompatibleWith(ContentType.TEXT_PLAIN_TYPE))
                     {
                         pctIsText = true;
                         break;
@@ -35,25 +35,25 @@ public class IntelligentContentTypeResolverStrategy implements
                 {
                     boolean hasJson = false;
                     boolean hasXml = false;
-                    for (final MediaType mt : expectedContentTypes)
+                    for (final ContentType ct : expectedContentTypes)
                     {
-                        if (mt.toString().split(";")[0].equals(MediaType.APPLICATION_JSON))
+                        if (ct.isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
                         {
                             hasJson = true;
                             break;
                         }
-                        else if (mt.toString().split(";")[0].equals(MediaType.APPLICATION_XML))
+                        else if (ct.isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
                         {
                             hasXml = true; // don't break; we prefer json
                         }
                     }
                     if (hasJson)
                     {
-                        contentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                        contentType = Optional.of(ContentType.APPLICATION_JSON_TYPE);
                     }
                     else if (hasXml)
                     {
-                        contentType = Optional.of(MediaType.APPLICATION_XML_TYPE);
+                        contentType = Optional.of(ContentType.APPLICATION_XML_TYPE);
                     }
                 }
             }
@@ -62,13 +62,14 @@ public class IntelligentContentTypeResolverStrategy implements
         return contentType;
     }
     
-    private Optional<MediaType> getAgreedContentType(final List<MediaType> requestContentTypes, final List<MediaType> acceptedContentTypes)
+    private Optional<ContentType> getAgreedContentType(final List<ContentType> requestContentTypes,
+            final List<ContentType> acceptedContentTypes)
     {
-        for (final MediaType rct : requestContentTypes)
+        for (final ContentType rct : requestContentTypes)
         {
-            for (final MediaType act : acceptedContentTypes)
+            for (final ContentType act : acceptedContentTypes)
             {
-                if (rct.toString().split(";")[0].equalsIgnoreCase(act.toString().split(";")[0]))
+                if (rct.isCompatibleWith(act))
                 {
                     return Optional.of(rct);
                 }

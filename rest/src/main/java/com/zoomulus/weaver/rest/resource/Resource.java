@@ -23,7 +23,6 @@ import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -38,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
 import com.zoomulus.weaver.rest.annotations.StrictParams;
 import com.zoomulus.weaver.rest.contenttype.ContentTypeResolverStrategy;
@@ -112,18 +112,18 @@ public class Resource
         return false;
     }
     
-    private List<MediaType> getAcceptedContentTypes()
+    private List<ContentType> getAcceptedContentTypes()
     {
         Annotation consumesAnnotation = referencedMethod.getAnnotation(Consumes.class);
         if (null == consumesAnnotation) consumesAnnotation = referencedClass.getAnnotation(Consumes.class);
-        final List<MediaType> acceptedContentTypes = Lists.newArrayList();
+        final List<ContentType> acceptedContentTypes = Lists.newArrayList();
         if (null != consumesAnnotation)
         {
             for (final String cts : ((Consumes)consumesAnnotation).value())
             {
                 try
                 {
-                    acceptedContentTypes.add(MediaType.valueOf(cts));
+                    acceptedContentTypes.add(ContentType.valueOf(cts));
                 }
                 catch (IllegalArgumentException e) { }
             }
@@ -131,26 +131,26 @@ public class Resource
         return acceptedContentTypes;
     }
     
-    private List<MediaType> getRequestContentTypes(final Optional<HttpHeaders> headers)
+    private List<ContentType> getRequestContentTypes(final Optional<HttpHeaders> headers)
     {
         return getContentTypesForHeader(headers, HttpHeaders.Names.CONTENT_TYPE);
     }
     
-    private List<MediaType> getAcceptContentTypes(final Optional<HttpHeaders> headers)
+    private List<ContentType> getAcceptContentTypes(final Optional<HttpHeaders> headers)
     {
         return getContentTypesForHeader(headers, HttpHeaders.Names.ACCEPT);
     }
     
-    private List<MediaType> getContentTypesForHeader(final Optional<HttpHeaders> headers, final String headerName)
+    private List<ContentType> getContentTypesForHeader(final Optional<HttpHeaders> headers, final String headerName)
     {
-        final List<MediaType> requestContentTypes = Lists.newArrayList();
+        final List<ContentType> requestContentTypes = Lists.newArrayList();
         if (headers.isPresent())
         {
             for (final String cts : headers.get().getAll(headerName))
             {
                 try
                 {
-                    requestContentTypes.add(MediaType.valueOf(cts));
+                    requestContentTypes.add(ContentType.valueOf(cts));
                 }
                 catch (IllegalArgumentException e) { }
             }
@@ -158,13 +158,14 @@ public class Resource
         return requestContentTypes;
     }
     
-    private MediaType getAgreedContentType(final List<MediaType> requestContentTypes, final List<MediaType> acceptedContentTypes)
+    private ContentType getAgreedContentType(final List<ContentType> requestContentTypes,
+            final List<ContentType> acceptedContentTypes)
     {
-        for (final MediaType rct : requestContentTypes)
+        for (final ContentType rct : requestContentTypes)
         {
-            for (final MediaType act : acceptedContentTypes)
+            for (final ContentType act : acceptedContentTypes)
             {
-                if (rct.toString().split(";")[0].equalsIgnoreCase(act.toString().split(";")[0]))
+                if (rct.isCompatibleWith(act))
                 {
                     return rct;
                 }
@@ -173,12 +174,12 @@ public class Resource
         return null;
     }
     
-    private List<MediaType> getProducesContentTypes(final Object response)
+    private List<ContentType> getProducesContentTypes(final Object response)
     {
-        final List<MediaType> contentTypes = Lists.newArrayList();
+        final List<ContentType> contentTypes = Lists.newArrayList();
         if (response instanceof Response && ((Response)response).getMediaType() != null)
         {
-            contentTypes.add(((Response)response).getMediaType());
+            contentTypes.add(new ContentType(((Response)response).getMediaType().toString()));
         }
         else
         {
@@ -190,9 +191,16 @@ public class Resource
                 {
                     try
                     {
-                        contentTypes.add(MediaType.valueOf(cts));
+                        contentTypes.add(ContentType.valueOf(cts));
                     }
-                    catch (IllegalArgumentException e) { }
+                    catch (IllegalArgumentException e)
+                    {
+                        try
+                        {
+                            contentTypes.add(new ContentType(cts));
+                        }
+                        catch (IllegalArgumentException e2) { }
+                    }
                 }
             }
         }
@@ -210,13 +218,13 @@ public class Resource
         return messageBody;
     }
     
-    private Map<String, List<String>> parseFormData(final String body, final Optional<MediaType> contentType)
+    private Map<String, List<String>> parseFormData(final String body, final Optional<ContentType> contentType)
     {
         Map<String, List<String>> formParams = Maps.newHashMap();
         
         if (null == body || ! contentType.isPresent()) return formParams;
         
-        if (! contentType.get().toString().split(";")[0].equalsIgnoreCase(MediaType.APPLICATION_FORM_URLENCODED))
+        if (! contentType.get().isCompatibleWith(ContentType.APPLICATION_FORM_URLENCODED_TYPE))
             return formParams;
         
         if (HttpMethod.POST == httpMethod ||
@@ -296,7 +304,7 @@ public class Resource
             final ResourcePath resourcePath,
             final Map<String, List<String>> queryParams,
             final Map<String, List<String>> formParams,
-            final Optional<MediaType> inboundContentType)
+            final Optional<ContentType> inboundContentType)
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, JsonParseException, JsonMappingException, IOException
     {
         final List<Object> args = Lists.newArrayList();
@@ -311,17 +319,17 @@ public class Resource
                 boolean added = false;
                 if (inboundContentType.isPresent() && parameterTypes[idx] != String.class && ! parameterTypes[idx].getName().equals("[B"))
                 {
-                    if (inboundContentType.get().toString().split(";")[0].equals(MediaType.APPLICATION_JSON))
+                    if (inboundContentType.get().isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
                     {
                         args.add(jsonMapper.readValue(messageBody, parameterTypes[idx]));
                         added = true;
                     }
-                    else if (inboundContentType.get().toString().split(";")[0].equals(MediaType.APPLICATION_XML))
+                    else if (inboundContentType.get().isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
                     {
                         args.add(xmlMapper.readValue(messageBody, parameterTypes[idx]));
                         added = true;
                     }
-                    else if (inboundContentType.get().toString().split(";")[0].equals(MediaType.TEXT_PLAIN))
+                    else if (inboundContentType.get().isCompatibleWith(ContentType.TEXT_PLAIN_TYPE))
                     {
                         if (parameterTypes[idx].isPrimitive())
                         {
@@ -471,7 +479,7 @@ public class Resource
         Object response = null;
         try
         {
-            final List<MediaType> acceptedInboundContentTypes = getAcceptedContentTypes();
+            final List<ContentType> acceptedInboundContentTypes = getAcceptedContentTypes();
             
             if (acceptedInboundContentTypes.size() > 0 &&
                     (HttpMethod.GET == httpMethod ||
@@ -486,12 +494,12 @@ public class Resource
 //                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 //            }
             
-            final List<MediaType> requestContentTypes = getRequestContentTypes(headers);
+            final List<ContentType> requestContentTypes = getRequestContentTypes(headers);
             
             String decodedBody = getDecodedBody(messageBody); // , inboundContentType);
             
             
-            final Optional<MediaType> inboundContentType =
+            final Optional<ContentType> inboundContentType =
                     inboundContentTypeResolverStrategy.resolve(requestContentTypes, acceptedInboundContentTypes, decodedBody);
             
 //            final MediaType contentType = getAgreedContentType(requestContentTypes, acceptedInboundContentTypes);
@@ -532,10 +540,10 @@ public class Resource
             return Response.status(Status.NO_CONTENT).build();
         }
         
-        final List<MediaType> acceptContentTypes = getAcceptContentTypes(headers);
-        final List<MediaType> producesContentTypes = getProducesContentTypes(response);
+        final List<ContentType> acceptContentTypes = getAcceptContentTypes(headers);
+        final List<ContentType> producesContentTypes = getProducesContentTypes(response);
         
-        Optional<MediaType> producesContentType =
+        Optional<ContentType> producesContentType =
                 acceptContentTypes.isEmpty() ?
                         (producesContentTypes.size() == 1 ?
                                 Optional.of(producesContentTypes.get(0)) : Optional.empty()) :
@@ -543,9 +551,9 @@ public class Resource
                                 
         Optional<String> stringRep = Optional.empty();
         boolean wantsJson = acceptContentTypes.size() == 1 &&
-                acceptContentTypes.get(0).toString().equalsIgnoreCase(MediaType.APPLICATION_JSON);
+                acceptContentTypes.get(0).isCompatibleWith(ContentType.APPLICATION_JSON_TYPE);
         boolean wantsXml = acceptContentTypes.size() == 1 &&
-                acceptContentTypes.get(0).toString().equalsIgnoreCase(MediaType.APPLICATION_XML);
+                acceptContentTypes.get(0).isCompatibleWith(ContentType.APPLICATION_XML_TYPE);
         boolean triedJsonConversion = false;
         
         if (response instanceof Response)
@@ -561,12 +569,12 @@ public class Resource
         {
             try
             {
-                if (producesContentType.get().toString().equals(MediaType.APPLICATION_JSON))
+                if (producesContentType.get().isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
                 {
                     triedJsonConversion = true;
                     stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                 }
-                else if (producesContentType.get().toString().equals(MediaType.APPLICATION_XML))
+                else if (producesContentType.get().isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
                 {
                     stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
                 }
@@ -587,7 +595,7 @@ public class Resource
             {
                 if (! producesContentType.isPresent())
                 {
-                    producesContentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                    producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
                 }
                 stringRep = Optional.of((String) response);
             }
@@ -595,7 +603,7 @@ public class Resource
             {
                 if (! producesContentType.isPresent())
                 {
-                    producesContentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                    producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
                 }
                 stringRep = Optional.of(response.toString());
             }
@@ -609,7 +617,7 @@ public class Resource
                         stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
                         if (! producesContentType.isPresent())
                         {
-                            producesContentType = Optional.of(MediaType.APPLICATION_XML_TYPE);
+                            producesContentType = Optional.of(ContentType.APPLICATION_XML_TYPE);
                         }
                     }
                     else
@@ -617,7 +625,7 @@ public class Resource
                         stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
                         if (! producesContentType.isPresent())
                         {
-                            producesContentType = Optional.of(MediaType.APPLICATION_JSON_TYPE);
+                            producesContentType = Optional.of(ContentType.APPLICATION_JSON_TYPE);
                         }
                     }
                 }
@@ -629,7 +637,7 @@ public class Resource
             {
                 if (! producesContentType.isPresent())
                 {
-                    producesContentType = Optional.of(MediaType.TEXT_PLAIN_TYPE);
+                    producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
                 }
                 stringRep = Optional.of(response.toString());
             }
@@ -637,11 +645,11 @@ public class Resource
         
         if (! producesContentType.isPresent() || (! acceptContentTypes.isEmpty()))
         {
-            final MediaType pct = producesContentType.get();
+            final ContentType pct = producesContentType.get();
             boolean found = false;
-            for (final MediaType act : acceptContentTypes)
+            for (final ContentType act : acceptContentTypes)
             {
-                if (pct.toString().split(";")[0].equalsIgnoreCase(act.toString().split(";")[0]))
+                if (pct.isCompatibleWith(act))
                 {
                     found = true;
                     break;
@@ -658,7 +666,7 @@ public class Resource
             return Response
                     .status(Status.OK)
                     .entity(stringRep.get())
-                    .type(producesContentType.isPresent() ? producesContentType.get().toString() : MediaType.TEXT_PLAIN)
+                    .type(producesContentType.isPresent() ? producesContentType.get().toString() : ContentType.TEXT_PLAIN)
                     .build();
         }
         else
