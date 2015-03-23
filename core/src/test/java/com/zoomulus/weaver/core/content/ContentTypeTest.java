@@ -9,8 +9,6 @@ import io.netty.util.CharsetUtil;
 
 import java.util.Map;
 
-import javax.ws.rs.core.MediaType;
-
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
@@ -20,7 +18,7 @@ public class ContentTypeTest
     @Test
     public void testConstruct()
     {
-        final ContentType ct = new ContentType(MediaType.APPLICATION_JSON, CharsetUtil.UTF_16.name());
+        final ContentType ct = new ContentType(ContentType.APPLICATION_JSON, CharsetUtil.UTF_16.name());
         assertEquals(ContentType.APPLICATION_JSON, ct.getMediaType());
         assertEquals(CharsetUtil.UTF_16.name(), ct.getEncoding());
     }
@@ -28,7 +26,7 @@ public class ContentTypeTest
     @Test
     public void testConstructWithoutEncoding()
     {
-        final ContentType ct = new ContentType(MediaType.APPLICATION_JSON);
+        final ContentType ct = new ContentType(ContentType.APPLICATION_JSON);
         assertEquals(ContentType.APPLICATION_JSON, ct.getMediaType());
         assertEquals(CharsetUtil.UTF_8.name(), ct.getEncoding());
     }
@@ -75,7 +73,7 @@ public class ContentTypeTest
     {
         try
         {
-            new ContentType(MediaType.APPLICATION_JSON, null);
+            new ContentType(ContentType.APPLICATION_JSON, null);
             fail();
         }
         catch (NullPointerException e) { }
@@ -118,18 +116,18 @@ public class ContentTypeTest
         }
         
         final Map<ContentType, String> m2 = Maps.newHashMap();
-        m2.put(ContentType.APPLICATION_ATOM_XML_TYPE, MediaType.APPLICATION_ATOM_XML);
-        m2.put(ContentType.APPLICATION_FORM_URLENCODED_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-        m2.put(ContentType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON);
-        m2.put(ContentType.APPLICATION_OCTET_STREAM_TYPE, MediaType.APPLICATION_OCTET_STREAM);
-        m2.put(ContentType.APPLICATION_SVG_XML_TYPE, MediaType.APPLICATION_SVG_XML);
-        m2.put(ContentType.APPLICATION_XHTML_XML_TYPE, MediaType.APPLICATION_XHTML_XML);
-        m2.put(ContentType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML);
-        m2.put(ContentType.MULTIPART_FORM_DATA_TYPE, MediaType.MULTIPART_FORM_DATA);
-        m2.put(ContentType.TEXT_HTML_TYPE, MediaType.TEXT_HTML);
-        m2.put(ContentType.TEXT_PLAIN_TYPE, MediaType.TEXT_PLAIN);
-        m2.put(ContentType.TEXT_XML_TYPE, MediaType.TEXT_XML);
-        m2.put(ContentType.WILDCARD_TYPE, MediaType.WILDCARD);
+        m2.put(ContentType.APPLICATION_ATOM_XML_TYPE, ContentType.APPLICATION_ATOM_XML);
+        m2.put(ContentType.APPLICATION_FORM_URLENCODED_TYPE, ContentType.APPLICATION_FORM_URLENCODED);
+        m2.put(ContentType.APPLICATION_JSON_TYPE, ContentType.APPLICATION_JSON);
+        m2.put(ContentType.APPLICATION_OCTET_STREAM_TYPE, ContentType.APPLICATION_OCTET_STREAM);
+        m2.put(ContentType.APPLICATION_SVG_XML_TYPE, ContentType.APPLICATION_SVG_XML);
+        m2.put(ContentType.APPLICATION_XHTML_XML_TYPE, ContentType.APPLICATION_XHTML_XML);
+        m2.put(ContentType.APPLICATION_XML_TYPE, ContentType.APPLICATION_XML);
+        m2.put(ContentType.MULTIPART_FORM_DATA_TYPE, ContentType.MULTIPART_FORM_DATA);
+        m2.put(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_HTML);
+        m2.put(ContentType.TEXT_PLAIN_TYPE, ContentType.TEXT_PLAIN);
+        m2.put(ContentType.TEXT_XML_TYPE, ContentType.TEXT_XML);
+        m2.put(ContentType.WILDCARD_TYPE, ContentType.WILDCARD);
         
         for (final ContentType ct : m2.keySet())
         {

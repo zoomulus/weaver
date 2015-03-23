@@ -17,7 +17,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -25,6 +24,7 @@ import javax.ws.rs.core.Response.Status;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
 import com.zoomulus.weaver.rest.annotations.StrictParams;
 
@@ -422,10 +422,10 @@ public class RestServerTestResource
     
     @GET
     @Path("get/return/applicationxml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public Response getApplicationXml()
     {
-        return Response.status(Status.OK).type(MediaType.APPLICATION_XML).entity("text").build();
+        return Response.status(Status.OK).type(ContentType.APPLICATION_XML).entity("text").build();
     }
     
     @POST
@@ -486,7 +486,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/single")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Response postFormParam(@FormParam("p1") final String p1)
     {
         return Response.status(Status.OK).entity(p1 != null ? p1 : "null").build();
@@ -494,7 +494,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/requiredsingle")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Response postFormParamReqd(@RequiredParam @FormParam("p1") final String p1)
     {
         return Response.status(Status.OK).entity(p1).build();
@@ -502,7 +502,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/multiple")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Response postFormParamMultiple(@FormParam("p1") final String p1,
             @FormParam("p3") final String p3,
             @FormParam("p2") final String p2)
@@ -512,7 +512,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/queryandform")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Response postQueryAndForm(@QueryParam("qp1") final String qp1,
             @FormParam("fp1") final String fp1,
             @FormParam("fp2") final String fp2,
@@ -525,7 +525,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/boolean")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormparamTypematchBoolean(@FormParam("p") boolean v)
     {
         return Boolean.toString(v);
@@ -533,7 +533,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/byte")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public byte postFormparamTypematchByte(@FormParam("p") byte v)
     {
         return v;
@@ -541,7 +541,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/short")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Short postFormparamTypematchShort(@FormParam("p") short v)
     {
         return v;
@@ -549,7 +549,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/int")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Integer postFormparamTypematchInt(@FormParam("p") int v)
     {
         return v;
@@ -557,7 +557,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/long")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Long postFormparamTypematchLong(@FormParam("p") long v)
     {
         return v;
@@ -565,7 +565,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/float")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Float postFormparamTypematchFloat(@FormParam("p") float v)
     {
         return v;
@@ -573,7 +573,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/double")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Double postFormparamTypematchDouble(@FormParam("p") double v)
     {
         return v;
@@ -581,7 +581,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/Integer")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public Integer postFormparamTypematchInteger(@FormParam("p") final Integer v)
     {
         return v;
@@ -589,7 +589,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/customwithstringctor")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormparamTypematchCustomWithStringCtor(@FormParam("p") final CustomWithStringCtor v)
     {
         return v.getS();
@@ -597,7 +597,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/customvalueofstring")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormparamTypematchCustomValueOfString(@FormParam("p") final CustomValueOfString v)
     {
         return v.toString();
@@ -605,7 +605,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/formparam/typematch/custominvalid")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormparamTypematchCustomInvalid(@FormParam("p") final CustomInvalid v)
     {
         return "";
@@ -613,7 +613,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String postXml(final String payload)
     {
         return payload;
@@ -621,7 +621,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String postJson(final String payload)
     {
         return payload;
@@ -629,7 +629,7 @@ public class RestServerTestResource
     
     @POST
     @Path("post/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String postText(final String payload)
     {
         return payload;
@@ -638,7 +638,7 @@ public class RestServerTestResource
     // Shouldn't work
     @GET
     @Path("get/consumes")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String getConsumes(final String payload)
     {
         return null;
@@ -647,7 +647,7 @@ public class RestServerTestResource
     // Shouldn't work
     @HEAD
     @Path("head/consumes")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String headConsumes(final String payload)
     {
         return null;
@@ -656,7 +656,7 @@ public class RestServerTestResource
     // Shouldn't work
     @OPTIONS
     @Path("options/consumes")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String optionsConsumes(final String payload)
     {
         return null;
@@ -695,7 +695,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/defaultvalue/form/int")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public int postFormParamsDefaultInt(@DefaultValue("111") @FormParam("age") int age)
     {
         return age;
@@ -703,7 +703,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/defaultvalue/form/string")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormParamsDefaultString(@DefaultValue("tim") @FormParam("name") final String name)
     {
         return name;
@@ -711,7 +711,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/defaultvalue/form/multiple")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormParamsDefaultMultiple(@DefaultValue("tim") @FormParam("name") final String name,
             @FormParam("age") @DefaultValue("111") int age)
     {
@@ -721,7 +721,7 @@ public class RestServerTestResource
     // Again - no good reason for a client to do this but we shouldn't blow up if they do
     @POST
     @Path("/post/defaultvalue/form/requiredanddefaultsingle")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postFormParamsReqdAndDefault(@RequiredParam @DefaultValue("tim") @FormParam("name") final String name)
     {
         return name;
@@ -729,7 +729,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/defaultvalue/queryandform")
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postQueryAndForm(@RequiredParam @FormParam("firstname") final String firstName,
             @DefaultValue("timson") @FormParam("lastname") final String lastName,
             @DefaultValue("female") @QueryParam("gender") final String gender,
@@ -750,7 +750,7 @@ public class RestServerTestResource
     @POST
     @Path("/post/strictparams")
     @StrictParams
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(ContentType.APPLICATION_FORM_URLENCODED)
     public String postStrict(@FormParam("name") final String name)
     {
         return name;
@@ -784,7 +784,7 @@ public class RestServerTestResource
     // @Produces resources
     @GET
     @Path("/get/produces/response/string/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public Response getResponseStringProducesJson()
     {
         return Response.status(Status.OK).entity("not actually json").build();
@@ -792,7 +792,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/response/string/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public Response getResponseStringProducesXml()
     {
         return Response.status(Status.OK).entity("not actually xml").build();
@@ -800,7 +800,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/response/string/text")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(ContentType.TEXT_PLAIN)
     public Response getResponseStringProducesText()
     {
         return Response.status(Status.OK).entity("some text").build();
@@ -808,7 +808,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/response/object/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public Response getResponseObjectProducesJson()
     {
         return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).build();
@@ -816,7 +816,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/response/object/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public Response getResponseObjectProducesXml()
     {
         return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).build();
@@ -824,7 +824,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/response/native/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public Response getResponseNativeProducesJson()
     {
         return Response.status(Status.OK).entity(new Integer(5)).build();
@@ -832,7 +832,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/response/native/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public Response getResponseNativeProducesXml()
     {
         return Response.status(Status.OK).entity(new Integer(5)).build();
@@ -861,7 +861,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/string/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public String getStringJson()
     {
         return "text";
@@ -869,7 +869,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/object/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public CustomWithStringCtor getObjectJson()
     {
         return new CustomWithStringCtor("custom");
@@ -877,7 +877,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/native/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public int getNativeJson()
     {
         return 111;
@@ -885,7 +885,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/invalid/json")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(ContentType.APPLICATION_JSON)
     public CustomInvalid getInvalidJson()
     {
         return new CustomInvalid();
@@ -893,7 +893,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/string/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public String getStringXml()
     {
         return "text";
@@ -901,7 +901,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/object/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public CustomWithStringCtor getObjectXml()
     {
         return new CustomWithStringCtor("custom");
@@ -909,7 +909,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/native/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public int getNativeXml()
     {
         return 111;
@@ -917,7 +917,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/invalid/xml")
-    @Produces(MediaType.APPLICATION_XML)
+    @Produces(ContentType.APPLICATION_XML)
     public CustomInvalid getInvalidXml()
     {
         return new CustomInvalid();
@@ -975,7 +975,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/string/multipleproduces")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({ContentType.APPLICATION_JSON, ContentType.APPLICATION_XML})
     public String getStringProducesMultiple()
     {
         return "text";
@@ -983,7 +983,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/object/multipleproduces")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({ContentType.APPLICATION_JSON, ContentType.APPLICATION_XML})
     public CustomWithStringCtor getObjectProducesMultiple()
     {
         return new CustomWithStringCtor("custom");
@@ -991,7 +991,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/jsonobject/multipleproduces")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML})
+    @Produces({ContentType.TEXT_PLAIN, ContentType.TEXT_HTML})
     public CustomNoToString getJsonObjectProducesMultiple()
     {
         return new CustomNoToString("abc", 123);
@@ -999,7 +999,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/produces/nonjsonobject/multipleproduces")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces({ContentType.APPLICATION_JSON, ContentType.APPLICATION_XML})
     public CustomWithStringCtorChild getNonJsonObjectProducesMultiple()
     {
         return new CustomWithStringCtorChild("custom");
@@ -1010,14 +1010,14 @@ public class RestServerTestResource
     @Path("/get/accept/response/singlect")
     public Response getAcceptMatchResponseCT()
     {
-        return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).type(MediaType.APPLICATION_JSON).build();
+        return Response.status(Status.OK).entity(new CustomWithStringCtor("custom")).type(ContentType.APPLICATION_JSON).build();
     }
     
     @GET
     @Path("/get/accept/response/jsonstring")
     public Response getAcceptResponseStringJson()
     {
-        return Response.status(Status.OK).entity("text").type(MediaType.APPLICATION_JSON).build();
+        return Response.status(Status.OK).entity("text").type(ContentType.APPLICATION_JSON).build();
     }
     
     @GET
@@ -1029,7 +1029,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/accept/string/text/html")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(ContentType.TEXT_HTML)
     public String getAcceptStringTextHtml()
     {
         return "text";
@@ -1037,7 +1037,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/accept/string/text/multipleproduces")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_HTML})
+    @Produces({ContentType.TEXT_PLAIN, ContentType.TEXT_HTML})
     public String getAcceptStringTextProducesMultiple()
     {
         return "text";
@@ -1052,7 +1052,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/accept/object/text/html")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(ContentType.TEXT_HTML)
     public CustomWithStringCtor getAcceptObjectTextHtml()
     {
         return new CustomWithStringCtor("custom");
@@ -1060,7 +1060,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/accept/object/text/multipleproduces")
-    @Produces({MediaType.TEXT_HTML, MediaType.TEXT_PLAIN})
+    @Produces({ContentType.TEXT_HTML, ContentType.TEXT_PLAIN})
     public CustomWithStringCtor getAcceptObjectTextProducesMultiple()
     {
         return new CustomWithStringCtor("custom");
@@ -1075,7 +1075,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/accept/native/text/html")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(ContentType.TEXT_HTML)
     public int getAcceptNativeTextHtml()
     {
         return 111;
@@ -1083,7 +1083,7 @@ public class RestServerTestResource
     
     @GET
     @Path("/get/accept/native/text/multipleproduces")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
+    @Produces({ContentType.TEXT_PLAIN, ContentType.APPLICATION_JSON})
     public int getAcceptNativeTextProducesMultiple()
     {
         return 111;
@@ -1101,7 +1101,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String postToText(final String payload)
     {
         return payload;
@@ -1109,7 +1109,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String postToJson(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1124,7 +1124,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String postToXml(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1153,7 +1153,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/object/consumes/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String postStringToObjectConsumesJson(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1161,7 +1161,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/object/consumes/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String postStringToObjectConsumesXml(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1169,7 +1169,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/object/consumes/text/stringctor")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String postStringToObjectConsumesTextStringCtor(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1177,7 +1177,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/string/object/consumes/text/valueof")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String postStringToObjectConsumesTextValueOf(final CustomValueOfString custom)
     {
         return custom.toString();
@@ -1192,7 +1192,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/native/consumes/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String postNativeConsumesJson(final int v)
     {
         return Integer.toString(v);
@@ -1200,7 +1200,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/native/consumes/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String postNativeConsumesXml(final int v)
     {
         return Integer.toString(v);
@@ -1208,7 +1208,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/native/consumes/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String postNativeConsumesText(final int v)
     {
         return Integer.toString(v);
@@ -1223,7 +1223,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/bytearray/consumes/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String postBytesConsumesJson(final byte[] bytes)
     {
         return new String(bytes);
@@ -1231,7 +1231,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/bytearray/consumes/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String postBytesConsumesXml(final byte[] bytes)
     {
         return new String(bytes);
@@ -1239,7 +1239,7 @@ public class RestServerTestResource
     
     @POST
     @Path("/post/bytearray/consumes/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String postBytesConsumesText(final byte[] bytes)
     {
         return new String(bytes);
@@ -1254,7 +1254,7 @@ public class RestServerTestResource
 
     @PUT
     @Path("/put/string/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String putToText(final String payload)
     {
         return payload;
@@ -1262,7 +1262,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/string/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String putToJson(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1270,7 +1270,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/string/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String putToXml(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1306,7 +1306,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/string/object/consumes/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String putStringToObjectConsumesJson(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1314,7 +1314,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/string/object/consumes/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String putStringToObjectConsumesXml(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1322,7 +1322,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/string/object/consumes/text/stringctor")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String putStringToObjectConsumesTextStringCtor(final CustomWithStringCtor custom)
     {
         return custom.toString();
@@ -1330,7 +1330,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/string/object/consumes/text/valueof")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String putStringToObjectConsumesTextValueOf(final CustomValueOfString custom)
     {
         return custom.toString();
@@ -1345,7 +1345,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/native/consumes/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String putNativeConsumesJson(final int v)
     {
         return Integer.toString(v);
@@ -1353,7 +1353,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/native/consumes/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String putNativeConsumesXml(final int v)
     {
         return Integer.toString(v);
@@ -1361,7 +1361,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/native/consumes/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String putNativeConsumesText(final int v)
     {
         return Integer.toString(v);
@@ -1376,7 +1376,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/bytearray/consumes/json")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public String putBytesConsumesJson(final byte[] bytes)
     {
         return new String(bytes);
@@ -1384,7 +1384,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/bytearray/consumes/xml")
-    @Consumes(MediaType.APPLICATION_XML)
+    @Consumes(ContentType.APPLICATION_XML)
     public String putBytesConsumesXml(final byte[] bytes)
     {
         return new String(bytes);
@@ -1392,7 +1392,7 @@ public class RestServerTestResource
     
     @PUT
     @Path("/put/bytearray/consumes/text")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(ContentType.TEXT_PLAIN)
     public String putBytesConsumesText(final byte[] bytes)
     {
         return new String(bytes);

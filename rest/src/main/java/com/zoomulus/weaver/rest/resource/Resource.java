@@ -207,7 +207,7 @@ public class Resource
         return contentTypes;
     }
         
-    private String getDecodedBody(final String messageBody) // , final MediaType contentType)
+    private String getDecodedBody(final String messageBody) // , final ContentType contentType)
     {
         try
         {
@@ -502,7 +502,7 @@ public class Resource
             final Optional<ContentType> inboundContentType =
                     inboundContentTypeResolverStrategy.resolve(requestContentTypes, acceptedInboundContentTypes, decodedBody);
             
-//            final MediaType contentType = getAgreedContentType(requestContentTypes, acceptedInboundContentTypes);
+//            final ContentType contentType = getAgreedContentType(requestContentTypes, acceptedInboundContentTypes);
             
             
             if (! inboundContentType.isPresent() && ! acceptedInboundContentTypes.isEmpty())

@@ -4,10 +4,11 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.MediaType;
+
+import com.zoomulus.weaver.core.content.ContentType;
 
 @Path("/ctr")
-@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+@Consumes(ContentType.APPLICATION_FORM_URLENCODED)
 public class ConsumesTestResource
 {
     @POST
@@ -16,16 +17,16 @@ public class ConsumesTestResource
     
     @POST
     @Path("/r2")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public void r2() { }
     
     @POST
     @Path("/r3")
-    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Consumes({ContentType.APPLICATION_JSON, ContentType.APPLICATION_XML})
     public void r3() { }
     
     @GET
     @Path("/r4")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(ContentType.APPLICATION_JSON)
     public void r4() { }
 }

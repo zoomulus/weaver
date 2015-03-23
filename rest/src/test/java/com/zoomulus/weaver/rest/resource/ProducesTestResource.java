@@ -3,10 +3,11 @@ package com.zoomulus.weaver.rest.resource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+
+import com.zoomulus.weaver.core.content.ContentType;
 
 @Path("/ptr")
-@Produces(MediaType.TEXT_HTML)
+@Produces(ContentType.TEXT_HTML)
 public class ProducesTestResource
 {
     @GET
@@ -18,7 +19,7 @@ public class ProducesTestResource
     
     @GET
     @Path("r2")
-    @Produces(MediaType.TEXT_XML)
+    @Produces(ContentType.TEXT_XML)
     public String r2()
     {
         return "<html><body>r2</body></html>";

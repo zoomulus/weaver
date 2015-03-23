@@ -9,11 +9,10 @@ import io.netty.handler.codec.http.HttpMethod;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.core.MediaType;
-
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
+import com.zoomulus.weaver.core.content.ContentType;
 
 public class TestDefaultResourceScannerStrategy
 {
@@ -186,8 +185,8 @@ public class TestDefaultResourceScannerStrategy
         final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
         final Resource r = ris.get(new ResourceIdentifier("/ctr/r1", HttpMethod.POST));
-        assertTrue(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));
-        assertFalse(r.consumes(MediaType.APPLICATION_JSON));
+        assertTrue(r.consumes(ContentType.APPLICATION_FORM_URLENCODED));
+        assertFalse(r.consumes(ContentType.APPLICATION_JSON));
     }
     
     @Test
@@ -195,8 +194,8 @@ public class TestDefaultResourceScannerStrategy
     {
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(singlePost);
         final Resource r = ris.values().iterator().next();
-        assertTrue(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));
-        assertFalse(r.consumes(MediaType.APPLICATION_JSON));
+        assertTrue(r.consumes(ContentType.APPLICATION_FORM_URLENCODED));
+        assertFalse(r.consumes(ContentType.APPLICATION_JSON));
     }
     
     @Test
@@ -205,8 +204,8 @@ public class TestDefaultResourceScannerStrategy
         final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
         final Resource r = ris.get(new ResourceIdentifier("/ctr/r2", HttpMethod.POST));
-        assertTrue(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));
-        assertTrue(r.consumes(MediaType.APPLICATION_JSON));        
+        assertTrue(r.consumes(ContentType.APPLICATION_FORM_URLENCODED));
+        assertTrue(r.consumes(ContentType.APPLICATION_JSON));        
     }
     
     @Test
@@ -215,8 +214,8 @@ public class TestDefaultResourceScannerStrategy
         final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
         final Resource r = ris.get(new ResourceIdentifier("/ctr/r3", HttpMethod.POST));
-        assertTrue(r.consumes(MediaType.APPLICATION_JSON));
-        assertTrue(r.consumes(MediaType.APPLICATION_XML));
+        assertTrue(r.consumes(ContentType.APPLICATION_JSON));
+        assertTrue(r.consumes(ContentType.APPLICATION_XML));
     }
     
     @Test
@@ -225,8 +224,8 @@ public class TestDefaultResourceScannerStrategy
         final Set<Class<?>> s = Sets.newHashSet(ConsumesTestResource.class);
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
         final Resource r = ris.get(new ResourceIdentifier("/ctr/r4", HttpMethod.GET));
-        assertFalse(r.consumes(MediaType.APPLICATION_FORM_URLENCODED));        
-        assertFalse(r.consumes(MediaType.APPLICATION_JSON));
+        assertFalse(r.consumes(ContentType.APPLICATION_FORM_URLENCODED));        
+        assertFalse(r.consumes(ContentType.APPLICATION_JSON));
     }
     
     @Test
@@ -234,7 +233,7 @@ public class TestDefaultResourceScannerStrategy
     {
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(singlePut);
         final Resource r = ris.values().iterator().next();
-        assertTrue(r.consumes(MediaType.TEXT_PLAIN));
+        assertTrue(r.consumes(ContentType.TEXT_PLAIN));
     }
         
     @Test
@@ -243,8 +242,8 @@ public class TestDefaultResourceScannerStrategy
         final Set<Class<?>> s = Sets.newHashSet(ProducesTestResource.class);
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
         final Resource r = ris.get(new ResourceIdentifier("/ptr/r1", HttpMethod.GET));
-        assertTrue(r.produces(MediaType.TEXT_HTML));
-        assertFalse(r.produces(MediaType.TEXT_PLAIN));
+        assertTrue(r.produces(ContentType.TEXT_HTML));
+        assertFalse(r.produces(ContentType.TEXT_PLAIN));
     }
     
     @Test
@@ -252,8 +251,8 @@ public class TestDefaultResourceScannerStrategy
     {
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(singlePost);
         final Resource r = ris.values().iterator().next();
-        assertTrue(r.produces(MediaType.TEXT_HTML));
-        assertFalse(r.produces(MediaType.APPLICATION_JSON));
+        assertTrue(r.produces(ContentType.TEXT_HTML));
+        assertFalse(r.produces(ContentType.APPLICATION_JSON));
     }
     
     @Test
@@ -262,8 +261,8 @@ public class TestDefaultResourceScannerStrategy
         final Set<Class<?>> s = Sets.newHashSet(ProducesTestResource.class);
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(s);
         final Resource r = ris.get(new ResourceIdentifier("/ptr/r2", HttpMethod.GET));
-        assertTrue(r.produces(MediaType.TEXT_HTML));
-        assertTrue(r.produces(MediaType.TEXT_XML));        
+        assertTrue(r.produces(ContentType.TEXT_HTML));
+        assertTrue(r.produces(ContentType.TEXT_XML));        
     }
     
     @Test
@@ -271,6 +270,6 @@ public class TestDefaultResourceScannerStrategy
     {
         final Map<ResourceIdentifier, Resource> ris = scanner.scan(singleGet);
         final Resource r = ris.values().iterator().next();
-        assertTrue(r.produces(MediaType.TEXT_PLAIN));
+        assertTrue(r.produces(ContentType.TEXT_PLAIN));
     }
 }
