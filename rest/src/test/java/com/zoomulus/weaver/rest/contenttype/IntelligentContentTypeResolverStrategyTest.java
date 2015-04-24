@@ -33,7 +33,7 @@ public class IntelligentContentTypeResolverStrategyTest
     public void testChooseSingleContentType()
     {
         final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.TEXT_HTML_TYPE),
-                    Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.TEXT_PLAIN_TYPE), null);
+                    Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.TEXT_PLAIN_TYPE));
         assertTrue(ct.isPresent());
         assertEquals(ContentType.APPLICATION_JSON_TYPE, ct.get());
     }
@@ -42,7 +42,7 @@ public class IntelligentContentTypeResolverStrategyTest
     public void testNoMatchingContentType()
     {
         final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.APPLICATION_JSON_TYPE, ContentType.APPLICATION_XML_TYPE),
-                    Lists.newArrayList(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_PLAIN_TYPE), null);
+                    Lists.newArrayList(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_PLAIN_TYPE));
         assertFalse(ct.isPresent());
     }
     
@@ -50,7 +50,7 @@ public class IntelligentContentTypeResolverStrategyTest
     public void testSingleOptionMatches()
     {
         final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE),
-                Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE), null);
+                Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE));
         assertTrue(ct.isPresent());
         assertEquals(ContentType.TEXT_PLAIN_TYPE, ct.get());
     }
@@ -58,7 +58,7 @@ public class IntelligentContentTypeResolverStrategyTest
     @Test
     public void testNoOptionsReturnsNoMatch()
     {
-        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(), Lists.newArrayList(), null);
+        final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(), Lists.newArrayList());
         assertFalse(ct.isPresent());
     }
     
@@ -66,7 +66,7 @@ public class IntelligentContentTypeResolverStrategyTest
     public void testMultipleMatchesReturnsFirst()
     {
         final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE, ContentType.TEXT_HTML_TYPE),
-                Lists.newArrayList(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_PLAIN_TYPE), null);
+                Lists.newArrayList(ContentType.TEXT_HTML_TYPE, ContentType.TEXT_PLAIN_TYPE));
         assertTrue(ct.isPresent());
         assertEquals(ContentType.TEXT_PLAIN_TYPE, ct.get());
     }
@@ -75,7 +75,7 @@ public class IntelligentContentTypeResolverStrategyTest
     public void testNoExpectedCTReturnsFirstProvidedCT()
     {
         final Optional<ContentType> ct = sut.resolve(Lists.newArrayList(ContentType.TEXT_PLAIN_TYPE),
-                Lists.newArrayList(), null);
+                Lists.newArrayList());
         assertTrue(ct.isPresent());
         assertEquals(ContentType.TEXT_PLAIN_TYPE, ct.get());
     }

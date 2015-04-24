@@ -10,7 +10,7 @@ public class IntelligentContentTypeResolverStrategy implements
 {
     @Override
     public Optional<ContentType> resolve(final List<ContentType> providedContentTypes,
-            final List<ContentType> expectedContentTypes, final String message)
+            final List<ContentType> expectedContentTypes)
     {
         Optional<ContentType> contentType = getAgreedContentType(providedContentTypes, expectedContentTypes);
         

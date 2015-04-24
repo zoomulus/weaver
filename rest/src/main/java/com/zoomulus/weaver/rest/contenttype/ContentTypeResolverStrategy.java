@@ -8,6 +8,5 @@ import com.zoomulus.weaver.core.content.ContentType;
 public interface ContentTypeResolverStrategy
 {
     Optional<ContentType> resolve(final List<ContentType> providedContentTypes,
-            final List<ContentType> expectedContentTypes,
-            final String message);
+            final List<ContentType> expectedContentTypes);
 }
