@@ -2,46 +2,35 @@ package com.zoomulus.weaver.rest.resource;
 
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.util.CharsetUtil;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.MatrixParam;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Value;
 import lombok.experimental.Builder;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.content.ContentType;
-import com.zoomulus.weaver.rest.annotations.RequiredParam;
 import com.zoomulus.weaver.rest.annotations.StrictParams;
+import com.zoomulus.weaver.rest.content.HttpContent;
 import com.zoomulus.weaver.rest.contenttype.ContentTypeResolverStrategy;
 import com.zoomulus.weaver.rest.contenttype.IntelligentContentTypeResolverStrategy;
+import com.zoomulus.weaver.rest.resource.ResourceArgs.ResourceArgsBuilder.ResourceArgsBuilderException;
 
 @Value
 @Builder
@@ -73,32 +62,32 @@ public class Resource
     // Support ParamConverter<T>
     // Ensure most optimal match works
     
-    private Optional<Constructor<?>> getStringConstructor(final Class<?> klass)
-    {
-        for (final Constructor<?> ctor : klass.getConstructors())
-        {
-            final Class<?>[] params = ctor.getParameterTypes();
-            if (params.length != 1)
-            {
-                continue;
-            }
-            if (params[0] == String.class)
-            {
-                return Optional.of(ctor);
-            }
-        }
-        return Optional.empty();
-    }
-    
-    private Optional<Method> getValueOfStringMethod(final Class<?> klass)
-    {
-        try
-        {
-            return Optional.of(klass.getDeclaredMethod("valueOf", String.class));            
-        }
-        catch (NoSuchMethodException e) { }
-        return Optional.empty();
-    }
+//    private Optional<Constructor<?>> getStringConstructor(final Class<?> klass)
+//    {
+//        for (final Constructor<?> ctor : klass.getConstructors())
+//        {
+//            final Class<?>[] params = ctor.getParameterTypes();
+//            if (params.length != 1)
+//            {
+//                continue;
+//            }
+//            if (params[0] == String.class)
+//            {
+//                return Optional.of(ctor);
+//            }
+//        }
+//        return Optional.empty();
+//    }
+//    
+//    private Optional<Method> getValueOfStringMethod(final Class<?> klass)
+//    {
+//        try
+//        {
+//            return Optional.of(klass.getDeclaredMethod("valueOf", String.class));            
+//        }
+//        catch (NoSuchMethodException e) { }
+//        return Optional.empty();
+//    }
     
     private boolean hasDeclaredToString(final Class<?> klass)
     {
@@ -207,34 +196,34 @@ public class Resource
         return contentTypes;
     }
         
-    private String getDecodedBody(final String messageBody) // , final ContentType contentType)
-    {
-        try
-        {
-            return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
-        }
-        catch (UnsupportedEncodingException e) { }
-        
-        return messageBody;
-    }
+//    private String getDecodedBody(final String messageBody) // , final ContentType contentType)
+//    {
+//        try
+//        {
+//            return URLDecoder.decode(messageBody, CharsetUtil.UTF_8.name());
+//        }
+//        catch (UnsupportedEncodingException e) { }
+//        
+//        return messageBody;
+//    }
     
-    private Map<String, List<String>> parseFormData(final String body, final Optional<ContentType> contentType)
-    {
-        Map<String, List<String>> formParams = Maps.newHashMap();
-        
-        if (null == body || ! contentType.isPresent()) return formParams;
-        
-        if (! contentType.get().isCompatibleWith(ContentType.APPLICATION_FORM_URLENCODED_TYPE))
-            return formParams;
-        
-        if (HttpMethod.POST == httpMethod ||
-                HttpMethod.PUT == httpMethod)
-        {
-            formParams = new QueryStringDecoder(body, false).parameters();
-        }
-        
-        return formParams;
-    }    
+//    private Map<String, List<String>> parseFormData(final String body, final Optional<ContentType> contentType)
+//    {
+//        Map<String, List<String>> formParams = Maps.newHashMap();
+//        
+//        if (null == body || ! contentType.isPresent()) return formParams;
+//        
+//        if (! contentType.get().isCompatibleWith(ContentType.APPLICATION_FORM_URLENCODED_TYPE))
+//            return formParams;
+//        
+//        if (HttpMethod.POST == httpMethod ||
+//                HttpMethod.PUT == httpMethod)
+//        {
+//            formParams = new QueryStringDecoder(body, false).parameters();
+//        }
+//        
+//        return formParams;
+//    }    
     
     private boolean passesStrictParamsCheck(int nArgs, int nQueryParams, int nFormParams)
     {
@@ -254,221 +243,221 @@ public class Resource
         return true;
     }
     
-    private boolean expectsMessageBody()
-    {
-        for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
-        {
-            if (0 == paramAnnotations.length) return true;
-        }
-        return false;
-    }
+//    private boolean expectsMessageBody()
+//    {
+//        for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
+//        {
+//            if (0 == paramAnnotations.length) return true;
+//        }
+//        return false;
+//    }
     
-    private Object getParameterOfMatchingType(final Class<?> parameterType, final String s_arg)
-            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
-    {
-        Object arg = null;
-        if (parameterType.isPrimitive())
-        {
-            if (parameterType == boolean.class) { arg = Boolean.valueOf(s_arg); }
-            else if (parameterType == byte.class) { arg = Byte.valueOf(s_arg); }
-            else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
-            else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
-            else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
-            else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
-            else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
-        }
-        else
-        {
-            Optional<Constructor<?>> stringConstructor = getStringConstructor(parameterType);
-            if (stringConstructor.isPresent())
-            {
-                arg = stringConstructor.get().newInstance(s_arg);
-            }
-            else
-            {
-                Optional<Method> valueOfStringMethod = getValueOfStringMethod(parameterType);
-                if (valueOfStringMethod.isPresent())
-                {
-                    arg = valueOfStringMethod.get().invoke(null, s_arg);
-                }
-                else
-                {
-                    arg = s_arg;
-                }
-            }
-        }
-        return arg;
-    }
+//    private Object getParameterOfMatchingType(final Class<?> parameterType, final String s_arg)
+//            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+//    {
+//        Object arg = null;
+//        if (parameterType.isPrimitive())
+//        {
+//            if (parameterType == boolean.class) { arg = Boolean.valueOf(s_arg); }
+//            else if (parameterType == byte.class) { arg = Byte.valueOf(s_arg); }
+//            else if (parameterType == short.class) { arg = Short.valueOf(s_arg); }
+//            else if (parameterType == int.class) { arg = Integer.valueOf(s_arg); }
+//            else if (parameterType == long.class) { arg = Long.valueOf(s_arg); }
+//            else if (parameterType == float.class) { arg = Float.valueOf(s_arg); }
+//            else if (parameterType == double.class) { arg = Double.valueOf(s_arg); }
+//        }
+//        else
+//        {
+//            Optional<Constructor<?>> stringConstructor = getStringConstructor(parameterType);
+//            if (stringConstructor.isPresent())
+//            {
+//                arg = stringConstructor.get().newInstance(s_arg);
+//            }
+//            else
+//            {
+//                Optional<Method> valueOfStringMethod = getValueOfStringMethod(parameterType);
+//                if (valueOfStringMethod.isPresent())
+//                {
+//                    arg = valueOfStringMethod.get().invoke(null, s_arg);
+//                }
+//                else
+//                {
+//                    arg = s_arg;
+//                }
+//            }
+//        }
+//        return arg;
+//    }
     
-    private Object[] populateArgs(final String messageBody,
-            final ResourcePath resourcePath,
-            final Map<String, List<String>> queryParams,
-            final Map<String, List<String>> formParams,
-            final Optional<ContentType> inboundContentType)
-            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, JsonParseException, JsonMappingException, IOException
-    {
-        final List<Object> args = Lists.newArrayList();
-        
-        Class<?>[] parameterTypes = referencedMethod.getParameterTypes();
-        
-        int idx = 0;
-        for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
-        {
-            if (0 == paramAnnotations.length)
-            {
-                boolean added = false;
-                if (inboundContentType.isPresent() && parameterTypes[idx] != String.class && ! parameterTypes[idx].getName().equals("[B"))
-                {
-                    if (inboundContentType.get().isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
-                    {
-                        args.add(jsonMapper.readValue(messageBody, parameterTypes[idx]));
-                        added = true;
-                    }
-                    else if (inboundContentType.get().isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
-                    {
-                        args.add(xmlMapper.readValue(messageBody, parameterTypes[idx]));
-                        added = true;
-                    }
-                    else if (inboundContentType.get().isCompatibleWith(ContentType.TEXT_PLAIN_TYPE))
-                    {
-                        if (parameterTypes[idx].isPrimitive())
-                        {
-                            final Class<?> parameterType = parameterTypes[idx]; 
-                            if (parameterType == boolean.class) { args.add(Boolean.valueOf(messageBody)); added=true; }
-                            else if (parameterType == byte.class) { args.add(Byte.valueOf(messageBody)); added=true; }
-                            else if (parameterType == short.class) { args.add(Short.valueOf(messageBody)); added=true; }
-                            else if (parameterType == int.class) { args.add(Integer.valueOf(messageBody)); added=true; }
-                            else if (parameterType == long.class) { args.add(Long.valueOf(messageBody)); added=true; }
-                            else if (parameterType == float.class) { args.add(Float.valueOf(messageBody)); added=true; }
-                            else if (parameterType == double.class) { args.add(Double.valueOf(messageBody)); added=true; }                            
-                        }
-                        else
-                        {
-                            Optional<Constructor<?>> ctor = getStringConstructor(parameterTypes[idx]);
-                            if (ctor.isPresent())
-                            {
-                                args.add(ctor.get().newInstance(messageBody));
-                                added = true;
-                            }
-                            else
-                            {
-                                Optional<Method> valueOf = getValueOfStringMethod(parameterTypes[idx]);
-                                if (valueOf.isPresent())
-                                {
-                                    args.add(valueOf.get().invoke(null, messageBody));
-                                    added = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                if (! added)
-                {
-                    if (parameterTypes[idx].getName().equals("[B"))
-                    {
-                        args.add(messageBody.getBytes());
-                    }
-                    else
-                    {
-                        args.add(messageBody);
-                    }
-                }
-            }
-            else
-            {
-                Annotation paramTypeAnnotation = null;
-                Annotation defaultValueAnnotation = null;
-                Annotation requiredParamAnnotation = null;
-                boolean allowNullArg = false;
-                for (final Annotation annotation : paramAnnotations)
-                {
-                    if (annotation instanceof PathParam ||
-                            annotation instanceof MatrixParam ||
-                            annotation instanceof QueryParam ||
-                            annotation instanceof FormParam)
-                    {
-                        paramTypeAnnotation = annotation;
-                    }
-                    else if (annotation instanceof DefaultValue)
-                    {
-                        defaultValueAnnotation = annotation;
-                    }
-                    else if (annotation instanceof RequiredParam)
-                    {
-                        requiredParamAnnotation = annotation;
-                    }
-                }
-                
-                Class<?> parameterType = parameterTypes[idx];
-                String s_arg = null;
-
-                if (null != paramTypeAnnotation)
-                {
-                    if (paramTypeAnnotation instanceof PathParam)
-                    {
-                        final String paramValue = ((PathParam) paramTypeAnnotation).value();
-                        
-                        if (PathSegment.class.isAssignableFrom(parameterType))
-                        {
-                            Optional<PathSegment> ps = resourcePath.getPathSegment(paramValue);
-                            if (ps.isPresent()) args.add(ps.get());
-                        }
-                        else
-                        {
-                            s_arg = resourcePath.get(paramValue);
-                        }
-                    }
-                    else if (paramTypeAnnotation instanceof MatrixParam)
-                    {
-                        s_arg = resourcePath.matrixParamGet(((MatrixParam) paramTypeAnnotation).value());
-                    }
-                    else if (paramTypeAnnotation instanceof QueryParam ||
-                            paramTypeAnnotation instanceof FormParam)
-                    {
-                        final List<String> params = (paramTypeAnnotation instanceof QueryParam) ?
-                                queryParams.get(((QueryParam) paramTypeAnnotation).value()) :
-                                formParams.get(((FormParam) paramTypeAnnotation).value());
-                        if (null != params && ! params.isEmpty())
-                        {
-                            if (List.class.isAssignableFrom(parameterType))
-                            {
-                                args.add(params);
-                            }
-                            else
-                            {
-                                s_arg = params.get(0);
-                            }
-                        }
-                        else if (null != defaultValueAnnotation)
-                        {
-                            s_arg = ((DefaultValue) defaultValueAnnotation).value();
-                        }
-                        else if (! parameterType.isPrimitive())
-                        {
-                            allowNullArg = (null == requiredParamAnnotation);
-                        }
-                    }
-                }
-                
-                if (null != s_arg)
-                {
-                    Object arg = getParameterOfMatchingType(parameterType, s_arg);
-                    if (null != arg)
-                    {
-                        args.add(arg);
-                    }
-                }
-                else if (allowNullArg)
-                {
-                    args.add(null);
-                }
-            }
-            ++idx;
-        }
-        
-        return args.toArray();
-    }
+//    private Object[] populateArgs(final String messageBody,
+//            final ResourcePath resourcePath,
+//            final Map<String, List<String>> queryParams,
+//            final Map<String, List<String>> formParams,
+//            final Optional<ContentType> inboundContentType)
+//            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, JsonParseException, JsonMappingException, IOException
+//    {
+//        final List<Object> args = Lists.newArrayList();
+//        
+//        Class<?>[] parameterTypes = referencedMethod.getParameterTypes();
+//        
+//        int idx = 0;
+//        for (final Annotation[] paramAnnotations : referencedMethod.getParameterAnnotations())
+//        {
+//            if (0 == paramAnnotations.length)
+//            {
+//                boolean added = false;
+//                if (inboundContentType.isPresent() && parameterTypes[idx] != String.class && ! parameterTypes[idx].getName().equals("[B"))
+//                {
+//                    if (inboundContentType.get().isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
+//                    {
+//                        args.add(jsonMapper.readValue(messageBody, parameterTypes[idx]));
+//                        added = true;
+//                    }
+//                    else if (inboundContentType.get().isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
+//                    {
+//                        args.add(xmlMapper.readValue(messageBody, parameterTypes[idx]));
+//                        added = true;
+//                    }
+//                    else if (inboundContentType.get().isCompatibleWith(ContentType.TEXT_PLAIN_TYPE))
+//                    {
+//                        if (parameterTypes[idx].isPrimitive())
+//                        {
+//                            final Class<?> parameterType = parameterTypes[idx]; 
+//                            if (parameterType == boolean.class) { args.add(Boolean.valueOf(messageBody)); added=true; }
+//                            else if (parameterType == byte.class) { args.add(Byte.valueOf(messageBody)); added=true; }
+//                            else if (parameterType == short.class) { args.add(Short.valueOf(messageBody)); added=true; }
+//                            else if (parameterType == int.class) { args.add(Integer.valueOf(messageBody)); added=true; }
+//                            else if (parameterType == long.class) { args.add(Long.valueOf(messageBody)); added=true; }
+//                            else if (parameterType == float.class) { args.add(Float.valueOf(messageBody)); added=true; }
+//                            else if (parameterType == double.class) { args.add(Double.valueOf(messageBody)); added=true; }                            
+//                        }
+//                        else
+//                        {
+//                            Optional<Constructor<?>> ctor = getStringConstructor(parameterTypes[idx]);
+//                            if (ctor.isPresent())
+//                            {
+//                                args.add(ctor.get().newInstance(messageBody));
+//                                added = true;
+//                            }
+//                            else
+//                            {
+//                                Optional<Method> valueOf = getValueOfStringMethod(parameterTypes[idx]);
+//                                if (valueOf.isPresent())
+//                                {
+//                                    args.add(valueOf.get().invoke(null, messageBody));
+//                                    added = true;
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//                
+//                if (! added)
+//                {
+//                    if (parameterTypes[idx].getName().equals("[B"))
+//                    {
+//                        args.add(messageBody.getBytes());
+//                    }
+//                    else
+//                    {
+//                        args.add(messageBody);
+//                    }
+//                }
+//            }
+//            else
+//            {
+//                Annotation paramTypeAnnotation = null;
+//                Annotation defaultValueAnnotation = null;
+//                Annotation requiredParamAnnotation = null;
+//                boolean allowNullArg = false;
+//                for (final Annotation annotation : paramAnnotations)
+//                {
+//                    if (annotation instanceof PathParam ||
+//                            annotation instanceof MatrixParam ||
+//                            annotation instanceof QueryParam ||
+//                            annotation instanceof FormParam)
+//                    {
+//                        paramTypeAnnotation = annotation;
+//                    }
+//                    else if (annotation instanceof DefaultValue)
+//                    {
+//                        defaultValueAnnotation = annotation;
+//                    }
+//                    else if (annotation instanceof RequiredParam)
+//                    {
+//                        requiredParamAnnotation = annotation;
+//                    }
+//                }
+//                
+//                Class<?> parameterType = parameterTypes[idx];
+//                String s_arg = null;
+//
+//                if (null != paramTypeAnnotation)
+//                {
+//                    if (paramTypeAnnotation instanceof PathParam)
+//                    {
+//                        final String paramValue = ((PathParam) paramTypeAnnotation).value();
+//                        
+//                        if (PathSegment.class.isAssignableFrom(parameterType))
+//                        {
+//                            Optional<PathSegment> ps = resourcePath.getPathSegment(paramValue);
+//                            if (ps.isPresent()) args.add(ps.get());
+//                        }
+//                        else
+//                        {
+//                            s_arg = resourcePath.get(paramValue);
+//                        }
+//                    }
+//                    else if (paramTypeAnnotation instanceof MatrixParam)
+//                    {
+//                        s_arg = resourcePath.matrixParamGet(((MatrixParam) paramTypeAnnotation).value());
+//                    }
+//                    else if (paramTypeAnnotation instanceof QueryParam ||
+//                            paramTypeAnnotation instanceof FormParam)
+//                    {
+//                        final List<String> params = (paramTypeAnnotation instanceof QueryParam) ?
+//                                queryParams.get(((QueryParam) paramTypeAnnotation).value()) :
+//                                formParams.get(((FormParam) paramTypeAnnotation).value());
+//                        if (null != params && ! params.isEmpty())
+//                        {
+//                            if (List.class.isAssignableFrom(parameterType))
+//                            {
+//                                args.add(params);
+//                            }
+//                            else
+//                            {
+//                                s_arg = params.get(0);
+//                            }
+//                        }
+//                        else if (null != defaultValueAnnotation)
+//                        {
+//                            s_arg = ((DefaultValue) defaultValueAnnotation).value();
+//                        }
+//                        else if (! parameterType.isPrimitive())
+//                        {
+//                            allowNullArg = (null == requiredParamAnnotation);
+//                        }
+//                    }
+//                }
+//                
+//                if (null != s_arg)
+//                {
+//                    Object arg = getParameterOfMatchingType(parameterType, s_arg);
+//                    if (null != arg)
+//                    {
+//                        args.add(arg);
+//                    }
+//                }
+//                else if (allowNullArg)
+//                {
+//                    args.add(null);
+//                }
+//            }
+//            ++idx;
+//        }
+//        
+//        return args.toArray();
+//    }
     
     public Response invoke(final String messageBody,
             final ResourcePath resourcePath,
@@ -477,47 +466,52 @@ public class Resource
     {
         // TODO:  This method - probably the whole class - needs a complete refactor.
         Object response = null;
+        boolean methodRequiresPayload = (HttpMethod.PUT == httpMethod
+                || HttpMethod.POST == httpMethod
+                || HttpMethod.DELETE == httpMethod
+                || HttpMethod.PATCH == httpMethod);
+        boolean methodLacksPayload = ! methodRequiresPayload;
+
         try
         {
             final List<ContentType> acceptedInboundContentTypes = getAcceptedContentTypes();
             
-            if (acceptedInboundContentTypes.size() > 0 &&
-                    (HttpMethod.GET == httpMethod ||
-                    HttpMethod.HEAD == httpMethod ||
-                    HttpMethod.OPTIONS == httpMethod))
+            if (! acceptedInboundContentTypes.isEmpty() && methodLacksPayload)
             {
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
             
-//            if (acceptedInboundContentTypes.size() == 0 && expectsMessageBody())
-//            {
-//                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-//            }
+            final Optional<HttpContent> content = HttpContent.create(messageBody,
+                    getRequestContentTypes(headers),
+                    acceptedInboundContentTypes);
             
-            final List<ContentType> requestContentTypes = getRequestContentTypes(headers);
-            
-            String decodedBody = getDecodedBody(messageBody); // , inboundContentType);
-            
-            
-            final Optional<ContentType> inboundContentType =
-                    inboundContentTypeResolverStrategy.resolve(requestContentTypes, acceptedInboundContentTypes, decodedBody);
-            
-//            final ContentType contentType = getAgreedContentType(requestContentTypes, acceptedInboundContentTypes);
-            
-            
-            if (! inboundContentType.isPresent() && ! acceptedInboundContentTypes.isEmpty())
+            if (content.isPresent())
+            {
+                if (methodLacksPayload)
+                {
+                    return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                }
+            }
+            else if (! Strings.isNullOrEmpty(messageBody))
             {
                 return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
             }
             
-            Map<String, List<String>> formParams = parseFormData(decodedBody, inboundContentType);
+            final ResourceArgs resourceArgs = ResourceArgs.builder()
+                    .content(content)
+                    .resourcePath(resourcePath)
+                    .httpMethod(httpMethod)
+                    .referencedMethod(referencedMethod)
+                    .queryParams(queryParams)
+                    .build();
             
-            Object[] args = populateArgs(messageBody, resourcePath, queryParams, formParams, inboundContentType);
+            final Object[] args = resourceArgs.getArgs();
+            
             if (referencedMethod.getParameters().length != args.length)
             {
                 return Response.status(Status.BAD_REQUEST).build();
             }
-            else if (! passesStrictParamsCheck(args.length, queryParams.size(), formParams.size()))
+            else if (! passesStrictParamsCheck(args.length, queryParams.size(), resourceArgs.getFormParams().size()))
             {
                 return Response.status(Status.BAD_REQUEST).build();
             }
@@ -529,7 +523,7 @@ public class Resource
             e.printStackTrace();
             return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
         }
-        catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e)
+        catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | ResourceArgsBuilderException e)
         {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e).build();

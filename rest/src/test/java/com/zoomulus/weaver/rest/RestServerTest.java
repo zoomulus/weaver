@@ -1900,7 +1900,7 @@ public class RestServerTest
     }
     
     @Test
-    public void testPutXmlStringToObjectPayloadWithConsumesApplicationJsonProvidesObject() throws ClientProtocolException, IOException
+    public void testPutXmlStringToObjectPayloadWithConsumesApplicationXmlProvidesObject() throws ClientProtocolException, IOException
     {
         final RequestResult result = new PutRequestResult("/put/string/object/consumes/xml",
                 "<CustomWithStringCtor><s>custom</s></CustomWithStringCtor>", ContentType.TEXT_PLAIN_TYPE);
