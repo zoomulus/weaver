@@ -19,7 +19,9 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Value;
 import lombok.experimental.Builder;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.base.Strings;
@@ -31,6 +33,7 @@ import com.zoomulus.weaver.rest.content.HttpContent;
 import com.zoomulus.weaver.rest.contenttype.ContentTypeResolverStrategy;
 import com.zoomulus.weaver.rest.contenttype.IntelligentContentTypeResolverStrategy;
 import com.zoomulus.weaver.rest.resource.ResourceArgs.ResourceArgsBuilder.ResourceArgsBuilderException;
+import com.zoomulus.weaver.rest.response.ResponseFactory;
 
 @Value
 @Builder
@@ -459,64 +462,219 @@ public class Resource
 //        return args.toArray();
 //    }
     
-    public Response invoke(final String messageBody,
+    private Object invokeEndpoint(final String messageBody,
             final ResourcePath resourcePath,
             final Optional<HttpHeaders> headers,
             final Map<String, List<String>> queryParams)
+                    throws JsonParseException, JsonMappingException, InstantiationException, IllegalAccessException,
+                    IllegalArgumentException, InvocationTargetException, ResourceArgsBuilderException,
+                    IOException, NoSuchMethodException, SecurityException
     {
-        // TODO:  This method - probably the whole class - needs a complete refactor.
-        Object response = null;
         boolean methodRequiresPayload = (HttpMethod.PUT == httpMethod
                 || HttpMethod.POST == httpMethod
                 || HttpMethod.DELETE == httpMethod
                 || HttpMethod.PATCH == httpMethod);
         boolean methodLacksPayload = ! methodRequiresPayload;
 
-        try
+        final List<ContentType> acceptedInboundContentTypes = getAcceptedContentTypes();
+        
+        if (! acceptedInboundContentTypes.isEmpty() && methodLacksPayload)
         {
-            final List<ContentType> acceptedInboundContentTypes = getAcceptedContentTypes();
-            
-            if (! acceptedInboundContentTypes.isEmpty() && methodLacksPayload)
+            return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+        }
+        
+        final Optional<HttpContent> content = HttpContent.create(messageBody,
+                getRequestContentTypes(headers),
+                acceptedInboundContentTypes);
+        
+        if (content.isPresent())
+        {
+            if (methodLacksPayload)
             {
                 return Response.status(Status.INTERNAL_SERVER_ERROR).build();
             }
+        }
+        else if (! Strings.isNullOrEmpty(messageBody))
+        {
+            return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
+        }
+        
+        final ResourceArgs resourceArgs = ResourceArgs.builder()
+                .content(content)
+                .resourcePath(resourcePath)
+                .httpMethod(httpMethod)
+                .referencedMethod(referencedMethod)
+                .queryParams(queryParams)
+                .build();
+        
+        final Object[] args = resourceArgs.getArgs();
+        
+        if (referencedMethod.getParameters().length != args.length)
+        {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+        else if (! passesStrictParamsCheck(args.length, queryParams.size(), resourceArgs.getFormParams().size()))
+        {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+        Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
+        return referencedMethod.invoke(resourceObj, args);
+    }
+    
+    public Response invoke(final String messageBody,
+            final ResourcePath resourcePath,
+            final Optional<HttpHeaders> headers,
+            final Map<String, List<String>> queryParams)
+    {
+        // TODO:  This method - probably the whole class - needs a complete refactor.
+        try
+        {
+            Object response = invokeEndpoint(messageBody, resourcePath, headers, queryParams);
             
-            final Optional<HttpContent> content = HttpContent.create(messageBody,
-                    getRequestContentTypes(headers),
-                    acceptedInboundContentTypes);
-            
-            if (content.isPresent())
+            if (null == response) 
             {
-                if (methodLacksPayload)
+                return Response.status(Status.NO_CONTENT).build();
+            }
+            
+            final List<ContentType> acceptContentTypes = getAcceptContentTypes(headers);
+            final List<ContentType> producesContentTypes = getProducesContentTypes(response);
+            
+            //return new ResponseFactory().generate(response, acceptContentTypes, producesContentTypes);
+            
+            Optional<ContentType> producesContentType =
+                    new ResponseFactory().generate(response, acceptContentTypes, producesContentTypes);
+//                    acceptContentTypes.isEmpty() ?
+//                            (producesContentTypes.size() == 1 ?
+//                                    Optional.of(producesContentTypes.get(0)) : Optional.empty()) :
+//                            Optional.ofNullable(getAgreedContentType(acceptContentTypes, producesContentTypes));
+                                    
+            Optional<String> stringRep = Optional.empty();
+            boolean wantsJson = acceptContentTypes.size() == 1 &&
+                    acceptContentTypes.get(0).isCompatibleWith(ContentType.APPLICATION_JSON_TYPE);
+            boolean wantsXml = acceptContentTypes.size() == 1 &&
+                    acceptContentTypes.get(0).isCompatibleWith(ContentType.APPLICATION_XML_TYPE);
+            boolean triedJsonConversion = false;
+            
+            if (response instanceof Response)
+            {
+                if (! acceptContentTypes.isEmpty() && ! producesContentType.isPresent())
+                {
+                    return Response.status(Status.NOT_ACCEPTABLE).build();
+                }
+                return (Response) response;
+            }
+            
+            if (producesContentType.isPresent())
+            {
+                try
+                {
+                    if (producesContentType.get().isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
+                    {
+                        triedJsonConversion = true;
+                        stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
+                    }
+                    else if (producesContentType.get().isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
+                    {
+                        stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
+                    }
+                }
+                catch (JsonProcessingException e)
                 {
                     return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                 }
             }
-            else if (! Strings.isNullOrEmpty(messageBody))
+            else if (! acceptContentTypes.isEmpty() && ! producesContentTypes.isEmpty())
             {
-                return Response.status(Status.UNSUPPORTED_MEDIA_TYPE).build();
+                return Response.status(Status.NOT_ACCEPTABLE).build();
             }
             
-            final ResourceArgs resourceArgs = ResourceArgs.builder()
-                    .content(content)
-                    .resourcePath(resourcePath)
-                    .httpMethod(httpMethod)
-                    .referencedMethod(referencedMethod)
-                    .queryParams(queryParams)
-                    .build();
-            
-            final Object[] args = resourceArgs.getArgs();
-            
-            if (referencedMethod.getParameters().length != args.length)
+            if (! stringRep.isPresent())
             {
-                return Response.status(Status.BAD_REQUEST).build();
+                if (response instanceof String && ! wantsJson && ! wantsXml)
+                {
+                    if (! producesContentType.isPresent())
+                    {
+                        producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
+                    }
+                    stringRep = Optional.of((String) response);
+                }
+                else if (hasDeclaredToString(response.getClass()) && ! wantsJson && ! wantsXml)
+                {
+                    if (! producesContentType.isPresent())
+                    {
+                        producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
+                    }
+                    stringRep = Optional.of(response.toString());
+                }
+                // Otherwise do a JSON conversion if possible
+                else if (! triedJsonConversion)
+                {
+                    try
+                    {
+                        if (wantsXml)
+                        {
+                            stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
+                            if (! producesContentType.isPresent())
+                            {
+                                producesContentType = Optional.of(ContentType.APPLICATION_XML_TYPE);
+                            }
+                        }
+                        else
+                        {
+                            stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
+                            if (! producesContentType.isPresent())
+                            {
+                                producesContentType = Optional.of(ContentType.APPLICATION_JSON_TYPE);
+                            }
+                        }
+                    }
+                    catch (JsonProcessingException e) { }
+                }
+                
+                // As a last resort use whatever toString gives us
+                if (! stringRep.isPresent())
+                {
+                    if (! producesContentType.isPresent())
+                    {
+                        producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
+                    }
+                    stringRep = Optional.of(response.toString());
+                }
             }
-            else if (! passesStrictParamsCheck(args.length, queryParams.size(), resourceArgs.getFormParams().size()))
+            
+            if (! producesContentType.isPresent() || (! acceptContentTypes.isEmpty()))
             {
-                return Response.status(Status.BAD_REQUEST).build();
+                final ContentType pct = producesContentType.get();
+                boolean found = false;
+                for (final ContentType act : acceptContentTypes)
+                {
+                    if (pct.isCompatibleWith(act))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (! found)
+                {
+                    return Response.status(Status.NOT_ACCEPTABLE).build();
+                }
             }
-            Object resourceObj = referencedClass.getConstructor((Class<?>[])null).newInstance((Object[])null);
-            response = referencedMethod.invoke(resourceObj, args);
+            
+            if (stringRep.isPresent())
+            {
+                return Response
+                        .status(Status.OK)
+                        .entity(stringRep.get())
+                        .type(producesContentType.isPresent() ? producesContentType.get().toString() : ContentType.TEXT_PLAIN)
+                        .build();
+            }
+            else
+            {
+                return Response
+                        .status(Status.NO_CONTENT)
+                        .entity(null)
+                        .build();
+            }
         }
         catch (IOException e)
         {
@@ -527,148 +685,6 @@ public class Resource
         {
             e.printStackTrace();
             return Response.status(Status.INTERNAL_SERVER_ERROR).entity(e).build();
-        }
-        
-        if (null == response) 
-        {
-            return Response.status(Status.NO_CONTENT).build();
-        }
-        
-        final List<ContentType> acceptContentTypes = getAcceptContentTypes(headers);
-        final List<ContentType> producesContentTypes = getProducesContentTypes(response);
-        
-        Optional<ContentType> producesContentType =
-                acceptContentTypes.isEmpty() ?
-                        (producesContentTypes.size() == 1 ?
-                                Optional.of(producesContentTypes.get(0)) : Optional.empty()) :
-                        Optional.ofNullable(getAgreedContentType(acceptContentTypes, producesContentTypes));
-                                
-        Optional<String> stringRep = Optional.empty();
-        boolean wantsJson = acceptContentTypes.size() == 1 &&
-                acceptContentTypes.get(0).isCompatibleWith(ContentType.APPLICATION_JSON_TYPE);
-        boolean wantsXml = acceptContentTypes.size() == 1 &&
-                acceptContentTypes.get(0).isCompatibleWith(ContentType.APPLICATION_XML_TYPE);
-        boolean triedJsonConversion = false;
-        
-        if (response instanceof Response)
-        {
-            if (! acceptContentTypes.isEmpty() && ! producesContentType.isPresent())
-            {
-                return Response.status(Status.NOT_ACCEPTABLE).build();
-            }
-            return (Response) response;
-        }
-        
-        if (producesContentType.isPresent())
-        {
-            try
-            {
-                if (producesContentType.get().isCompatibleWith(ContentType.APPLICATION_JSON_TYPE))
-                {
-                    triedJsonConversion = true;
-                    stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
-                }
-                else if (producesContentType.get().isCompatibleWith(ContentType.APPLICATION_XML_TYPE))
-                {
-                    stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
-                }
-            }
-            catch (JsonProcessingException e)
-            {
-                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-            }
-        }
-        else if (! acceptContentTypes.isEmpty() && ! producesContentTypes.isEmpty())
-        {
-            return Response.status(Status.NOT_ACCEPTABLE).build();
-        }
-        
-        if (! stringRep.isPresent())
-        {
-            if (response instanceof String && ! wantsJson && ! wantsXml)
-            {
-                if (! producesContentType.isPresent())
-                {
-                    producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
-                }
-                stringRep = Optional.of((String) response);
-            }
-            else if (hasDeclaredToString(response.getClass()) && ! wantsJson && ! wantsXml)
-            {
-                if (! producesContentType.isPresent())
-                {
-                    producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
-                }
-                stringRep = Optional.of(response.toString());
-            }
-            // Otherwise do a JSON conversion if possible
-            else if (! triedJsonConversion)
-            {
-                try
-                {
-                    if (wantsXml)
-                    {
-                        stringRep = Optional.ofNullable(xmlMapper.writeValueAsString(response));
-                        if (! producesContentType.isPresent())
-                        {
-                            producesContentType = Optional.of(ContentType.APPLICATION_XML_TYPE);
-                        }
-                    }
-                    else
-                    {
-                        stringRep = Optional.ofNullable(jsonMapper.writeValueAsString(response));
-                        if (! producesContentType.isPresent())
-                        {
-                            producesContentType = Optional.of(ContentType.APPLICATION_JSON_TYPE);
-                        }
-                    }
-                }
-                catch (JsonProcessingException e) { }
-            }
-            
-            // As a last resort use whatever toString gives us
-            if (! stringRep.isPresent())
-            {
-                if (! producesContentType.isPresent())
-                {
-                    producesContentType = Optional.of(ContentType.TEXT_PLAIN_TYPE);
-                }
-                stringRep = Optional.of(response.toString());
-            }
-        }
-        
-        if (! producesContentType.isPresent() || (! acceptContentTypes.isEmpty()))
-        {
-            final ContentType pct = producesContentType.get();
-            boolean found = false;
-            for (final ContentType act : acceptContentTypes)
-            {
-                if (pct.isCompatibleWith(act))
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (! found)
-            {
-                return Response.status(Status.NOT_ACCEPTABLE).build();
-            }
-        }
-        
-        if (stringRep.isPresent())
-        {
-            return Response
-                    .status(Status.OK)
-                    .entity(stringRep.get())
-                    .type(producesContentType.isPresent() ? producesContentType.get().toString() : ContentType.TEXT_PLAIN)
-                    .build();
-        }
-        else
-        {
-            return Response
-                    .status(Status.NO_CONTENT)
-                    .entity(null)
-                    .build();
         }
     }
     

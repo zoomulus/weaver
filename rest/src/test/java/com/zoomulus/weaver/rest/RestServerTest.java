@@ -1300,35 +1300,34 @@ public class RestServerTest
     }
     
     @Test
-    public void testStringWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
+    public void testStringWithMultipleProducesReturnsJson() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/produces/string/multipleproduces");
-        verifyOkResult(result, "text");
-        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
+        verifyOkResult(result, "\"text\"");
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testObjectWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
+    public void testObjectWithMultipleProducesReturnsJson() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/produces/object/multipleproduces");
-        verifyOkResult(result, "custom");
-        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
+        verifyOkResult(result, "{\"s\":\"custom\"}");
+        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
     }
     
     @Test
-    public void testJsonizableObjectWithMultipleProducesReturnsApplicationJson() throws ClientProtocolException, IOException
+    public void testJsonizableObjectWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/produces/jsonobject/multipleproduces");
         verifyOkResult(result, "{\"s\":\"abc\",\"i\":123}");
-        verifyContentType(result, ContentType.APPLICATION_JSON_TYPE);
+        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
     }
     
     @Test
     public void testNonJsonizableObjectWithMultipleProducesReturnsTextPlain() throws ClientProtocolException, IOException
     {
         final RequestResult result = new GetRequestResult("/get/produces/nonjsonobject/multipleproduces");
-        verifyOkResult(result, "custom");
-        verifyContentType(result, ContentType.TEXT_PLAIN_TYPE);
+        verifyInternalServerErrorResult(result);
     }
     
     
