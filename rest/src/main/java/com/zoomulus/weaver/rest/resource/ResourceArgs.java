@@ -29,7 +29,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.rest.annotations.RequiredParam;
+import com.zoomulus.weaver.rest.annotations.StrictParams;
 import com.zoomulus.weaver.rest.content.HttpContent;
+import com.zoomulus.weaver.rest.exceptions.StrictParamsMismatchException;
 
 public class ResourceArgs
 {
@@ -43,17 +45,23 @@ public class ResourceArgs
     @Getter
     private final Object[] args;
     
+    private final Method referencedMethod;
+    
     private ResourceArgs(final ResourcePath resourcePath,
             final Optional<String> body,
             final Map<String, List<String>> queryParams,
             final Optional<ContentType> contentType,
             final HttpMethod httpMethod,
-            final Method referencedMethod) throws JsonParseException, JsonMappingException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException
+            final Method referencedMethod) throws JsonParseException, JsonMappingException, InstantiationException,
+                IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+                IOException, StrictParamsMismatchException
     {
         this.queryParams = queryParams;
         this.formParams = parseFormData(body, contentType, httpMethod);
+        this.referencedMethod = referencedMethod;
         
         this.args = populateArgs(referencedMethod, body, contentType, resourcePath, queryParams, formParams);
+        performStrictParamsCheck(this.args.length, queryParams.size(), formParams.size());
     }
     
     private Map<String, List<String>> parseFormData(final Optional<String> body,
@@ -316,6 +324,22 @@ public class ResourceArgs
         }
         return arg;
     }
+    
+    private void performStrictParamsCheck(int nArgs, int nQueryParams, int nFormParams) throws StrictParamsMismatchException
+    {
+        for (final Annotation annotation : referencedMethod.getAnnotations())
+        {
+            if (annotation instanceof StrictParams)
+            {
+                if (nArgs != (nQueryParams + nFormParams))
+                {
+                    throw new StrictParamsMismatchException(referencedMethod.getDeclaringClass().getName(),
+                            referencedMethod.getName(), nArgs, nQueryParams+nFormParams);
+                }
+                break;
+            }
+        }
+    }
 
     
     public static ResourceArgsBuilder builder()
@@ -365,7 +389,9 @@ public class ResourceArgs
             return this;
         }
         
-        public ResourceArgs build() throws ResourceArgsBuilderException, JsonParseException, JsonMappingException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IOException
+        public ResourceArgs build() throws ResourceArgsBuilderException, JsonParseException, JsonMappingException,
+            InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+            IOException, StrictParamsMismatchException
         {
             if (null == resourcePath)
             {
