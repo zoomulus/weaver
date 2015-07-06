@@ -56,4 +56,10 @@ public class RestServerQueryParamTest extends RestServerTestBase
     {
         verifyOkResult(new GetRequestResult("get/queryparams/single?firstname=tim&lastname=timson"), "tim");
     }
+    
+    @Test
+    public void testNonmatchingQueryParamWithStrictParamsFails() throws ClientProtocolException, IOException
+    {
+        verify400Result(new GetRequestResult("get/strictparams?name=bob&catname=killer"));
+    }
 }

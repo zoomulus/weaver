@@ -3,12 +3,15 @@ package com.zoomulus.weaver.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Map;
+
 import javax.ws.rs.core.Response.Status;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.zoomulus.weaver.core.connector.ServerConnector;
 import com.zoomulus.weaver.core.content.ContentType;
 import com.zoomulus.weaver.rest.connector.RestServerConnector;
@@ -36,6 +39,13 @@ public abstract class RestServerTestBase
         server.shutdown();
     }
 
+    protected Map<String, String> getAcceptHeader(final String ct)
+    {
+        final Map<String, String> headers = Maps.newHashMap();
+        headers.put("Accept", ct);
+        return headers;
+    }
+    
     protected void verifyOkResult(final RequestResult rr, final String expectedResponse)
     {
         assertEquals(Status.OK.getStatusCode(), rr.status());

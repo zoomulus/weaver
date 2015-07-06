@@ -194,4 +194,11 @@ public class RestServerFormParamTest extends RestServerTestBase
         verifyInternalServerErrorResult(new PostRequestResult("post/formparam/typematch/custominvalid",
                 formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
     }
+    
+    @Test
+    public void testNonmatchingFormParamWithStrictParamsFails() throws ClientProtocolException, IOException
+    {
+        final String formdata = URLEncoder.encode("name=bob&catname=killer", CharsetUtil.UTF_8.name());
+        verify400Result(new PostRequestResult("post/strictparams", formdata, ContentType.APPLICATION_FORM_URLENCODED_TYPE));
+    }
 }
