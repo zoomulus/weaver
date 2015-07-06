@@ -9,6 +9,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
@@ -1396,5 +1397,13 @@ public class RestServerTestResource
     public String putBytesConsumesText(final byte[] bytes)
     {
         return new String(bytes);
+    }
+    
+    
+    @GET
+    @Path("/get/header/id")
+    public String getIdHeader(@HeaderParam("X-Weaver-Test-ID") final String id)
+    {
+        return id;
     }
 }

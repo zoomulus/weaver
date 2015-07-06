@@ -1,5 +1,6 @@
 package com.zoomulus.weaver.rest.resource;
 
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
 
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.MatrixParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -49,6 +51,7 @@ public class ResourceArgs
     
     private ResourceArgs(final ResourcePath resourcePath,
             final Optional<String> body,
+            final Optional<HttpHeaders> headers,
             final Map<String, List<String>> queryParams,
             final Optional<ContentType> contentType,
             final HttpMethod httpMethod,
@@ -60,7 +63,7 @@ public class ResourceArgs
         this.formParams = parseFormData(body, contentType, httpMethod);
         this.referencedMethod = referencedMethod;
         
-        this.args = populateArgs(referencedMethod, body, contentType, resourcePath, queryParams, formParams);
+        this.args = populateArgs(referencedMethod, body, headers, contentType, resourcePath, queryParams, formParams);
         performStrictParamsCheck(this.args.length, queryParams.size(), formParams.size());
     }
     
@@ -86,6 +89,7 @@ public class ResourceArgs
     
     private Object[] populateArgs(final Method referencedMethod,
             final Optional<String> body,
+            final Optional<HttpHeaders> headers,
             final Optional<ContentType> contentType,
             final ResourcePath resourcePath,
             final Map<String, List<String>> queryParams,
@@ -177,7 +181,8 @@ public class ResourceArgs
                     if (annotation instanceof PathParam ||
                             annotation instanceof MatrixParam ||
                             annotation instanceof QueryParam ||
-                            annotation instanceof FormParam)
+                            annotation instanceof FormParam ||
+                            annotation instanceof HeaderParam)
                     {
                         paramTypeAnnotation = annotation;
                     }
@@ -238,6 +243,17 @@ public class ResourceArgs
                         else if (! parameterType.isPrimitive())
                         {
                             allowNullArg = (null == requiredParamAnnotation);
+                        }
+                    }
+                    else if (paramTypeAnnotation instanceof HeaderParam)
+                    {
+                        if (headers.isPresent())
+                        {
+                            final String paramValue = ((HeaderParam) paramTypeAnnotation).value();
+                            if (headers.get().contains(paramValue))
+                            {
+                                s_arg = headers.get().get(paramValue);
+                            }
                         }
                     }
                 }
@@ -352,6 +368,7 @@ public class ResourceArgs
         private ResourcePath resourcePath = null;
         private Map<String, List<String>> queryParams = Maps.newHashMap();
         private Optional<ContentType> contentType = Optional.empty();
+        private Optional<HttpHeaders> headers = Optional.empty();
         private HttpMethod httpMethod = null;
         private Method referencedMethod = null;
         
@@ -383,6 +400,12 @@ public class ResourceArgs
             return this;
         }
         
+        public ResourceArgsBuilder httpHeaders(final Optional<HttpHeaders> headers)
+        {
+            this.headers = headers;
+            return this;
+        }
+        
         public ResourceArgsBuilder referencedMethod(final Method referencedMethod)
         {
             this.referencedMethod = referencedMethod;
@@ -407,6 +430,7 @@ public class ResourceArgs
             }
             return new ResourceArgs(resourcePath,
                     body,
+                    headers,
                     queryParams,
                     contentType,
                     httpMethod,

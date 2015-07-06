@@ -179,6 +179,7 @@ public class Resource
                 .content(content)
                 .resourcePath(resourcePath)
                 .httpMethod(httpMethod)
+                .httpHeaders(headers)
                 .referencedMethod(referencedMethod)
                 .queryParams(queryParams)
                 .build();
