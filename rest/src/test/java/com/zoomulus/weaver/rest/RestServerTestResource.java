@@ -1406,4 +1406,30 @@ public class RestServerTestResource
     {
         return id;
     }
+    
+    @GET
+    @Path("/get/header/id/default")
+    public String getIdHeaderDefault(@HeaderParam("X-Weaver-Test-ID") @DefaultValue("111") final String id)
+    {
+        return id;
+    }
+    
+    @GET
+    @Path("/get/header/multiple")
+    public String getMultipleHeaders(@HeaderParam("Header2") final String header2,
+            @HeaderParam("Header1") final String header1,
+            @HeaderParam("Header3") final String header3)
+    {
+        return String.format("%s%s%s", header1, header2, header3);
+    }
+    
+    @GET
+    @Path("/get/header/multiple/default")
+    public String getMultipleHeadersDefault(@HeaderParam("Header2") final String header2,
+            @HeaderParam("Header1") final String header1,
+            @HeaderParam("Header3") @DefaultValue("3") final String header3,
+            @DefaultValue("4") @HeaderParam("Header4") final String header4)
+    {
+        return String.format("%s%s%s%s", header1, header2, header3, header4);
+    }
 }

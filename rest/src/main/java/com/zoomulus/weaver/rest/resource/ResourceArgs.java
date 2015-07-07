@@ -247,13 +247,18 @@ public class ResourceArgs
                     }
                     else if (paramTypeAnnotation instanceof HeaderParam)
                     {
-                        if (headers.isPresent())
+                        if (headers.isPresent())  // Should always be true - most HTTP requests have *some* headers at least
                         {
                             final String paramValue = ((HeaderParam) paramTypeAnnotation).value();
                             if (headers.get().contains(paramValue))
                             {
                                 s_arg = headers.get().get(paramValue);
                             }
+                        }
+                        
+                        if (null == s_arg && null != defaultValueAnnotation)
+                        {
+                            s_arg = ((DefaultValue) defaultValueAnnotation).value();
                         }
                     }
                 }
